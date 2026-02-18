@@ -18,15 +18,17 @@ A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 | Package | Version | Description |
 |---------|---------|-------------|
 | [`@arkv/colors`](./packages/colors) | [![npm](https://img.shields.io/npm/v/@arkv/colors)](https://www.npmjs.com/package/@arkv/colors) | Lightweight, zero-dependency ANSI color and style utilities |
-| [`@arkv/shared`](./packages/shared) | *internal* | Shared utilities across packages (not published) |
+| [`@arkv/shared`](./packages/shared) | [![npm](https://img.shields.io/npm/v/@arkv/shared)](https://www.npmjs.com/package/@arkv/shared) | Shared utilities across packages |
+| [`@arkv/logger`](./packages/logger) | [![npm](https://img.shields.io/npm/v/@arkv/logger)](https://www.npmjs.com/package/@arkv/logger) | Framework-agnostic structured logger with async context, sanitization, and colored output |
 
 ## Project Structure
 
 ```
 arkv/
   packages/
-    shared/          # Internal shared utilities (private)
+    shared/          # Shared utilities (@arkv/shared)
     colors/          # ANSI color & style utilities (@arkv/colors)
+    logger/          # Structured logger (@arkv/logger)
   scripts/           # Monorepo-level scripts (versioning, env docs)
   .github/workflows/ # CI/CD pipeline
   .husky/            # Git hooks (pre-commit, commit-msg)

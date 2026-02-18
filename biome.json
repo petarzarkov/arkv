@@ -19,11 +19,13 @@
     "rules": {
       "recommended": true,
       "correctness": {
-        "noUnusedVariables": "error",
-        "useImportExtensions": {
+        "noUnusedVariables": "error"
+      },
+      "nursery": {
+        "noExcessiveLinesPerFile": {
           "level": "error",
           "options": {
-            "forceJsExtensions": true
+            "maxLines": 500
           }
         }
       },

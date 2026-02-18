@@ -16,15 +16,25 @@
     },
     "packages/colors": {
       "name": "@arkv/colors",
-      "version": "0.0.1",
+      "version": "0.1.2",
+    },
+    "packages/logger": {
+      "name": "@arkv/logger",
+      "version": "0.1.0",
+      "dependencies": {
+        "@arkv/colors": "workspace:*",
+        "@arkv/shared": "workspace:*",
+      },
     },
     "packages/shared": {
       "name": "@arkv/shared",
-      "version": "0.0.1",
+      "version": "0.1.0",
     },
   },
   "packages": {
     "@arkv/colors": ["@arkv/colors@workspace:packages/colors"],
+
+    "@arkv/logger": ["@arkv/logger@workspace:packages/logger"],
 
     "@arkv/shared": ["@arkv/shared@workspace:packages/shared"],
 

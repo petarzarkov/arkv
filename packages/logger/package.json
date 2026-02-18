@@ -1,7 +1,7 @@
 {
-  "name": "@arkv/shared",
+  "name": "@arkv/logger",
   "version": "0.1.0",
-  "description": "Shared utilities for @arkv packages",
+  "description": "Framework-agnostic structured logger with async context, sanitization, and colored output",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
@@ -21,8 +21,10 @@
     "access": "public"
   },
   "keywords": [
-    "shared",
-    "utilities",
+    "logger",
+    "logging",
+    "structured",
+    "async-context",
     "typescript"
   ],
   "scripts": {
@@ -36,17 +38,20 @@
     "test:cov": "bun test --coverage",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@arkv/colors": "workspace:*",
+    "@arkv/shared": "workspace:*"
+  },
   "author": {
     "name": "Petar Zarkov",
     "email": "pzarko1@gmail.com",
     "url": "https://github.com/petarzarkov"
   },
   "license": "MIT",
-  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/shared#readme",
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/logger#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/petarzarkov/arkv",
-    "directory": "packages/shared"
+    "directory": "packages/logger"
   }
 }
