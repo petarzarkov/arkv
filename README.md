@@ -1,38 +1,57 @@
-# npm-package-bun-template
+<div align="center">
 
-A modern NPM package template powered by [Bun](https://bun.sh), TypeScript, and Biome.
+# arkv
 
-## Features
+A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 
-- **Bun** - Fast runtime, package manager, and test runner
-- **TypeScript** - Strict mode, ESNext target, decorator support
-- **Biome** - Linting, formatting, and import organization
-- **Husky + lint-staged** - Pre-commit linting and conventional commit message validation
-- **GitHub Actions CI** - Build, lint, typecheck, and test on every push/PR; auto version bump and npm publish on main
-- **Semantic versioning** - Auto version bumps based on conventional commits
-- **Environment docs generation** - Auto-generate env variable documentation from `.env.sample` files
-- **Dual package output** - CJS + ESM + type declarations
+[![CI](https://github.com/petarzarkov/arkv/actions/workflows/ci.yml/badge.svg)](https://github.com/petarzarkov/arkv/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-black.svg)](https://bun.sh)
+
+</div>
+
+---
+
+## Packages
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| [`@arkv/colors`](./packages/colors) | [![npm](https://img.shields.io/npm/v/@arkv/colors)](https://www.npmjs.com/package/@arkv/colors) | Lightweight, zero-dependency ANSI color and style utilities |
+| `@arkv/shared` | *internal* | Shared utilities across packages (not published) |
+
+## Project Structure
+
+```
+arkv/
+  packages/
+    shared/          # Internal shared utilities (private)
+    colors/          # ANSI color & style utilities (@arkv/colors)
+  scripts/           # Monorepo-level scripts (versioning, env docs)
+  .github/workflows/ # CI/CD pipeline
+  .husky/            # Git hooks (pre-commit, commit-msg)
+```
 
 ## Getting Started
 
 ```bash
-# Install dependencies
+# Install all dependencies
 bun install
 
-# Run in development mode (watch)
-bun run dev
-
-# Build
+# Build all packages
 bun run build
 
-# Run tests
-bun test
+# Run all tests
+bun run test
+
+# Run tests with coverage
+bun run test:cov
 
 # Lint & format
 bun run lint
 bun run format
 
-# Type check
+# Typecheck
 bun run typecheck
 ```
 
@@ -40,31 +59,26 @@ bun run typecheck
 
 | Script | Description |
 |---|---|
-| `bun run dev` | Watch mode development |
-| `bun run build` | Parallel build of CJS, ESM, and type declarations |
-| `bun test` | Run tests (bail on first failure) |
-| `bun run test:watch` | Run tests in watch mode |
-| `bun run test:cov` | Run tests with coverage |
+| `bun run build` | Build all packages (ESM + CJS + Types) |
+| `bun run test` | Run all tests |
+| `bun run test:cov` | Run all tests with coverage |
 | `bun run lint` | Lint and auto-fix with Biome |
 | `bun run format` | Format code with Biome |
-| `bun run typecheck` | Type check without emitting |
-| `bun run version` | Bump version from conventional commits |
+| `bun run typecheck` | Typecheck all packages |
+| `bun run version` | Bump versions based on conventional commits |
 | `bun run version:dry-run` | Preview version bump |
-| `bun run mod:cost` | Analyze dependency costs |
 
-## Project Structure
+## Adding a New Package
 
-```
-src/               # Source code
-scripts/           # Utility scripts (versioning, env docs generation)
-dist/              # Compiled output (CJS, ESM, type declarations)
-.github/workflows/ # CI workflow
-.husky/            # Git hooks (pre-commit, commit-msg)
-```
+1. Create a directory under `packages/`
+2. Add a `package.json` with `"name": "@arkv/<name>"`
+3. Add a `tsconfig.json` extending the root config
+4. For publishable packages, add build tsconfigs (ESM + CJS + Types)
+5. For internal-only packages, set `"private": true`
 
 ## Commit Convention
 
-Commits are validated against the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 type(scope)?: description
@@ -72,28 +86,19 @@ type(scope)?: description
 
 Allowed types: `feat`, `fix`, `chore`, `docs`, `test`, `style`, `refactor`, `perf`, `build`, `ci`, `revert`, `security`, `sync`
 
-## Versioning
+## Versioning & Publishing
 
-Run `bun run version` to auto-bump based on the last commit message:
+On push to `main`, CI automatically:
 
-- **Breaking change** (`!` suffix or `BREAKING CHANGE` in body) → major
-- **`feat:`** → minor
-- **Everything else** → patch
+1. Builds, lints, typechecks, and tests all packages
+2. Bumps versions of publishable packages based on commit type
+3. Publishes **only packages whose source code changed**
 
-Use `bun run version:dry-run` to preview without making changes.
-
-## CI/CD
-
-The GitHub Actions [workflow](.github/workflows/ci.yml) runs on every push and PR:
-
-1. Install dependencies (with Bun cache)
-2. Build, lint, and typecheck in parallel
-3. Run tests with coverage
-
-On pushes to `main`, it additionally:
-
-4. Auto-bumps the version based on the commit message
-5. Publishes the package to npm
+| Commit type | Version bump |
+|---|---|
+| `feat:` | minor |
+| `fix:`, `chore:`, etc. | patch |
+| Breaking change (`!:`) | major |
 
 ## License
 

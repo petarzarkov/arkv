@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  CI:
+  ci:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -39,26 +39,56 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build, Lint & Typecheck
-        run: bun run --parallel build lint typecheck
+      - name: Lint & Format
+        run: bun run lint
 
-      - name: Test Coverage
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Build
+        run: bun run build
+
+      - name: Test
         run: bun run test:cov
 
-      # - name: Configure git identity
-      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      #   run: |
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Configure git identity
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # - name: Version bump
-      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      #   run: bun run version
+      - name: Version bump
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: bun run version
 
-      # - name: Configure npm auth
-      #   if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
-      #   run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+      - name: Configure npm auth
+        if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      # - name: Publish to npm
-      #   if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
-      #   run: export XDG_CONFIG_HOME="$HOME" && bun publish --access public --no-git-checks
+      - name: Selective publish
+        if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
+
+          for pkg_dir in packages/*/; do
+            pkg_name=$(basename "$pkg_dir")
+            pkg_json="${pkg_dir}package.json"
+
+            # Skip if no package.json
+            [ ! -f "$pkg_json" ] && continue
+
+            # Skip private packages
+            is_private=$(node -e "console.log(require('./${pkg_json}').private || false)")
+            [ "$is_private" = "true" ] && continue
+
+            # Check if any source files in this package changed
+            if echo "$CHANGED_FILES" | grep -q "^packages/${pkg_name}/src/"; then
+              echo "Publishing ${pkg_name}..."
+              cd "$pkg_dir"
+              export XDG_CONFIG_HOME="$HOME"
+              bun publish --access public --no-git-checks
+              cd ../..
+            else
+              echo "Skipping ${pkg_name} (no source changes)"
+            fi
+          done

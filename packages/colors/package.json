@@ -1,0 +1,54 @@
+{
+  "name": "@arkv/colors",
+  "version": "0.0.1",
+  "description": "Lightweight, zero-dependency ANSI color and style utilities for terminals",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "colors",
+    "ansi",
+    "terminal",
+    "cli",
+    "typescript"
+  ],
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build:esm": "tsc -p tsconfig.build.esm.json",
+    "build:cjs": "tsc -p tsconfig.build.cjs.json",
+    "build:types": "tsc -p tsconfig.build.types.json",
+    "build": "bun run --parallel build:esm build:cjs build:types",
+    "postbuild": "echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json && echo '{\"type\":\"module\"}' > dist/esm/package.json",
+    "test": "bun test --bail",
+    "test:cov": "bun test --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/colors#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/arkv",
+    "directory": "packages/colors"
+  }
+}

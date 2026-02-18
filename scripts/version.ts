@@ -1,6 +1,11 @@
 import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
+import { join, resolve } from 'node:path';
 
 const isDryRun = process.env.DRY_RUN === 'true';
 
@@ -34,7 +39,7 @@ const extractCommitType = (
   );
 
   if (mergeMatch) {
-    return mergeMatch[1]; // Returns the commit type (feat, fix, etc.)
+    return mergeMatch[1];
   }
 
   return null;
@@ -54,7 +59,6 @@ const determineBumpType = ():
       .toString()
       .trim();
 
-    // Check for breaking change indicator (! after type/scope)
     if (
       commitMessage.includes('!:') ||
       commitMessage.includes('BREAKING CHANGE')
@@ -62,15 +66,12 @@ const determineBumpType = ():
       return 'major';
     }
 
-    // Extract commit type from message (handles merge commits)
     const commitType = extractCommitType(commitMessage);
 
-    // Feature commits bump minor version
     if (commitType === 'feat') {
       return 'minor';
     }
 
-    // Everything else (fix, chore, docs, etc.) bumps patch version
     return 'patch';
   } catch (error) {
     console.warn(
@@ -81,21 +82,64 @@ const determineBumpType = ():
   }
 };
 
+const findPublishablePackages = (): Array<{
+  name: string;
+  dir: string;
+  packageJsonPath: string;
+}> => {
+  const packagesDir = resolve(process.cwd(), 'packages');
+  const entries = readdirSync(packagesDir, {
+    withFileTypes: true,
+  });
+  const packages: Array<{
+    name: string;
+    dir: string;
+    packageJsonPath: string;
+  }> = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const pkgJsonPath = join(
+      packagesDir,
+      entry.name,
+      'package.json',
+    );
+    if (!existsSync(pkgJsonPath)) continue;
+    const pkg = JSON.parse(
+      readFileSync(pkgJsonPath, 'utf-8'),
+    );
+    if (pkg.private) continue;
+    packages.push({
+      name: pkg.name,
+      dir: join(packagesDir, entry.name),
+      packageJsonPath: pkgJsonPath,
+    });
+  }
+
+  return packages;
+};
+
 (async () => {
   if (isDryRun) {
-    console.log('\n--- 🧪 DRY RUN MODE ENABLED 🧪 ---\n');
+    console.log('\n--- DRY RUN MODE ENABLED ---\n');
   }
 
   const bumpType = determineBumpType();
-  console.log(
-    `📦 Determined version bump type: ${bumpType}`,
-  );
+  console.log(`Determined version bump type: ${bumpType}`);
 
-  try {
-    const packageJsonPath = resolve(
-      process.cwd(),
-      'package.json',
-    );
+  const publishablePackages = findPublishablePackages();
+
+  if (publishablePackages.length === 0) {
+    console.log('No publishable packages found.');
+    process.exit(0);
+  }
+
+  const bumpedFiles: string[] = [];
+
+  for (const {
+    name,
+    packageJsonPath,
+  } of publishablePackages) {
     const pkg = JSON.parse(
       readFileSync(packageJsonPath, 'utf-8'),
     );
@@ -103,13 +147,12 @@ const determineBumpType = ():
 
     if (!oldVersion) {
       console.warn(
-        `⚠️  No version found in package.json. Skipping.`,
+        `No version found in ${name}. Skipping.`,
       );
-      process.exit(1);
+      continue;
     }
 
     const newVersion = bumpVersion(oldVersion, bumpType);
-
     pkg.version = newVersion;
 
     if (!isDryRun) {
@@ -117,14 +160,26 @@ const determineBumpType = ():
         packageJsonPath,
         `${JSON.stringify(pkg, null, 2)}\n`,
       );
+      bumpedFiles.push(packageJsonPath);
       console.log(
-        `✅ Bumped ${pkg.name} from ${oldVersion} to ${newVersion}`,
+        `Bumped ${name} from ${oldVersion} to ${newVersion}`,
       );
+    } else {
+      console.log(
+        `[DRY RUN] Would bump ${name} from ${oldVersion} to ${newVersion}`,
+      );
+    }
+  }
 
-      // Commit and push changes
-      console.log('📝 Committing version changes...');
-      execSync('git add package.json');
-      const commitMessage = `chore(release): bump version to ${newVersion} [skip ci]`;
+  if (!isDryRun && bumpedFiles.length > 0) {
+    try {
+      console.log('Committing version changes...');
+      execSync(`git add ${bumpedFiles.join(' ')}`);
+
+      const pkg = JSON.parse(
+        readFileSync(bumpedFiles[0], 'utf-8'),
+      );
+      const commitMessage = `chore(release): bump version to ${pkg.version} [skip ci]`;
       execSync(
         `git commit -m "${commitMessage}" --no-verify`,
       );
@@ -141,12 +196,12 @@ const determineBumpType = ():
         );
       }
 
-      console.log(`🚀 Pushing to branch: ${branch}`);
+      console.log(`Pushing to branch: ${branch}`);
       const token = process.env.GITHUB_TOKEN;
       if (token) {
         const repo =
           process.env.GITHUB_REPOSITORY ??
-          'petarzarkov/module-cost';
+          'petarzarkov/arkv';
         execSync(
           `git push https://x-access-token:${token}@github.com/${repo}.git HEAD:refs/heads/${branch}`,
         );
@@ -156,18 +211,11 @@ const determineBumpType = ():
         );
       }
       console.log(
-        `✨ Successfully pushed version ${newVersion}`,
+        `Successfully pushed version ${pkg.version}`,
       );
-    } else {
-      console.log(
-        `\n[DRY RUN] 🚀 Would bump ${pkg.name} from ${oldVersion} to ${newVersion}`,
-      );
-      console.log(
-        `[DRY RUN] � Would commit: "chore(release): bump version to ${newVersion} [skip ci]"`,
-      );
+    } catch (error) {
+      console.error('Failed to version packages:', error);
+      process.exit(1);
     }
-  } catch (error) {
-    console.error(`❌ Failed to version package:`, error);
-    process.exit(1);
   }
 })();

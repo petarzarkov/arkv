@@ -11,7 +11,7 @@ import {
   retry,
   sleep,
   unique,
-} from './index';
+} from './generic.js';
 
 describe('clamp', () => {
   it('returns the value when within range', () => {
