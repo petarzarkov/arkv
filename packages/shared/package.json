@@ -1,6 +1,6 @@
 {
   "name": "@arkv/shared",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared utilities for @arkv packages",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
