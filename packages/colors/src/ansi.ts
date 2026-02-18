@@ -1,5 +1,5 @@
 // ANSI color codes for terminal output
-export const ANSICodes = {
+export const ANSICodes = Object.freeze({
   reset: '\x1b[0m',
   bright: '\x1b[1m',
   dim: '\x1b[2m',
@@ -45,12 +45,12 @@ export const ANSICodes = {
   bgBrightMagenta: '\x1b[105m',
   bgBrightCyan: '\x1b[106m',
   bgBrightWhite: '\x1b[107m',
-} as const;
+});
 
 // Pre-computed open/close pairs for proper composition.
 // Uses specific close codes instead of universal reset,
 // so closing one style doesn't kill others.
-export const ANSIPairs = {
+export const ANSIPairs = Object.freeze({
   // Styles
   bold: { open: '\x1b[1m', close: '\x1b[22m' },
   dim: { open: '\x1b[2m', close: '\x1b[22m' },
@@ -191,4 +191,4 @@ export const ANSIPairs = {
     open: '\x1b[107m',
     close: '\x1b[49m',
   },
-} as const;
+});
