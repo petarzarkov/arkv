@@ -18,7 +18,7 @@ A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 | Package | Version | Description |
 |---------|---------|-------------|
 | [`@arkv/colors`](./packages/colors) | [![npm](https://img.shields.io/npm/v/@arkv/colors)](https://www.npmjs.com/package/@arkv/colors) | Lightweight, zero-dependency ANSI color and style utilities |
-| `@arkv/shared` | *internal* | Shared utilities across packages (not published) |
+| [`@arkv/shared`](./packages/shared) | *internal* | Shared utilities across packages (not published) |
 
 ## Project Structure
 
