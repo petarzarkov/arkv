@@ -1,0 +1,76 @@
+{
+  "name": "npm-package-bun-template",
+  "version": "0.0.1",
+  "description": "Bun npm package template",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "keywords": [
+    "npm",
+    "package",
+    "template",
+    "bun"
+  ],
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/petarzarkov/npm-package-bun-template#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/npm-package-bun-template"
+  },
+  "scripts": {
+    "prepare": "husky || true",
+    "dev": "bun --watch src/index.ts",
+    "start": "bun --max-old-space-size=1536 dist/index.js",
+    "prebuild": "rm -rf dist",
+    "build:esm": "tsc -p tsconfig.build.esm.json",
+    "build:cjs": "tsc -p tsconfig.build.cjs.json",
+    "build:types": "tsc -p tsconfig.build.types.json",
+    "build": "bun run --parallel build:esm build:cjs build:types",
+    "postbuild": "echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json && echo '{\"type\":\"module\"}' > dist/esm/package.json",
+    "test": "bun test --bail",
+    "test:watch": "bun test --watch",
+    "test:cov": "bun test --coverage",
+    "lint": "biome check --write --unsafe .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit --skipLibCheck --skipDefaultLibCheck",
+    "gen:env:docs": "bun ./scripts/gen-env-docs.ts",
+    "version": "bun ./scripts/version.ts",
+    "version:dry-run": "DRY_RUN=true bun ./scripts/version.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@biomejs/biome": "2.4.2",
+    "@types/bun": "1.3.9",
+    "@types/node": "25.2.3",
+    "glob": "13.0.4",
+    "husky": "9.1.7",
+    "lint-staged": "16.2.7",
+    "typescript": "5.9.3"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "bun run lint",
+      "bun run format"
+    ]
+  }
+}

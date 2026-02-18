@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+if grep -qE "^Merge " "$1"; then
+  exit 0
+fi
+
+# Allow default git-generated messages
+if head -1 "$1" | grep -qE '^(Revert\b|fixup!|squash!)'; then
+  exit 0
+fi
+
+COMMIT_MSG_REGEXP="^(feat|fix|chore|docs|test|style|refactor|perf|build|ci|revert|security|sync)(\([^)]+\))?(!)?: .{1,}$"
+COMMIT_MSG_LENGTH=200
+
+if ! head -1 "$1" | grep -qE "$COMMIT_MSG_REGEXP"; then
+    echo ""
+    echo "Aborting commit."
+    echo "Your commit message is invalid."
+    echo "Use the following format: $COMMIT_MSG_REGEXP"
+    echo "Example:"
+    echo "feat(x): add y item for configuration"
+    exit 1
+fi
+if ! head -1 "$1" | grep -qE "^.{1,$COMMIT_MSG_LENGTH}$"; then
+    echo "Aborting commit. Your commit message is too long. Please limit your commit message to $COMMIT_MSG_LENGTH characters or less." >&2
+    exit 1
+fi
