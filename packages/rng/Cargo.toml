@@ -1,0 +1,16 @@
+[package]
+name = "arkv-rng"
+version = "0.1.0"
+edition = "2021"
+description = "PCG64-based seedable PRNG compiled to WebAssembly"
+repository = "https://github.com/petarzarkov/arkv"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+rand = "0.8"
+rand_pcg = "0.3"
+getrandom = { version = "0.2", features = ["js"] }

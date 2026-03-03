@@ -1,0 +1,67 @@
+{
+  "name": "@arkv/rng",
+  "version": "0.0.0",
+  "description": "Lightweight, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG.",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "rng",
+    "random",
+    "crypto",
+    "web-assembly",
+    "rust",
+    "prng",
+    "seedable",
+    "typescript",
+    "javascript",
+    "node",
+    "browser"
+  ],
+  "scripts": {
+    "prebuild": "rm -rf dist wasm-pkg src/wasm",
+    "build:wasm": "bun run build.ts",
+    "build:esm": "tsc -p tsconfig.build.esm.json",
+    "build:cjs": "tsc -p tsconfig.build.cjs.json",
+    "build:types": "tsc -p tsconfig.build.types.json",
+    "build:ts": "bun run --parallel build:esm build:cjs build:types",
+    "build": "bun run build:wasm && bun run build:ts",
+    "postbuild": "echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json && echo '{\"type\":\"module\"}' > dist/esm/package.json",
+    "test": "bun test --bail",
+    "test:cov": "bun test --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/rng#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/arkv",
+    "directory": "packages/rng"
+  },
+  "devDependencies": {
+    "@types/seedrandom": "^3.0.8",
+    "pure-rand": "^7.0.1",
+    "seedrandom": "^3.0.5"
+  }
+}

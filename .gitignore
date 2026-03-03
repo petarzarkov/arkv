@@ -137,3 +137,10 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# @arkv/rng Wasm build artifacts (auto-generated)
+wasm-pkg/
+packages/rng/src/wasm/
+
+# Rust build cache
+target
