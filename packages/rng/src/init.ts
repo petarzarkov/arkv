@@ -29,7 +29,7 @@ export async function initArkvRng(): Promise<void> {
 export function checkInit(): void {
   if (!isInitialized) {
     throw new Error(
-      'You must await initArkvRng() before creating an Rng instance.',
+      'You must await initArkvRng() before creating an @arkv/rng Rng instance.',
     );
   }
 }
