@@ -38,9 +38,37 @@ export class Rng {
     return this.engine.next_float();
   }
 
+  /**
+   * Generates an array of `length` random floats in [0, 1)
+   * in a single WebAssembly boundary crossing.
+   * Returns a Float64Array.
+   */
+  public floats(length: number): Float64Array {
+    if (length < 0) {
+      throw new Error('Length cannot be negative.');
+    }
+    return this.engine.next_f64_array(length);
+  }
+
   /** Random integer in [min, max). */
   public range(min: number, max: number): number {
     return this.engine.next_range(min, max);
+  }
+
+  /**
+   * Generates an array of `length` random integers in [min, max)
+   * in a single WebAssembly boundary crossing.
+   * Returns a Uint32Array.
+   */
+  public ranges(
+    min: number,
+    max: number,
+    length: number,
+  ): Uint32Array {
+    if (length < 0) {
+      throw new Error('Length cannot be negative.');
+    }
+    return this.engine.next_range_array(min, max, length);
   }
 
   /**

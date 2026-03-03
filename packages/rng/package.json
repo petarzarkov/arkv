@@ -42,6 +42,7 @@
     "build:ts": "bun run --parallel build:esm build:cjs build:types",
     "build": "bun run build:wasm && bun run build:ts",
     "postbuild": "echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json && echo '{\"type\":\"module\"}' > dist/esm/package.json",
+    "bench": "bun bench.ts",
     "test": "bun test --bail",
     "test:cov": "bun test --coverage",
     "typecheck": "tsc --noEmit"
@@ -62,6 +63,7 @@
   "devDependencies": {
     "@types/seedrandom": "^3.0.8",
     "pure-rand": "^7.0.1",
+    "random-js": "^2.1.0",
     "seedrandom": "^3.0.5"
   }
 }

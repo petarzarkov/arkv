@@ -16,11 +16,11 @@
     },
     "packages/colors": {
       "name": "@arkv/colors",
-      "version": "0.1.4",
+      "version": "0.2.1",
     },
     "packages/logger": {
       "name": "@arkv/logger",
-      "version": "0.1.2",
+      "version": "0.2.1",
       "dependencies": {
         "@arkv/colors": "workspace:*",
         "@arkv/shared": "workspace:*",
@@ -28,16 +28,17 @@
     },
     "packages/rng": {
       "name": "@arkv/rng",
-      "version": "0.0.0",
+      "version": "0.1.1",
       "devDependencies": {
         "@types/seedrandom": "^3.0.8",
         "pure-rand": "^7.0.1",
+        "random-js": "^2.1.0",
         "seedrandom": "^3.0.5",
       },
     },
     "packages/shared": {
       "name": "@arkv/shared",
-      "version": "0.1.2",
+      "version": "0.2.1",
     },
   },
   "packages": {
@@ -144,6 +145,8 @@
     "pidtree": ["pidtree@0.6.0", "", { "bin": { "pidtree": "bin/pidtree.js" } }, "sha512-eG2dWTVw5bzqGRztnHExczNxt5VGsE6OwTeCG3fdUf9KBsZzO3R5OIIIzWR+iZA0NtZ+RDVdaoE2dK1cn6jH4g=="],
 
     "pure-rand": ["pure-rand@7.0.1", "", {}, "sha512-oTUZM/NAZS8p7ANR3SHh30kXB+zK2r2BPcEn/awJIbOvq82WoMN4p62AWWp3Hhw50G0xMsw1mhIBLqHw64EcNQ=="],
+
+    "random-js": ["random-js@2.1.0", "", {}, "sha512-CRUyWmnzmZBA7RZSVGq0xMqmgCyPPxbiKNLFA5ud7KenojVX2s7Gv+V7eB52beKTPGxWRnVZ7D/tCIgYJJ8vNQ=="],
 
     "restore-cursor": ["restore-cursor@5.1.0", "", { "dependencies": { "onetime": "^7.0.0", "signal-exit": "^4.1.0" } }, "sha512-oMA2dcrw6u0YfxJQXm342bFKX/E4sG9rbTzO9ptUcR/e8A33cHuvStiYOwH7fszkZlZ1z/ta9AAoPk2F4qIOHA=="],
 

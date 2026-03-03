@@ -48,6 +48,29 @@ impl ArkvRng {
         buffer
     }
 
+    /// Generates an array of N random f64 floats in [0, 1) in a single boundary crossing.
+    /// wasm-bindgen automatically converts Vec<f64> to a Float64Array in JS.
+    pub fn next_f64_array(&mut self, length: usize) -> Vec<f64> {
+        let mut buffer = Vec::with_capacity(length);
+        for _ in 0..length {
+            buffer.push(self.rng.gen::<f64>());
+        }
+        buffer
+    }
+
+    /// Generates an array of N random u32 integers in [min, max) in a single boundary crossing.
+    /// wasm-bindgen automatically converts Vec<u32> to a Uint32Array in JS.
+    pub fn next_range_array(&mut self, min: u32, max: u32, length: usize) -> Vec<u32> {
+        if min >= max {
+            return vec![min; length];
+        }
+        let mut buffer = Vec::with_capacity(length);
+        for _ in 0..length {
+            buffer.push(self.rng.gen_range(min..max));
+        }
+        buffer
+    }
+
     /// Generates the exact sequence of swap indices needed for a Fisher-Yates shuffle.
     /// Returns an array of size (length - 1).
     pub fn next_shuffle_indices(&mut self, length: u32) -> Vec<u32> {
