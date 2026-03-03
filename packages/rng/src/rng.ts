@@ -65,7 +65,6 @@ export class Rng {
   /**
    * Return a new array with the same elements in a random
    * order (Fisher-Yates). The original is not mutated.
-   * Optimized for zero-overhead Wasm boundary crossing.
    */
   public shuffle<T>(array: readonly T[]): T[] {
     const len = array.length;

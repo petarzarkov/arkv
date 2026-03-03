@@ -1,6 +1,6 @@
 # @arkv/rng
 
-Seedable, isomorphic pseudo-random number generator powered by **Rust + WebAssembly** (PCG64 algorithm). Works identically in Node.js, Bun, and the browser — no native compilation required.
+Seedable, blazing fast, isomorphic pseudo-random number generator powered by **Rust + WebAssembly** (PCG64 algorithm). Works identically in Node.js, Bun, and the browser — no native compilation required.
 
 ## Benchmark
 

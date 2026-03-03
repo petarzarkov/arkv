@@ -20,6 +20,7 @@ A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 | [`@arkv/colors`](./packages/colors) | [![npm](https://img.shields.io/npm/v/@arkv/colors)](https://www.npmjs.com/package/@arkv/colors) | Lightweight, zero-dependency ANSI color and style utilities |
 | [`@arkv/shared`](./packages/shared) | [![npm](https://img.shields.io/npm/v/@arkv/shared)](https://www.npmjs.com/package/@arkv/shared) | Shared utilities across packages |
 | [`@arkv/logger`](./packages/logger) | [![npm](https://img.shields.io/npm/v/@arkv/logger)](https://www.npmjs.com/package/@arkv/logger) | Framework-agnostic structured logger with async context, sanitization, and colored output |
+| [`@arkv/rng`](./packages/rng) | [![npm](https://img.shields.io/npm/v/@arkv/rng)](https://www.npmjs.com/package/@arkv/rng) | Lightweight, blazing fast, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG. |
 
 ## Project Structure
 
