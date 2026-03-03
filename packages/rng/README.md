@@ -4,9 +4,9 @@ Seedable, isomorphic pseudo-random number generator powered by **Rust + WebAssem
 
 ## Benchmark
 
-```
-🏎️  Benchmarking PRNGs with N=100000 iterations ...
+- PRNGs with N=100000 iterations
 
+```
 --- Sequential Integer Generation (100k) ---
 @arkv/rng (Wasm single) : 2.66 ms
 seedrandom (JS float*N) : 5.00 ms
