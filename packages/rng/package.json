@@ -1,6 +1,6 @@
 {
   "name": "@arkv/rng",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
