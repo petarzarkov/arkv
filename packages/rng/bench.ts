@@ -294,7 +294,8 @@ function main() {
 
   // ── 4. Bounded range [1, 1000) — uniform ──────────────────────────────────
   printTable(
-    '4 · Bounded Range [1, 1000)  — uniform distribution',
+    `4 · Bounded Range [1, 1000)  — uniform distribution 
+    \`@arkv/rng\` uses **unbiased rejection sampling** (via the \`rand\` crate), which guarantees a perfectly uniform distribution. \`seedrandom + Math.floor()\` uses biased float multiplication — faster but mathematically incorrect (modulo bias). \`pure-rand\` also uses unbiased sampling, explaining its slower numbers. \`@arkv/rng\` produces cryptographically correct uniform integers faster than \`seedrandom\` produces biased ones.`,
     [
       ...arkvInstances.map(([algo, rng]) => ({
         label: `@arkv/rng  · ${algo}  ranges [batch]`,

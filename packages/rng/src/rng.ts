@@ -1,5 +1,11 @@
 import { wasmMemory } from './init.js';
-import { ArkvRng as WasmRng } from './wasm/arkv_rng.js';
+import {
+  ArkvLcg32,
+  ArkvMersenne,
+  ArkvPcg64,
+  ArkvXoroshiro128Plus,
+  ArkvXorshift128Plus,
+} from './wasm/arkv_rng.js';
 
 export type RngAlgorithm =
   | 'pcg64'
@@ -8,8 +14,73 @@ export type RngAlgorithm =
   | 'mersenne'
   | 'lcg32';
 
+// Structural interface satisfied by all wasm-bindgen-generated RNG classes.
+interface WasmEngine {
+  next_u32(): number;
+  next_float(): number;
+  next_range(min: number, max: number): number;
+  fill_u32s(length: number): number;
+  fill_f64s(length: number): number;
+  fill_range_u32s(
+    min: number,
+    max: number,
+    length: number,
+  ): number;
+  fill_shuffle_u32s(length: number): number;
+  free(): void;
+}
+
+function makeEngine(
+  algorithm: RngAlgorithm,
+  seed: number | bigint | string | undefined,
+): WasmEngine {
+  if (seed !== undefined) {
+    if (typeof seed === 'string') {
+      switch (algorithm) {
+        case 'pcg64':
+          return ArkvPcg64.from_str_seed(seed);
+        case 'xoroshiro128+':
+          return ArkvXoroshiro128Plus.from_str_seed(seed);
+        case 'xorshift128+':
+          return ArkvXorshift128Plus.from_str_seed(seed);
+        case 'mersenne':
+          return ArkvMersenne.from_str_seed(seed);
+        case 'lcg32':
+          return ArkvLcg32.from_str_seed(seed);
+      }
+    } else {
+      const s = BigInt(seed);
+      switch (algorithm) {
+        case 'pcg64':
+          return new ArkvPcg64(s);
+        case 'xoroshiro128+':
+          return new ArkvXoroshiro128Plus(s);
+        case 'xorshift128+':
+          return new ArkvXorshift128Plus(s);
+        case 'mersenne':
+          return new ArkvMersenne(s);
+        case 'lcg32':
+          return new ArkvLcg32(s);
+      }
+    }
+  } else {
+    switch (algorithm) {
+      case 'pcg64':
+        return ArkvPcg64.from_entropy();
+      case 'xoroshiro128+':
+        return ArkvXoroshiro128Plus.from_entropy();
+      case 'xorshift128+':
+        return ArkvXorshift128Plus.from_entropy();
+      case 'mersenne':
+        return ArkvMersenne.from_entropy();
+      case 'lcg32':
+        return ArkvLcg32.from_entropy();
+    }
+  }
+}
+
 export class Rng {
-  private engine: WasmRng;
+  private engine: WasmEngine;
 
   /**
    * Pass a seed for deterministic output, or omit for system entropy.
@@ -24,18 +95,7 @@ export class Rng {
     seed?: number | bigint | string,
     algorithm: RngAlgorithm = 'pcg64',
   ) {
-    if (seed !== undefined) {
-      if (typeof seed === 'string') {
-        this.engine = WasmRng.from_str_seed(
-          seed,
-          algorithm,
-        );
-      } else {
-        this.engine = new WasmRng(BigInt(seed), algorithm);
-      }
-    } else {
-      this.engine = WasmRng.from_entropy(algorithm);
-    }
+    this.engine = makeEngine(algorithm, seed);
   }
 
   /** Random unsigned 32-bit integer [0, 2^32). */

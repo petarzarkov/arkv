@@ -164,214 +164,164 @@ fn fnv1a_64(s: &str) -> u64 {
     h
 }
 
-// ── Inner enum ────────────────────────────────────────────────────────────────
+// ── Per-algorithm WASM structs ─────────────────────────────────────────────────
+// Each algorithm gets its own specialized struct — no runtime dispatch.
+// The compiler can inline the entire hot path: JS → Wasm → RNG core.
 
-enum Inner {
-    Pcg64(Pcg64),
-    Xoroshiro128Plus(Xoroshiro128Plus),
-    Xorshift128Plus(Xorshift128PlusRng),
-    Mersenne(Mt19937GenRand64),
-    Lcg32(Lcg32Rng),
-}
-
-impl Inner {
-    fn from_seed(algorithm: &str, seed: u64) -> Self {
-        match algorithm {
-            "xoroshiro128+" => Inner::Xoroshiro128Plus(Xoroshiro128Plus::seed_from_u64(seed)),
-            "xorshift128+" => Inner::Xorshift128Plus(Xorshift128PlusRng::seed_from_u64(seed)),
-            "mersenne" => Inner::Mersenne(Mt19937GenRand64::seed_from_u64(seed)),
-            "lcg32" => Inner::Lcg32(Lcg32Rng::seed_from_u64(seed)),
-            _ => Inner::Pcg64(Pcg64::seed_from_u64(seed)),
+macro_rules! export_rng {
+    ($wasm_name:ident, $rng_type:ty) => {
+        #[wasm_bindgen]
+        pub struct $wasm_name {
+            inner: $rng_type,
+            f64_buf: Vec<f64>,
+            u32_buf: Vec<u32>,
         }
-    }
 
-    fn from_entropy(algorithm: &str) -> Self {
-        match algorithm {
-            "xoroshiro128+" => Inner::Xoroshiro128Plus(Xoroshiro128Plus::from_entropy()),
-            "xorshift128+" => Inner::Xorshift128Plus(Xorshift128PlusRng::from_entropy()),
-            "mersenne" => Inner::Mersenne(Mt19937GenRand64::from_entropy()),
-            "lcg32" => Inner::Lcg32(Lcg32Rng::from_entropy()),
-            _ => Inner::Pcg64(Pcg64::from_entropy()),
-        }
-    }
+        #[wasm_bindgen]
+        impl $wasm_name {
+            /// Create a seeded RNG.
+            #[wasm_bindgen(constructor)]
+            pub fn new(seed: u64) -> Self {
+                Self {
+                    inner: <$rng_type>::seed_from_u64(seed),
+                    f64_buf: Vec::new(),
+                    u32_buf: Vec::new(),
+                }
+            }
 
-    fn next_u32(&mut self) -> u32 {
-        match self {
-            Inner::Pcg64(r) => r.gen::<u32>(),
-            Inner::Xoroshiro128Plus(r) => r.gen::<u32>(),
-            Inner::Xorshift128Plus(r) => r.gen::<u32>(),
-            Inner::Mersenne(r) => r.gen::<u32>(),
-            Inner::Lcg32(r) => r.gen::<u32>(),
-        }
-    }
+            /// Create a seeded RNG from a string seed (hashed via FNV-1a 64-bit).
+            pub fn from_str_seed(seed: &str) -> Self {
+                Self {
+                    inner: <$rng_type>::seed_from_u64(fnv1a_64(seed)),
+                    f64_buf: Vec::new(),
+                    u32_buf: Vec::new(),
+                }
+            }
 
-    fn next_f64(&mut self) -> f64 {
-        match self {
-            Inner::Pcg64(r) => r.gen::<f64>(),
-            Inner::Xoroshiro128Plus(r) => r.gen::<f64>(),
-            Inner::Xorshift128Plus(r) => r.gen::<f64>(),
-            Inner::Mersenne(r) => r.gen::<f64>(),
-            Inner::Lcg32(r) => r.gen::<f64>(),
-        }
-    }
+            /// Create an RNG seeded from OS entropy.
+            pub fn from_entropy() -> Self {
+                Self {
+                    inner: <$rng_type>::from_entropy(),
+                    f64_buf: Vec::new(),
+                    u32_buf: Vec::new(),
+                }
+            }
 
-    fn next_range(&mut self, min: u32, max: u32) -> u32 {
-        match self {
-            Inner::Pcg64(r) => r.gen_range(min..max),
-            Inner::Xoroshiro128Plus(r) => r.gen_range(min..max),
-            Inner::Xorshift128Plus(r) => r.gen_range(min..max),
-            Inner::Mersenne(r) => r.gen_range(min..max),
-            Inner::Lcg32(r) => r.gen_range(min..max),
-        }
-    }
-}
+            pub fn next_u32(&mut self) -> u32 {
+                self.inner.next_u32()
+            }
 
-// ── ArkvRng (WASM-exported) ───────────────────────────────────────────────────
+            pub fn next_float(&mut self) -> f64 {
+                self.inner.gen::<f64>()
+            }
 
-#[wasm_bindgen]
-pub struct ArkvRng {
-    inner: Inner,
-    f64_buf: Vec<f64>,
-    u32_buf: Vec<u32>,
-}
+            pub fn next_range(&mut self, min: u32, max: u32) -> u32 {
+                if min >= max {
+                    return min;
+                }
+                self.inner.gen_range(min..max)
+            }
 
-impl ArkvRng {
-    fn with_inner(inner: Inner) -> Self {
-        ArkvRng { inner, f64_buf: Vec::new(), u32_buf: Vec::new() }
-    }
-}
+            /// Generates an array of N random u32 numbers in a single boundary crossing.
+            pub fn next_u32_array(&mut self, length: usize) -> Vec<u32> {
+                let mut buffer = Vec::with_capacity(length);
+                for _ in 0..length {
+                    buffer.push(self.inner.next_u32());
+                }
+                buffer
+            }
 
-#[wasm_bindgen]
-impl ArkvRng {
-    /// Create a seeded RNG. `algorithm` selects the PRNG backend:
-    /// `"pcg64"` (default), `"xoroshiro128+"`, `"xorshift128+"`, `"mersenne"`, `"lcg32"`.
-    #[wasm_bindgen(constructor)]
-    pub fn new(seed: u64, algorithm: &str) -> ArkvRng {
-        ArkvRng::with_inner(Inner::from_seed(algorithm, seed))
-    }
+            /// Generates an array of N random f64 floats in [0, 1) in a single boundary crossing.
+            pub fn next_f64_array(&mut self, length: usize) -> Vec<f64> {
+                let mut buffer = Vec::with_capacity(length);
+                for _ in 0..length {
+                    buffer.push(self.inner.gen::<f64>());
+                }
+                buffer
+            }
 
-    /// Create a seeded RNG from a string seed.
-    /// The string is hashed to a u64 via FNV-1a 64-bit (UTF-8 bytes).
-    pub fn from_str_seed(seed: &str, algorithm: &str) -> ArkvRng {
-        ArkvRng::with_inner(Inner::from_seed(algorithm, fnv1a_64(seed)))
-    }
+            /// Generates an array of N random u32 integers in [min, max) in a single boundary crossing.
+            pub fn next_range_array(&mut self, min: u32, max: u32, length: usize) -> Vec<u32> {
+                if min >= max {
+                    return vec![min; length];
+                }
+                let mut buffer = Vec::with_capacity(length);
+                for _ in 0..length {
+                    buffer.push(self.inner.gen_range(min..max));
+                }
+                buffer
+            }
 
-    /// Create an RNG seeded from OS entropy.
-    pub fn from_entropy(algorithm: &str) -> ArkvRng {
-        ArkvRng::with_inner(Inner::from_entropy(algorithm))
-    }
+            /// Generates the swap indices for a Fisher-Yates shuffle of `length` elements.
+            pub fn next_shuffle_indices(&mut self, length: u32) -> Vec<u32> {
+                if length <= 1 {
+                    return Vec::new();
+                }
+                let capacity = (length - 1) as usize;
+                let mut indices = Vec::with_capacity(capacity);
+                for i in (1..length).rev() {
+                    indices.push(self.inner.gen_range(0u32..i + 1));
+                }
+                indices
+            }
 
-    pub fn next_u32(&mut self) -> u32 {
-        self.inner.next_u32()
-    }
+            // ── Zero-copy batch methods ───────────────────────────────────────────────
+            // These fill a preallocated internal buffer and return a raw pointer into
+            // WASM linear memory. In JavaScript, wrap the result with:
+            //   new Float64Array(wasm.memory.buffer, ptr, length)
+            //   new Uint32Array(wasm.memory.buffer, ptr, length)
+            // The view is valid until the next WASM call on this instance.
 
-    pub fn next_float(&mut self) -> f64 {
-        self.inner.next_f64()
-    }
+            /// Fill internal f64 buffer with `length` floats in [0, 1) and return pointer.
+            pub fn fill_f64s(&mut self, length: usize) -> u32 {
+                self.f64_buf.resize(length, 0.0);
+                for v in self.f64_buf.iter_mut() {
+                    *v = self.inner.gen::<f64>();
+                }
+                self.f64_buf.as_ptr() as u32
+            }
 
-    pub fn next_range(&mut self, min: u32, max: u32) -> u32 {
-        if min >= max {
-            return min;
-        }
-        self.inner.next_range(min, max)
-    }
+            /// Fill internal u32 buffer with `length` integers in [0, 2^32) and return pointer.
+            pub fn fill_u32s(&mut self, length: usize) -> u32 {
+                self.u32_buf.resize(length, 0);
+                for v in self.u32_buf.iter_mut() {
+                    *v = self.inner.next_u32();
+                }
+                self.u32_buf.as_ptr() as u32
+            }
 
-    /// Generates an array of N random u32 numbers in a single boundary crossing.
-    /// wasm-bindgen automatically converts Vec<u32> to a Uint32Array in JS.
-    pub fn next_u32_array(&mut self, length: usize) -> Vec<u32> {
-        let mut buffer = Vec::with_capacity(length);
-        for _ in 0..length {
-            buffer.push(self.inner.next_u32());
-        }
-        buffer
-    }
+            /// Fill internal u32 buffer with `length` values in [min, max) and return pointer.
+            pub fn fill_range_u32s(&mut self, min: u32, max: u32, length: usize) -> u32 {
+                self.u32_buf.resize(length, 0);
+                if min >= max {
+                    self.u32_buf.fill(min);
+                } else {
+                    for v in self.u32_buf.iter_mut() {
+                        *v = self.inner.gen_range(min..max);
+                    }
+                }
+                self.u32_buf.as_ptr() as u32
+            }
 
-    /// Generates an array of N random f64 floats in [0, 1) in a single boundary crossing.
-    /// wasm-bindgen automatically converts Vec<f64> to a Float64Array in JS.
-    pub fn next_f64_array(&mut self, length: usize) -> Vec<f64> {
-        let mut buffer = Vec::with_capacity(length);
-        for _ in 0..length {
-            buffer.push(self.inner.next_f64());
-        }
-        buffer
-    }
-
-    /// Generates an array of N random u32 integers in [min, max) in a single boundary crossing.
-    /// wasm-bindgen automatically converts Vec<u32> to a Uint32Array in JS.
-    pub fn next_range_array(&mut self, min: u32, max: u32, length: usize) -> Vec<u32> {
-        if min >= max {
-            return vec![min; length];
-        }
-        let mut buffer = Vec::with_capacity(length);
-        for _ in 0..length {
-            buffer.push(self.inner.next_range(min, max));
-        }
-        buffer
-    }
-
-    /// Generates the swap indices for a Fisher-Yates shuffle of `length` elements.
-    /// Returns an array of size (length - 1).
-    pub fn next_shuffle_indices(&mut self, length: u32) -> Vec<u32> {
-        if length <= 1 {
-            return Vec::new();
-        }
-        let capacity = (length - 1) as usize;
-        let mut indices = Vec::with_capacity(capacity);
-        for i in (1..length).rev() {
-            indices.push(self.inner.next_range(0, i + 1));
-        }
-        indices
-    }
-
-    // ── Zero-copy batch methods ───────────────────────────────────────────────
-    // These fill a preallocated internal buffer and return a raw pointer into
-    // WASM linear memory. In JavaScript, wrap the result with:
-    //   new Float64Array(wasm.memory.buffer, ptr, length)
-    //   new Uint32Array(wasm.memory.buffer, ptr, length)
-    // The view is valid until the next WASM call on this instance.
-
-    /// Fill internal f64 buffer with `length` floats in [0, 1) and return pointer.
-    pub fn fill_f64s(&mut self, length: usize) -> u32 {
-        self.f64_buf.resize(length, 0.0);
-        for v in self.f64_buf.iter_mut() {
-            *v = self.inner.next_f64();
-        }
-        self.f64_buf.as_ptr() as u32
-    }
-
-    /// Fill internal u32 buffer with `length` integers in [0, 2^32) and return pointer.
-    pub fn fill_u32s(&mut self, length: usize) -> u32 {
-        self.u32_buf.resize(length, 0);
-        for v in self.u32_buf.iter_mut() {
-            *v = self.inner.next_u32();
-        }
-        self.u32_buf.as_ptr() as u32
-    }
-
-    /// Fill internal u32 buffer with `length` values in [min, max) and return pointer.
-    pub fn fill_range_u32s(&mut self, min: u32, max: u32, length: usize) -> u32 {
-        self.u32_buf.resize(length, 0);
-        if min >= max {
-            self.u32_buf.fill(min);
-        } else {
-            for v in self.u32_buf.iter_mut() {
-                *v = self.inner.next_range(min, max);
+            /// Fill internal u32 buffer with Fisher-Yates swap indices for `length` elements
+            /// and return pointer. Returns 0 if length <= 1 (no swaps needed).
+            pub fn fill_shuffle_u32s(&mut self, length: u32) -> u32 {
+                if length <= 1 {
+                    return 0;
+                }
+                let n = (length - 1) as usize;
+                self.u32_buf.resize(n, 0);
+                for (slot, i) in self.u32_buf.iter_mut().zip((1..length).rev()) {
+                    *slot = self.inner.gen_range(0u32..i + 1);
+                }
+                self.u32_buf.as_ptr() as u32
             }
         }
-        self.u32_buf.as_ptr() as u32
-    }
-
-    /// Fill internal u32 buffer with Fisher-Yates swap indices for `length` elements
-    /// and return pointer. Returns 0 if length <= 1 (no swaps needed).
-    pub fn fill_shuffle_u32s(&mut self, length: u32) -> u32 {
-        if length <= 1 {
-            return 0;
-        }
-        let n = (length - 1) as usize;
-        self.u32_buf.resize(n, 0);
-        for (slot, i) in self.u32_buf.iter_mut().zip((1..length).rev()) {
-            *slot = self.inner.next_range(0, i + 1);
-        }
-        self.u32_buf.as_ptr() as u32
-    }
+    };
 }
+
+export_rng!(ArkvPcg64, Pcg64);
+export_rng!(ArkvXoroshiro128Plus, Xoroshiro128Plus);
+export_rng!(ArkvXorshift128Plus, Xorshift128PlusRng);
+export_rng!(ArkvMersenne, Mt19937GenRand64);
+export_rng!(ArkvLcg32, Lcg32Rng);

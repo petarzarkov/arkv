@@ -16,3 +16,9 @@ rand_pcg = "0.3"
 rand_xoshiro = "0.6"
 rand_mt = "4"
 getrandom = { version = "0.2", features = ["js"] }
+
+[profile.release]
+lto = true          # Link Time Optimization — enables cross-crate inlining
+codegen-units = 1   # Single codegen unit — maximizes optimization scope
+opt-level = 3       # Maximum speed
+panic = "abort"     # Removes panic unwinding overhead
