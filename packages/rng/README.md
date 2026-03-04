@@ -1,73 +1,6 @@
 # @arkv/rng
 
-Seedable, blazing fast, isomorphic pseudo-random number generator powered by **Rust + WebAssembly** (PCG64 algorithm). Works identically in Node.js, Bun, and the browser — no native compilation required.
-
-## Benchmark
-
-Run `bun run build:wasm && bun run bench` to reproduce.
-
-Compared against: `seedrandom`, `pure-rand`, `random-js` (Mersenne Twister),
-`Math.random()`, and `crypto.getRandomValues()`.
-
-```
-1 · Sequential u32 Integer  (N=100,000)
-┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
-│ Library                                    │       ms │        ops/sec │ slowdown │
-├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
-│ Math.random()                        †     │     0.15 │    651,597,391 │  fastest │
-│ @arkv/rng  · Rng.int()                     │     0.80 │    125,083,493 │    5.21x │
-│ random-js  · MersenneTwister               │     1.92 │     52,114,331 │   12.50x │
-│ seedrandom                                 │     2.81 │     35,625,324 │   18.29x │
-│ pure-rand  · xoroshiro128+                 │     7.87 │     12,700,637 │   51.30x │
-└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
-
-2 · Batched u32 Array (100 k elements)  (N=100,000)
-┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
-│ Library                                    │       ms │        ops/sec │ slowdown │
-├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
-│ crypto.getRandomValues()  [bulk fill] †    │     0.07 │  1,414,047,144 │  fastest │
-│ @arkv/rng  · Rng.ints(N)  [native batch]   │     0.72 │    138,695,101 │   10.20x │
-│ Math.random()  loop                  †     │     1.26 │     79,644,277 │   17.75x │
-│ random-js  loop                            │     1.32 │     75,750,575 │   18.67x │
-│ pure-rand  loop                            │     3.88 │     25,795,960 │   54.82x │
-└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
-
-3 · Float [0, 1)  (N=100,000)
-┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
-│ Library                                    │       ms │        ops/sec │ slowdown │
-├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
-│ Math.random()                        †     │     0.15 │    679,675,659 │  fastest │
-│ @arkv/rng  · Rng.float()  [single]         │     0.83 │    119,907,815 │    5.67x │
-│ @arkv/rng  · Rng.floats(N)  [native batch] │     0.91 │    109,450,624 │    6.21x │
-│ random-js  · Random.real(0, 1)             │     2.11 │     47,351,669 │   14.35x │
-│ seedrandom                                 │     2.79 │     35,857,935 │   18.95x │
-└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
-
-4 · Bounded Range [1, 1000)  (N=100,000)
-┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
-│ Library                                    │       ms │        ops/sec │ slowdown │
-├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
-│ Math.random()  + floor               †     │     0.29 │    347,092,063 │  fastest │
-│ @arkv/rng  · Rng.ranges(1,1000,N) [batch]  │     0.92 │    108,613,720 │    3.20x │
-│ @arkv/rng  · Rng.range(1, 1000)  [single]  │     1.58 │     63,216,280 │    5.49x │
-│ seedrandom  + floor                        │     3.16 │     31,612,257 │   10.98x │
-│ random-js  · Random.integer(1, 999)        │     4.70 │     21,283,701 │   16.31x │
-│ pure-rand  · uniformIntDistribution        │     8.74 │     11,441,404 │   30.34x │
-└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
-
-5 · Array Shuffle (100 k elements)  (N=100,000)
-┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
-│ Library                                    │       ms │        ops/sec │ slowdown │
-├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
-│ @arkv/rng  · Rng.shuffle()  [new array]    │     2.12 │     47,076,170 │  fastest │
-│ random-js  · Random.shuffle()  [in-place]  │     3.83 │     26,124,899 │    1.80x │
-│ seedrandom  Fisher-Yates  [in-place]       │     4.86 │     20,568,048 │    2.29x │
-└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
-```
-
-> † `Math.random()` and `crypto.getRandomValues()` are native V8/OS calls —
-> not seedable, no reproducible sequences. Run `bun run bench` on your machine
-> for accurate results.
+Seedable, zero dependency, blazing fast, isomorphic pseudo-random number generator powered by **Rust + WebAssembly** (PCG64 algorithm). Works identically in Node.js, Bun, and the browser — no native compilation required.
 
 ## Install
 
@@ -211,3 +144,70 @@ bun test --coverage
 The repo root contains a `Cargo.toml` workspace that includes this
 package. Open the repo root in VS Code and rust-analyzer will
 discover the crate automatically — no extra configuration needed.
+
+## Benchmark
+
+Run `bun run build:wasm && bun run bench` to reproduce.
+
+Compared against: `seedrandom`, `pure-rand`, `random-js` (Mersenne Twister),
+`Math.random()`, and `crypto.getRandomValues()`.
+
+```text
+1 · Sequential u32 Integer  (N=100,000)
+┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
+│ Library                                    │       ms │        ops/sec │ slowdown │
+├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
+│ @arkv/rng  · Rng.int()                     │     0.80 │    125,611,414 │    2.56x │
+│ Math.random() †                            │     0.31 │    321,837,305 │  fastest │
+│ seedrandom                                 │     2.66 │     37,645,415 │    8.55x │
+│ pure-rand  · xoroshiro128+                 │    11.06 │      9,044,085 │   35.59x │
+│ random-js  · MersenneTwister               │     1.98 │     50,547,889 │    6.37x │
+└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
+
+2 · Batched u32 Array (100 k elements)  (N=100,000)
+┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
+│ Library                                    │       ms │        ops/sec │ slowdown │
+├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
+│ @arkv/rng  · Rng.ints(N)  [native batch]   │     0.94 │    106,761,300 │    9.61x │
+│ Math.random()  loop †                      │     2.05 │     48,748,860 │   21.05x │
+│ pure-rand  loop                            │     7.37 │     13,575,100 │   75.61x │
+│ random-js  loop                            │     1.76 │     56,721,208 │   18.09x │
+│ crypto.getRandomValues()  [bulk fill] †    │     0.10 │  1,026,346,310 │  fastest │
+└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
+
+3 · Float [0, 1)  (N=100,000)
+┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
+│ Library                                    │       ms │        ops/sec │ slowdown │
+├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
+│ @arkv/rng  · Rng.floats(N)  [native batch] │     1.43 │     70,072,027 │    6.53x │
+│ Math.random() †                            │     0.22 │    457,519,330 │  fastest │
+│ @arkv/rng  · Rng.float()  [single]         │     0.76 │    132,325,892 │    3.46x │
+│ seedrandom                                 │     2.91 │     34,335,047 │   13.33x │
+│ random-js  · Random.real(0, 1)             │     3.14 │     31,835,738 │   14.37x │
+└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
+
+4 · Bounded Range [1, 1000)  (N=100,000)
+┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
+│ Library                                    │       ms │        ops/sec │ slowdown │
+├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
+│ @arkv/rng  · Rng.ranges(1,1000,N) [batch]  │     1.21 │     82,957,123 │    3.12x │
+│ Math.random()  + floor †                   │     0.39 │    258,908,390 │  fastest │
+│ @arkv/rng  · Rng.range(1, 1000)  [single]  │     1.08 │     92,261,987 │    2.81x │
+│ seedrandom  + floor                        │     3.09 │     32,379,907 │    8.00x │
+│ pure-rand  · uniformIntDistribution        │    10.89 │      9,181,969 │   28.20x │
+│ random-js  · Random.integer(1, 999)        │     5.95 │     16,804,715 │   15.41x │
+└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
+
+5 · Array Shuffle (100 k elements)  (N=100,000)
+┌────────────────────────────────────────────┬──────────┬────────────────┬──────────┐
+│ Library                                    │       ms │        ops/sec │ slowdown │
+├────────────────────────────────────────────┼──────────┼────────────────┼──────────┤
+│ @arkv/rng  · Rng.shuffle()  [new array]    │     3.72 │     26,892,557 │  fastest │
+│ seedrandom  Fisher-Yates  [in-place]       │     5.33 │     18,776,621 │    1.43x │
+│ random-js  · Random.shuffle()  [in-place]  │     6.00 │     16,661,946 │    1.61x │
+└────────────────────────────────────────────┴──────────┴────────────────┴──────────┘
+```
+
+> † `Math.random()` and `crypto.getRandomValues()` are native V8/OS calls —
+> not seedable, no reproducible sequences. Run `bun run bench` on your machine
+> for accurate results.

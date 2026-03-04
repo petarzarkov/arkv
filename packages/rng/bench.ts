@@ -1,3 +1,6 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import prand from 'pure-rand';
 import { MersenneTwister19937, Random } from 'random-js';
 import seedrandom from 'seedrandom';
@@ -21,17 +24,23 @@ const SW = 10; // slowdown column
 const hr = (l: string, m: string, r: string): string =>
   `${l}${'─'.repeat(LW)}${m}${'─'.repeat(MW)}${m}${'─'.repeat(OW)}${m}${'─'.repeat(SW)}${r}`;
 
+// Buffer to capture table output for the README
+const outputBuffer: string[] = [];
+
+function out(msg: string) {
+  console.log(msg);
+  outputBuffer.push(msg);
+}
+
 function printTable(title: string, rows: Result[]): void {
   const best = Math.min(...rows.map(r => r.ms));
 
-  console.log(
-    `\n${title}  (N=${N.toLocaleString('en-US')})`,
-  );
-  console.log(hr('┌', '┬', '┐'));
-  console.log(
+  out(`\n${title}  (N=${N.toLocaleString('en-US')})`);
+  out(hr('┌', '┬', '┐'));
+  out(
     `│ ${'Library'.padEnd(LW - 2)} │ ${'ms'.padStart(MW - 2)} │ ${'ops/sec'.padStart(OW - 2)} │ ${'slowdown'.padStart(SW - 2)} │`,
   );
-  console.log(hr('├', '┼', '┤'));
+  out(hr('├', '┼', '┤'));
   for (const { label, ms } of rows) {
     const ops = Math.round((N / ms) * 1000).toLocaleString(
       'en-US',
@@ -39,11 +48,11 @@ function printTable(title: string, rows: Result[]): void {
     const ratio = ms / best;
     const slow =
       ratio < 1.005 ? 'fastest' : `${ratio.toFixed(2)}x`;
-    console.log(
+    out(
       `│ ${label.padEnd(LW - 2)} │ ${ms.toFixed(2).padStart(MW - 2)} │ ${ops.padStart(OW - 2)} │ ${slow.padStart(SW - 2)} │`,
     );
   }
-  console.log(hr('└', '┴', '┘'));
+  out(hr('└', '┴', '┘'));
 }
 
 /** Run fn once for warmup, then return the time of a second run. */
@@ -74,7 +83,7 @@ async function main() {
       }),
     },
     {
-      label: 'Math.random()',
+      label: 'Math.random() †',
       ms: bench(() => {
         for (let i = 0; i < N; i++)
           Math.floor(Math.random() * 4294967296);
@@ -116,12 +125,11 @@ async function main() {
   // ── 2. Batched u32 array ─────────────────────────────────────────────────
   printTable('2 · Batched u32 Array (100 k elements)', [
     {
-      label:
-        '@arkv/rng  · Rng.ints(N)  [native Rust batch]',
+      label: '@arkv/rng  · Rng.ints(N)  [native batch]',
       ms: bench(() => arkvRng.ints(N)),
     },
     {
-      label: 'Math.random()  loop',
+      label: 'Math.random()  loop †',
       ms: bench(() => {
         const arr = new Uint32Array(N);
         for (let i = 0; i < N; i++)
@@ -156,7 +164,7 @@ async function main() {
       }),
     },
     {
-      label: 'crypto.getRandomValues()  [bulk fill]',
+      label: 'crypto.getRandomValues()  [bulk fill] †',
       ms: bench(() =>
         crypto.getRandomValues(new Uint32Array(N)),
       ),
@@ -166,12 +174,11 @@ async function main() {
   // ── 3. Float [0, 1) ──────────────────────────────────────────────────────
   printTable('3 · Float [0, 1)', [
     {
-      label:
-        '@arkv/rng  · Rng.floats(N)  [native Rust batch]',
+      label: '@arkv/rng  · Rng.floats(N)  [native batch]',
       ms: bench(() => arkvRng.floats(N)),
     },
     {
-      label: 'Math.random()',
+      label: 'Math.random() †',
       ms: bench(() => {
         for (let i = 0; i < N; i++) Math.random();
       }),
@@ -202,12 +209,11 @@ async function main() {
   // ── 4. Bounded range [1, 1000) ───────────────────────────────────────────
   printTable('4 · Bounded Range [1, 1000)', [
     {
-      label:
-        '@arkv/rng  · Rng.ranges(1,1000,N)  [native batch]',
+      label: '@arkv/rng  · Rng.ranges(1,1000,N) [batch]',
       ms: bench(() => arkvRng.ranges(1, 1000, N)),
     },
     {
-      label: 'Math.random()  + floor',
+      label: 'Math.random()  + floor †',
       ms: bench(() => {
         for (let i = 0; i < N; i++)
           Math.floor(Math.random() * 999) + 1;
@@ -282,6 +288,44 @@ async function main() {
 
   console.log();
   arkvRng.free();
+
+  // ── Update README ────────────────────────────────────────────────────────
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const readmePath = join(__dirname, 'README.md');
+
+  try {
+    const readme = readFileSync(readmePath, 'utf8');
+
+    // Reconstruct the entire ## Benchmark section to ensure consistency
+    const benchmarkSection = `## Benchmark
+
+Run \`bun run build:wasm && bun run bench\` to reproduce.
+
+Compared against: \`seedrandom\`, \`pure-rand\`, \`random-js\` (Mersenne Twister),
+\`Math.random()\`, and \`crypto.getRandomValues()\`.
+
+\`\`\`text
+${outputBuffer.join('\n').trim()}
+\`\`\`
+
+> † \`Math.random()\` and \`crypto.getRandomValues()\` are native V8/OS calls —
+> not seedable, no reproducible sequences. Run \`bun run bench\` on your machine
+> for accurate results.
+`;
+
+    // Regex to find ## Benchmark and everything after it
+    const updatedReadme = readme.replace(
+      /## Benchmark[\s\S]*$/,
+      `${benchmarkSection.trim()}\n`,
+    );
+
+    writeFileSync(readmePath, updatedReadme);
+    console.log(
+      '✅ README.md updated with latest benchmark results!',
+    );
+  } catch (err) {
+    console.error('❌ Failed to update README.md:', err);
+  }
 }
 
 main();
