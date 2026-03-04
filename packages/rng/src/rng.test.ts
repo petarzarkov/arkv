@@ -173,6 +173,25 @@ describe('@arkv/rng', () => {
         rng.free();
       });
 
+      it('bigInt() returns a BigInt in [0, 2^64)', () => {
+        const rng = new Rng(1n, algo);
+        const val = rng.bigInt();
+        expect(typeof val).toBe('bigint');
+        expect(val).toBeGreaterThanOrEqual(0n);
+        expect(val).toBeLessThan(2n ** 64n);
+        rng.free();
+      });
+
+      it('bigInt() is deterministic: same seed → same sequence', () => {
+        const rng1 = new Rng(999n, algo);
+        const rng2 = new Rng(999n, algo);
+        for (let i = 0; i < 5; i++) {
+          expect(rng1.bigInt()).toBe(rng2.bigInt());
+        }
+        rng1.free();
+        rng2.free();
+      });
+
       it('free() releases Wasm memory without throwing', () => {
         const rng = new Rng(1n, algo);
         expect(() => rng.free()).not.toThrow();
@@ -412,6 +431,53 @@ describe('@arkv/rng', () => {
       const rng = new Rng(1n);
       expect(rng.shuffle([42])).toEqual([42]);
       rng.free();
+    });
+  });
+
+  describe('intStream()', () => {
+    it('returns a function', () => {
+      const rng = new Rng(1n);
+      expect(typeof rng.intStream()).toBe('function');
+      rng.free();
+    });
+
+    it('returns integers in [0, 2^32-1]', () => {
+      const rng = new Rng(1n);
+      const stream = rng.intStream(16);
+      for (let i = 0; i < 50; i++) {
+        const val = stream();
+        expect(Number.isInteger(val)).toBe(true);
+        expect(val).toBeGreaterThanOrEqual(0);
+        expect(val).toBeLessThanOrEqual(2 ** 32 - 1);
+      }
+      rng.free();
+    });
+
+    it('is deterministic: same seed → same stream values', () => {
+      const rng1 = new Rng(42n);
+      const rng2 = new Rng(42n);
+      const s1 = rng1.intStream(8);
+      const s2 = rng2.intStream(8);
+      for (let i = 0; i < 20; i++) {
+        expect(s1()).toBe(s2());
+      }
+      rng1.free();
+      rng2.free();
+    });
+
+    it('stream values match equivalent ints() sequence', () => {
+      const rng1 = new Rng(7n);
+      const rng2 = new Rng(7n);
+      const stream = rng1.intStream(4);
+      const batch = Array.from(rng2.ints(4));
+      expect([
+        stream(),
+        stream(),
+        stream(),
+        stream(),
+      ]).toEqual(batch);
+      rng1.free();
+      rng2.free();
     });
   });
 });

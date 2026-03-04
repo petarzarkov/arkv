@@ -17,6 +17,7 @@ export type RngAlgorithm =
 // Structural interface satisfied by all wasm-bindgen-generated RNG classes.
 interface WasmEngine {
   next_u32(): number;
+  next_u64(): bigint;
   next_float(): number;
   next_range(min: number, max: number): number;
   fill_u32s(length: number): number;
@@ -101,6 +102,33 @@ export class Rng {
   /** Random unsigned 32-bit integer [0, 2^32). */
   public int(): number {
     return this.engine.next_u32();
+  }
+
+  /** Random unsigned 64-bit integer as a BigInt in [0, 2^64). */
+  public bigInt(): bigint {
+    return this.engine.next_u64();
+  }
+
+  /**
+   * Returns a high-throughput closure for sequential integer generation.
+   * Pre-fetches `bufferSize` integers per WASM boundary crossing,
+   * amortizing the per-call overhead across multiple invocations.
+   *
+   * The closure is independent of the parent Rng instance's single-call
+   * methods — calling `rng.int()` after creating a stream does NOT
+   * invalidate the stream's buffer.
+   */
+  public intStream(bufferSize = 256): () => number {
+    let buffer = new Uint32Array(0);
+    let index = 0;
+
+    return () => {
+      if (index >= buffer.length) {
+        buffer = this.ints(bufferSize).slice();
+        index = 0;
+      }
+      return buffer[index++] as number;
+    };
   }
 
   /**

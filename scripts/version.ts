@@ -231,10 +231,13 @@ const pushVersionCommit = (bumpedFiles: string[]): void => {
 };
 
 const publishPackage = (pkgDir: string): void => {
-  process.env.XDG_CONFIG_HOME = process.env.HOME;
   execSync('bun publish --access public --no-git-checks', {
     cwd: pkgDir,
     stdio: 'inherit',
+    env: {
+      ...process.env,
+      XDG_CONFIG_HOME: process.env.HOME,
+    },
   });
 };
 

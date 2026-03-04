@@ -211,6 +211,10 @@ macro_rules! export_rng {
                 self.inner.next_u32()
             }
 
+            pub fn next_u64(&mut self) -> u64 {
+                self.inner.next_u64()
+            }
+
             pub fn next_float(&mut self) -> f64 {
                 self.inner.gen::<f64>()
             }

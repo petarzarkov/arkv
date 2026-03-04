@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/nursery/noExcessiveLinesPerFile: Purely for benching, no need to split it yet */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -260,37 +261,41 @@ function main() {
   ]);
 
   // ── 3. Float [0, 1) ────────────────────────────────────────────────────────
-  printTable('3 · Float [0, 1)', [
-    ...arkvInstances.map(([algo, rng]) => ({
-      label: `@arkv/rng  · ${algo}  [batch]`,
-      ms: bench(() => rng.floats(N)),
-    })),
-    {
-      label: '@arkv/rng  · pcg64  [single]',
-      ms: bench(() => {
-        for (let i = 0; i < N; i++) arkvPcg64.float();
-      }),
-    },
-    ...srVariants.map(([name, rng]) => ({
-      label: `seedrandom  · ${name}`,
-      ms: bench(() => {
-        for (let i = 0; i < N; i++) rng();
-      }),
-    })),
-    ...prandFactories.map(([name, mk]) => ({
-      label: `pure-rand  · ${name}`,
-      ms: prandFloatBench(mk),
-    })),
-    {
-      label: 'random-js  · Random.real(0, 1)',
-      ms: bench(() => {
-        const r = new Random(
-          MersenneTwister19937.seed(SEED),
-        );
-        for (let i = 0; i < N; i++) r.real(0, 1);
-      }),
-    },
-  ]);
+  printTable(
+    `3 · Float [0, 1)  — 53-bit precision
+    \`@arkv/rng\` and \`pure-rand\` generate high-resolution floats with full **53-bit precision** (IEEE 754 standard). \`seedrandom\` generates lower-resolution floats with only **32-bit precision**. This quality difference explains pure-rand's slower single-call numbers — it rolls two 32-bit integers per float, whereas seedrandom rolls just one.`,
+    [
+      ...arkvInstances.map(([algo, rng]) => ({
+        label: `@arkv/rng  · ${algo}  [batch]`,
+        ms: bench(() => rng.floats(N)),
+      })),
+      {
+        label: '@arkv/rng  · pcg64  [single]',
+        ms: bench(() => {
+          for (let i = 0; i < N; i++) arkvPcg64.float();
+        }),
+      },
+      ...srVariants.map(([name, rng]) => ({
+        label: `seedrandom  · ${name}`,
+        ms: bench(() => {
+          for (let i = 0; i < N; i++) rng();
+        }),
+      })),
+      ...prandFactories.map(([name, mk]) => ({
+        label: `pure-rand  · ${name}`,
+        ms: prandFloatBench(mk),
+      })),
+      {
+        label: 'random-js  · Random.real(0, 1)',
+        ms: bench(() => {
+          const r = new Random(
+            MersenneTwister19937.seed(SEED),
+          );
+          for (let i = 0; i < N; i++) r.real(0, 1);
+        }),
+      },
+    ],
+  );
 
   // ── 4. Bounded range [1, 1000) — uniform ──────────────────────────────────
   printTable(
@@ -399,6 +404,67 @@ function main() {
       }),
     })),
   ]);
+
+  // ── 7. intStream() — Buffered single integer ──────────────────────────────
+  const arkvPcg64Stream = arkvPcg64.intStream();
+  const arkvXoroshiroStream = arkvXoroshiro.intStream();
+  const arkvLcg32Stream = arkvLcg32.intStream();
+
+  printTable('7 · intStream() — Buffered Single Integer', [
+    {
+      label: '@arkv/rng  · pcg64  intStream()',
+      ms: bench(() => {
+        for (let i = 0; i < N; i++) arkvPcg64Stream();
+      }),
+    },
+    {
+      label: '@arkv/rng  · xoroshiro128+  intStream()',
+      ms: bench(() => {
+        for (let i = 0; i < N; i++) arkvXoroshiroStream();
+      }),
+    },
+    {
+      label: '@arkv/rng  · lcg32  intStream()',
+      ms: bench(() => {
+        for (let i = 0; i < N; i++) arkvLcg32Stream();
+      }),
+    },
+    ...srVariants.map(([name, rng]) => ({
+      label: `seedrandom  · ${name}`,
+      ms: bench(() => {
+        for (let i = 0; i < N; i++)
+          Math.floor(rng() * 4294967296);
+      }),
+    })),
+  ]);
+
+  // ── 8. Native 64-bit BigInt ───────────────────────────────────────────────
+  printTable(
+    `8 · Native 64-bit BigInt
+    \`@arkv/rng\` generates a 64-bit integer natively in Rust in a single CPU operation. Pure-JS libraries must roll two 32-bit values and stitch them via BigInt arithmetic — consuming twice the RNG calls and adding JS BigInt overhead.`,
+    [
+      ...arkvInstances.map(([algo, rng]) => ({
+        label: `@arkv/rng  · ${algo}  bigInt()`,
+        ms: bench(() => {
+          for (let i = 0; i < N; i++) rng.bigInt();
+        }),
+      })),
+      ...srVariants.map(([name, rng]) => ({
+        label: `seedrandom  · ${name}  (2×32-bit + BigInt)`,
+        ms: bench(() => {
+          for (let i = 0; i < N; i++) {
+            const hi = BigInt(
+              Math.floor(rng() * 4294967296),
+            );
+            const lo = BigInt(
+              Math.floor(rng() * 4294967296),
+            );
+            (hi << 32n) | lo;
+          }
+        }),
+      })),
+    ],
+  );
 
   console.log();
   arkvPcg64Str.free();
