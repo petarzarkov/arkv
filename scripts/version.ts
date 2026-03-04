@@ -5,7 +5,8 @@ import {
   readFileSync,
   writeFileSync,
 } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
+import { semver } from 'bun';
 
 const isDryRun = process.env.DRY_RUN === 'true';
 
@@ -52,9 +53,7 @@ const determineBumpType = ():
   try {
     const commitMessage = execSync(
       'git log -1 --pretty=format:"%s%n%b"',
-      {
-        stdio: 'pipe',
-      },
+      { stdio: 'pipe' },
     )
       .toString()
       .trim();
@@ -79,6 +78,28 @@ const determineBumpType = ():
       error,
     );
     return 'patch';
+  }
+};
+
+const getChangedSrcPackages = (): Set<string> | null => {
+  try {
+    const out = execSync(
+      'git diff-tree --no-commit-id --name-only -r HEAD',
+      { stdio: 'pipe' },
+    )
+      .toString()
+      .trim();
+
+    if (!out) return null;
+
+    const dirs = new Set<string>();
+    for (const file of out.split('\n')) {
+      const match = file.match(/^packages\/([^/]+)\/src\//);
+      if (match) dirs.add(match[1]);
+    }
+    return dirs;
+  } catch {
+    return null;
   }
 };
 
@@ -119,27 +140,20 @@ const findPublishablePackages = (): Array<{
   return packages;
 };
 
-(async () => {
-  if (isDryRun) {
-    console.log('\n--- DRY RUN MODE ENABLED ---\n');
-  }
+const applyVersionBumps = (
+  packages: Array<{
+    name: string;
+    dir: string;
+    packageJsonPath: string;
+  }>,
+  bumpType: 'major' | 'minor' | 'patch',
+): Array<{ packageJsonPath: string; dir: string }> => {
+  const bumped: Array<{
+    packageJsonPath: string;
+    dir: string;
+  }> = [];
 
-  const bumpType = determineBumpType();
-  console.log(`Determined version bump type: ${bumpType}`);
-
-  const publishablePackages = findPublishablePackages();
-
-  if (publishablePackages.length === 0) {
-    console.log('No publishable packages found.');
-    process.exit(0);
-  }
-
-  const bumpedFiles: string[] = [];
-
-  for (const {
-    name,
-    packageJsonPath,
-  } of publishablePackages) {
+  for (const { name, dir, packageJsonPath } of packages) {
     const pkg = JSON.parse(
       readFileSync(packageJsonPath, 'utf-8'),
     );
@@ -153,6 +167,14 @@ const findPublishablePackages = (): Array<{
     }
 
     const newVersion = bumpVersion(oldVersion, bumpType);
+
+    if (semver.order(newVersion, oldVersion) !== 1) {
+      console.warn(
+        `Skipping ${name}: new version ${newVersion} is not greater than ${oldVersion}`,
+      );
+      continue;
+    }
+
     pkg.version = newVersion;
 
     if (!isDryRun) {
@@ -160,7 +182,7 @@ const findPublishablePackages = (): Array<{
         packageJsonPath,
         `${JSON.stringify(pkg, null, 2)}\n`,
       );
-      bumpedFiles.push(packageJsonPath);
+      bumped.push({ packageJsonPath, dir });
       console.log(
         `Bumped ${name} from ${oldVersion} to ${newVersion}`,
       );
@@ -171,48 +193,111 @@ const findPublishablePackages = (): Array<{
     }
   }
 
-  if (!isDryRun && bumpedFiles.length > 0) {
+  return bumped;
+};
+
+const pushVersionCommit = (bumpedFiles: string[]): void => {
+  execSync(`git add ${bumpedFiles.join(' ')}`);
+
+  const pkg = JSON.parse(
+    readFileSync(bumpedFiles[0], 'utf-8'),
+  );
+  const commitMessage = `chore(release): bump version to ${pkg.version} [skip ci]`;
+  execSync(`git commit -m "${commitMessage}" --no-verify`);
+
+  const branch =
+    process.env.GITHUB_REF_NAME ??
+    execSync('git branch --show-current').toString().trim();
+
+  if (!branch) {
+    throw new Error(
+      'Unable to determine branch for pushing release commit.',
+    );
+  }
+
+  console.log(`Pushing to branch: ${branch}`);
+  const token = process.env.GITHUB_TOKEN;
+  if (token) {
+    const repo =
+      process.env.GITHUB_REPOSITORY ?? 'petarzarkov/arkv';
+    execSync(
+      `git push https://x-access-token:${token}@github.com/${repo}.git HEAD:refs/heads/${branch}`,
+    );
+  } else {
+    execSync(`git push origin HEAD:refs/heads/${branch}`);
+  }
+
+  console.log(`Successfully pushed version ${pkg.version}`);
+};
+
+const publishPackage = (pkgDir: string): void => {
+  process.env.XDG_CONFIG_HOME = process.env.HOME;
+  execSync('bun publish --access public --no-git-checks', {
+    cwd: pkgDir,
+    stdio: 'inherit',
+  });
+};
+
+(async () => {
+  if (isDryRun) {
+    console.log('\n--- DRY RUN MODE ENABLED ---\n');
+  }
+
+  const changedSrcPackages = getChangedSrcPackages();
+
+  if (
+    changedSrcPackages !== null &&
+    changedSrcPackages.size === 0
+  ) {
+    console.log(
+      'No src changes detected, skipping version bump.',
+    );
+    process.exit(0);
+  }
+
+  if (changedSrcPackages !== null) {
+    console.log(
+      `Detected src changes in: ${[...changedSrcPackages].join(', ')}`,
+    );
+  } else {
+    console.log(
+      'Could not determine changed packages, processing all.',
+    );
+  }
+
+  const bumpType = determineBumpType();
+  console.log(`Determined version bump type: ${bumpType}`);
+
+  const allPublishablePackages = findPublishablePackages();
+  const publishablePackages =
+    changedSrcPackages === null
+      ? allPublishablePackages
+      : allPublishablePackages.filter(pkg =>
+          changedSrcPackages.has(basename(pkg.dir)),
+        );
+
+  if (publishablePackages.length === 0) {
+    console.log('No publishable packages found.');
+    process.exit(0);
+  }
+
+  const bumpedPackages = applyVersionBumps(
+    publishablePackages,
+    bumpType,
+  );
+
+  if (!isDryRun && bumpedPackages.length > 0) {
     try {
       console.log('Committing version changes...');
-      execSync(`git add ${bumpedFiles.join(' ')}`);
-
-      const pkg = JSON.parse(
-        readFileSync(bumpedFiles[0], 'utf-8'),
-      );
-      const commitMessage = `chore(release): bump version to ${pkg.version} [skip ci]`;
-      execSync(
-        `git commit -m "${commitMessage}" --no-verify`,
+      pushVersionCommit(
+        bumpedPackages.map(p => p.packageJsonPath),
       );
 
-      const branch =
-        process.env.GITHUB_REF_NAME ??
-        execSync('git branch --show-current')
-          .toString()
-          .trim();
-
-      if (!branch) {
-        throw new Error(
-          'Unable to determine branch for pushing release commit.',
-        );
+      console.log('Publishing bumped packages...');
+      for (const { dir } of bumpedPackages) {
+        console.log(`Publishing ${basename(dir)}...`);
+        publishPackage(dir);
       }
-
-      console.log(`Pushing to branch: ${branch}`);
-      const token = process.env.GITHUB_TOKEN;
-      if (token) {
-        const repo =
-          process.env.GITHUB_REPOSITORY ??
-          'petarzarkov/arkv';
-        execSync(
-          `git push https://x-access-token:${token}@github.com/${repo}.git HEAD:refs/heads/${branch}`,
-        );
-      } else {
-        execSync(
-          `git push origin HEAD:refs/heads/${branch}`,
-        );
-      }
-      console.log(
-        `Successfully pushed version ${pkg.version}`,
-      );
     } catch (error) {
       console.error('Failed to version packages:', error);
       process.exit(1);

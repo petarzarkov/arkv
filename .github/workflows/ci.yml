@@ -64,46 +64,17 @@ jobs:
       - name: Test
         run: bun run test:cov
 
-      - name: Capture changed files before version bump
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: echo "CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | tr '\n' ' ')" >> "$GITHUB_ENV"
-
       - name: Configure git identity
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Version bump
+      - name: Configure npm auth
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Version bump & publish
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: bun run version
 
-      - name: Configure npm auth
-        if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Selective publish
-        if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          for pkg_dir in packages/*/; do
-            pkg_name=$(basename "$pkg_dir")
-            pkg_json="${pkg_dir}package.json"
-
-            # Skip if no package.json
-            [ ! -f "$pkg_json" ] && continue
-
-            # Skip private packages
-            is_private=$(bun -e "console.log(require('./${pkg_json}').private || false)")
-            [ "$is_private" = "true" ] && continue
-
-            # Check if any source files in this package changed
-            if echo "$CHANGED_FILES" | grep -q "packages/${pkg_name}/src/"; then
-              echo "Publishing ${pkg_name}..."
-              cd "$pkg_dir"
-              export XDG_CONFIG_HOME="$HOME"
-              bun publish --access public --no-git-checks
-              cd ../..
-            else
-              echo "Skipping ${pkg_name} (no source changes)"
-            fi
-          done
