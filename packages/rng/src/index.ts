@@ -1,2 +1,1 @@
-export { initArkvRng } from './init.js';
-export { Rng } from './rng.js';
+export { Rng, type RngAlgorithm } from './rng.js';

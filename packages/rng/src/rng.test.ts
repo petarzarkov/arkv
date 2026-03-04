@@ -1,25 +1,21 @@
-import { beforeAll, describe, expect, it } from 'bun:test';
-import { initArkvRng, Rng } from './index.js';
+import { describe, expect, it } from 'bun:test';
+import { Rng, type RngAlgorithm } from './index.js';
+
+// WASM initializes synchronously on import — no beforeAll needed.
+
+const ALGORITHMS: RngAlgorithm[] = [
+  'pcg64',
+  'xoroshiro128+',
+  'xorshift128+',
+  'mersenne',
+  'lcg32',
+];
 
 describe('@arkv/rng', () => {
-  beforeAll(async () => {
-    await initArkvRng();
-  });
-
-  describe('initArkvRng', () => {
-    it('is idempotent', async () => {
-      await expect(initArkvRng()).resolves.toBeUndefined();
-    });
-  });
+  // ── Construction ────────────────────────────────────────────────────────────
 
   describe('Rng construction', () => {
-    it('throws before init', () => {
-      // Guard is covered by checkInit; since beforeAll already
-      // initialized the module, this test documents the API contract.
-      expect(() => new Rng()).not.toThrow();
-    });
-
-    it('creates instance with system entropy', () => {
+    it('creates instance with system entropy (default algorithm)', () => {
       const rng = new Rng();
       expect(rng).toBeInstanceOf(Rng);
       rng.free();
@@ -38,82 +34,154 @@ describe('@arkv/rng', () => {
     });
   });
 
-  describe('int()', () => {
-    it('returns an integer in [0, 2^32-1]', () => {
-      const rng = new Rng(1n);
-      const val = rng.int();
-      expect(Number.isInteger(val)).toBe(true);
-      expect(val).toBeGreaterThanOrEqual(0);
-      expect(val).toBeLessThanOrEqual(2 ** 32 - 1);
-      rng.free();
-    });
-  });
+  // ── Per-algorithm tests ────────────────────────────────────────────────────
 
-  describe('ints()', () => {
-    it('returns a Uint32Array of the requested length', () => {
-      const rng = new Rng(1n);
-      const arr = rng.ints(100);
-      expect(arr).toBeInstanceOf(Uint32Array);
-      expect(arr).toHaveLength(100);
-      rng.free();
-    });
+  for (const algo of ALGORITHMS) {
+    describe(`algorithm: '${algo}'`, () => {
+      it('creates instance with seed', () => {
+        const rng = new Rng(42, algo);
+        expect(rng).toBeInstanceOf(Rng);
+        rng.free();
+      });
 
-    it('returns values within [0, 2^32-1]', () => {
-      const rng = new Rng(1n);
-      const arr = rng.ints(50);
-      for (let i = 0; i < arr.length; i++) {
-        const val = arr[i];
+      it('creates instance with entropy', () => {
+        const rng = new Rng(undefined, algo);
+        expect(rng).toBeInstanceOf(Rng);
+        rng.free();
+      });
+
+      it('int() returns an integer in [0, 2^32-1]', () => {
+        const rng = new Rng(1n, algo);
+        const val = rng.int();
         expect(Number.isInteger(val)).toBe(true);
         expect(val).toBeGreaterThanOrEqual(0);
         expect(val).toBeLessThanOrEqual(2 ** 32 - 1);
-      }
-      rng.free();
+        rng.free();
+      });
+
+      it('float() returns a value in [0, 1)', () => {
+        const rng = new Rng(1n, algo);
+        const val = rng.float();
+        expect(val).toBeGreaterThanOrEqual(0);
+        expect(val).toBeLessThan(1);
+        rng.free();
+      });
+
+      it('range() returns value in [min, max) over 100 calls', () => {
+        const rng = new Rng(1n, algo);
+        for (let i = 0; i < 100; i++) {
+          const val = rng.range(10, 20);
+          expect(val).toBeGreaterThanOrEqual(10);
+          expect(val).toBeLessThan(20);
+        }
+        rng.free();
+      });
+
+      it('ints() returns a Uint32Array of the correct length and range', () => {
+        const rng = new Rng(1n, algo);
+        const arr = rng.ints(50);
+        expect(arr).toBeInstanceOf(Uint32Array);
+        expect(arr).toHaveLength(50);
+        for (const val of arr) {
+          expect(val).toBeGreaterThanOrEqual(0);
+          expect(val).toBeLessThanOrEqual(2 ** 32 - 1);
+        }
+        rng.free();
+      });
+
+      it('floats() returns a Float64Array of values in [0, 1)', () => {
+        const rng = new Rng(1n, algo);
+        const arr = rng.floats(50);
+        expect(arr).toBeInstanceOf(Float64Array);
+        expect(arr).toHaveLength(50);
+        for (const val of arr) {
+          expect(val).toBeGreaterThanOrEqual(0);
+          expect(val).toBeLessThan(1);
+        }
+        rng.free();
+      });
+
+      it('ranges() returns a Uint32Array of values in [min, max)', () => {
+        const rng = new Rng(1n, algo);
+        const arr = rng.ranges(5, 15, 50);
+        expect(arr).toBeInstanceOf(Uint32Array);
+        expect(arr).toHaveLength(50);
+        for (const val of arr) {
+          expect(val).toBeGreaterThanOrEqual(5);
+          expect(val).toBeLessThan(15);
+        }
+        rng.free();
+      });
+
+      it('is deterministic: same seed → same sequence', () => {
+        const rng1 = new Rng(999n, algo);
+        const rng2 = new Rng(999n, algo);
+        for (let i = 0; i < 10; i++) {
+          expect(rng1.int()).toBe(rng2.int());
+        }
+        rng1.free();
+        rng2.free();
+      });
+
+      it('ints() is deterministic across arrays', () => {
+        const rng1 = new Rng(999n, algo);
+        const rng2 = new Rng(999n, algo);
+        expect(rng1.ints(100)).toEqual(rng2.ints(100));
+        rng1.free();
+        rng2.free();
+      });
+
+      it('produces different sequences for different seeds', () => {
+        const rng1 = new Rng(1n, algo);
+        const rng2 = new Rng(2n, algo);
+        const seq1 = Array.from({ length: 5 }, () =>
+          rng1.int(),
+        );
+        const seq2 = Array.from({ length: 5 }, () =>
+          rng2.int(),
+        );
+        expect(seq1).not.toEqual(seq2);
+        rng1.free();
+        rng2.free();
+      });
+
+      it('shuffle() returns same elements in (likely) different order', () => {
+        const rng = new Rng(1n, algo);
+        const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        const shuffled = rng.shuffle(arr);
+        expect(shuffled).toHaveLength(arr.length);
+        expect(shuffled.sort()).toEqual([...arr].sort());
+        expect(arr).toEqual([
+          1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+        ]); // not mutated
+        rng.free();
+      });
+
+      it('free() releases Wasm memory without throwing', () => {
+        const rng = new Rng(1n, algo);
+        expect(() => rng.free()).not.toThrow();
+      });
     });
+  }
 
-    it('throws on negative length', () => {
-      const rng = new Rng(1n);
-      expect(() => rng.ints(-5)).toThrow(
-        'Length cannot be negative.',
-      );
-      rng.free();
-    });
+  // ── Cross-algorithm isolation ───────────────────────────────────────────────
 
-    it('is perfectly deterministic across the whole array', () => {
-      const rng1 = new Rng(999n);
-      const rng2 = new Rng(999n);
-
-      const arr1 = rng1.ints(1000);
-      const arr2 = rng2.ints(1000);
-
-      // Uint32Arrays can be deeply compared in Bun test
-      expect(arr1).toEqual(arr2);
-
-      rng1.free();
-      rng2.free();
+  describe('cross-algorithm isolation', () => {
+    it('different algorithms with the same seed produce different sequences', () => {
+      // Collect the first int from every algorithm
+      const results = ALGORITHMS.map(algo => {
+        const rng = new Rng(12345n, algo);
+        const val = rng.int();
+        rng.free();
+        return val;
+      });
+      // At least two values must differ (all distinct algorithms)
+      const unique = new Set(results);
+      expect(unique.size).toBeGreaterThan(1);
     });
   });
 
-  describe('float()', () => {
-    it('returns a value in [0, 1)', () => {
-      const rng = new Rng(1n);
-      const val = rng.float();
-      expect(val).toBeGreaterThanOrEqual(0);
-      expect(val).toBeLessThan(1);
-      rng.free();
-    });
-  });
-
-  describe('range()', () => {
-    it('returns value in [min, max) over 100 calls', () => {
-      const rng = new Rng(1n);
-      for (let i = 0; i < 100; i++) {
-        const val = rng.range(10, 20);
-        expect(val).toBeGreaterThanOrEqual(10);
-        expect(val).toBeLessThan(20);
-      }
-      rng.free();
-    });
-  });
+  // ── Shared method tests (default algorithm) ────────────────────────────────
 
   describe('bool()', () => {
     it('returns a boolean', () => {
@@ -124,17 +192,15 @@ describe('@arkv/rng', () => {
 
     it('always returns true with probability 1', () => {
       const rng = new Rng(1n);
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 20; i++)
         expect(rng.bool(1)).toBe(true);
-      }
       rng.free();
     });
 
     it('always returns false with probability 0', () => {
       const rng = new Rng(1n);
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 20; i++)
         expect(rng.bool(0)).toBe(false);
-      }
       rng.free();
     });
   });
@@ -143,8 +209,7 @@ describe('@arkv/rng', () => {
     it('returns an element from the array', () => {
       const rng = new Rng(1n);
       const arr = [10, 20, 30, 40, 50];
-      const val = rng.pick(arr);
-      expect(arr).toContain(val);
+      expect(arr).toContain(rng.pick(arr));
       rng.free();
     });
 
@@ -163,69 +228,27 @@ describe('@arkv/rng', () => {
     });
   });
 
-  describe('shuffle()', () => {
-    it('returns an array of the same length', () => {
+  describe('ints() error handling', () => {
+    it('throws on negative length', () => {
       const rng = new Rng(1n);
-      const arr = [1, 2, 3, 4, 5];
-      expect(rng.shuffle(arr)).toHaveLength(arr.length);
+      expect(() => rng.ints(-5)).toThrow(
+        'Length cannot be negative.',
+      );
       rng.free();
     });
+  });
 
-    it('contains the same elements', () => {
-      const rng = new Rng(1n);
-      const arr = [1, 2, 3, 4, 5];
-      const shuffled = rng.shuffle(arr);
-      expect(shuffled.sort()).toEqual([...arr].sort());
-      rng.free();
-    });
-
-    it('does not mutate the original array', () => {
-      const rng = new Rng(1n);
-      const arr = [1, 2, 3, 4, 5];
-      const copy = [...arr];
-      rng.shuffle(arr);
-      expect(arr).toEqual(copy);
-      rng.free();
-    });
-
-    it('handles empty and single-element arrays', () => {
+  describe('shuffle() edge cases', () => {
+    it('handles empty array', () => {
       const rng = new Rng(1n);
       expect(rng.shuffle([])).toEqual([]);
-      expect(rng.shuffle([42])).toEqual([42]);
       rng.free();
     });
-  });
 
-  describe('determinism', () => {
-    it('produces identical sequences for the same seed', () => {
-      const rng1 = new Rng(12345n);
-      const rng2 = new Rng(12345n);
-      for (let i = 0; i < 10; i++) {
-        expect(rng1.int()).toBe(rng2.int());
-      }
-      rng1.free();
-      rng2.free();
-    });
-
-    it('produces different sequences for different seeds', () => {
-      const rng1 = new Rng(1n);
-      const rng2 = new Rng(2n);
-      const seq1 = Array.from({ length: 5 }, () =>
-        rng1.int(),
-      );
-      const seq2 = Array.from({ length: 5 }, () =>
-        rng2.int(),
-      );
-      expect(seq1).not.toEqual(seq2);
-      rng1.free();
-      rng2.free();
-    });
-  });
-
-  describe('free()', () => {
-    it('releases Wasm memory without throwing', () => {
+    it('handles single-element array', () => {
       const rng = new Rng(1n);
-      expect(() => rng.free()).not.toThrow();
+      expect(rng.shuffle([42])).toEqual([42]);
+      rng.free();
     });
   });
 });

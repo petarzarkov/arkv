@@ -1,4 +1,4 @@
-import initWasm from './wasm/arkv_rng.js';
+import { initSync } from './wasm/arkv_rng.js';
 import { WASM_BASE64 } from './wasm/inline.js';
 
 function decodeBase64(b64: string): Uint8Array {
@@ -12,24 +12,6 @@ function decodeBase64(b64: string): Uint8Array {
   );
 }
 
-let isInitialized = false;
-
-/**
- * Must be called once before creating any Rng instance.
- * Safe to call multiple times (idempotent).
- */
-export async function initArkvRng(): Promise<void> {
-  if (!isInitialized) {
-    const wasmBytes = decodeBase64(WASM_BASE64);
-    await initWasm({ module_or_path: wasmBytes });
-    isInitialized = true;
-  }
-}
-
-export function checkInit(): void {
-  if (!isInitialized) {
-    throw new Error(
-      'You must await initArkvRng() before creating an @arkv/rng Rng instance.',
-    );
-  }
-}
+// Initialize the WASM module synchronously when this module is first imported.
+// Users do not need to call any init function — just `import { Rng } from '@arkv/rng'`.
+initSync({ module: decodeBase64(WASM_BASE64) });

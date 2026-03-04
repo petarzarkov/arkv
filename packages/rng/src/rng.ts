@@ -1,19 +1,28 @@
-import { checkInit } from './init.js';
+import './init.js';
 import { ArkvRng as WasmRng } from './wasm/arkv_rng.js';
+
+export type RngAlgorithm =
+  | 'pcg64'
+  | 'xoroshiro128+'
+  | 'xorshift128+'
+  | 'mersenne'
+  | 'lcg32';
 
 export class Rng {
   private engine: WasmRng;
 
   /**
-   * Pass a seed for deterministic output, or omit for
-   * system entropy.
+   * Pass a seed for deterministic output, or omit for system entropy.
+   * `algorithm` selects the PRNG backend (default: `'pcg64'`).
    */
-  constructor(seed?: number | bigint) {
-    checkInit();
+  constructor(
+    seed?: number | bigint,
+    algorithm: RngAlgorithm = 'pcg64',
+  ) {
     if (seed !== undefined) {
-      this.engine = new WasmRng(BigInt(seed));
+      this.engine = new WasmRng(BigInt(seed), algorithm);
     } else {
-      this.engine = WasmRng.from_entropy();
+      this.engine = WasmRng.from_entropy(algorithm);
     }
   }
 
