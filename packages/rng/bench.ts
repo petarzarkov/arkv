@@ -30,6 +30,8 @@ const out = (msg: string) => {
   outputBuffer.push(msg);
 };
 
+const mdBuffer: string[] = [];
+
 function printTable(title: string, rows: Result[]): void {
   const best = Math.min(...rows.map(r => r.ms));
   out(`\n${title}  (N=${N.toLocaleString('en-US')})`);
@@ -51,6 +53,29 @@ function printTable(title: string, rows: Result[]): void {
     );
   }
   out(hr('└', '┴', '┘'));
+
+  // Markdown table for README
+  mdBuffer.push(
+    `### ${title}  (N=${N.toLocaleString('en-US')})\n`,
+  );
+  mdBuffer.push('| Library | ms | ops/sec | vs fastest |');
+  mdBuffer.push('|:--------|---:|-------:|----------:|');
+  for (const { label, ms } of rows) {
+    const ops = Math.round((N / ms) * 1000).toLocaleString(
+      'en-US',
+    );
+    const slow =
+      ms / best < 1.005
+        ? '**fastest**'
+        : `${(ms / best).toFixed(2)}x`;
+    const displayLabel = label.startsWith('@arkv')
+      ? `**${label}**`
+      : label;
+    mdBuffer.push(
+      `| ${displayLabel} | ${ms.toFixed(2)} | ${ops} | ${slow} |`,
+    );
+  }
+  mdBuffer.push('');
 }
 
 /** Run fn once for warmup, then return the time of a second run. */
@@ -175,13 +200,6 @@ function main() {
         for (let i = 0; i < N; i++) rng.int();
       }),
     })),
-    {
-      label: 'Math.random() †',
-      ms: bench(() => {
-        for (let i = 0; i < N; i++)
-          Math.floor(Math.random() * 4294967296);
-      }),
-    },
     ...srVariants.map(([name, rng]) => ({
       label: `seedrandom  · ${name}`,
       ms: bench(() => {
@@ -211,14 +229,6 @@ function main() {
       label: `@arkv/rng  · ${algo}  [native batch]`,
       ms: bench(() => rng.ints(N)),
     })),
-    {
-      label: 'Math.random()  loop †',
-      ms: bench(() => {
-        const a = new Uint32Array(N);
-        for (let i = 0; i < N; i++)
-          a[i] = Math.floor(Math.random() * 4294967296);
-      }),
-    },
     ...prandFactories.map(([name, mk]) => ({
       label: `pure-rand  · ${name}  loop`,
       ms: bench(() => {
@@ -246,12 +256,6 @@ function main() {
           a[i] = r.integer(0, 4294967295);
       }),
     },
-    {
-      label: 'crypto.getRandomValues()  [bulk fill] †',
-      ms: bench(() =>
-        crypto.getRandomValues(new Uint32Array(N)),
-      ),
-    },
   ]);
 
   // ── 3. Float [0, 1) ────────────────────────────────────────────────────────
@@ -264,12 +268,6 @@ function main() {
       label: '@arkv/rng  · pcg64  [single]',
       ms: bench(() => {
         for (let i = 0; i < N; i++) arkvPcg64.float();
-      }),
-    },
-    {
-      label: 'Math.random() †',
-      ms: bench(() => {
-        for (let i = 0; i < N; i++) Math.random();
       }),
     },
     ...srVariants.map(([name, rng]) => ({
@@ -306,13 +304,6 @@ function main() {
         ms: bench(() => {
           for (let i = 0; i < N; i++)
             arkvPcg64.range(1, 1000);
-        }),
-      },
-      {
-        label: 'Math.random()  + floor †',
-        ms: bench(() => {
-          for (let i = 0; i < N; i++)
-            Math.floor(Math.random() * 999) + 1;
         }),
       },
       ...srVariants.map(([name, rng]) => ({
@@ -389,15 +380,9 @@ function main() {
 Run \`bun run build:wasm && bun run bench\` to reproduce.
 
 Compared against: \`seedrandom\` (all 7 algorithm variants), \`pure-rand\` (all 4 algorithms),
-\`random-js\` (Mersenne Twister), \`Math.random()\`, and \`crypto.getRandomValues()\`.
+\`random-js\` (Mersenne Twister).
 
-\`\`\`text
-${outputBuffer.join('\n').trim()}
-\`\`\`
-
-> † \`Math.random()\` and \`crypto.getRandomValues()\` are native V8/OS calls —
-> not seedable, no reproducible sequences. Run \`bun run bench\` on your machine
-> for accurate results.
+${mdBuffer.join('\n').trimEnd()}
 `;
     writeFileSync(
       readmePath,

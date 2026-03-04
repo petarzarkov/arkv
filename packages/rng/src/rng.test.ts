@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { Rng, type RngAlgorithm } from './index.js';
 
-// WASM initializes synchronously on import — no beforeAll needed.
-
 const ALGORITHMS: RngAlgorithm[] = [
   'pcg64',
   'xoroshiro128+',
