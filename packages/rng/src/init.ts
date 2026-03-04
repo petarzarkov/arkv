@@ -14,4 +14,7 @@ function decodeBase64(b64: string): Uint8Array {
 
 // Initialize the WASM module synchronously when this module is first imported.
 // Users do not need to call any init function — just `import { Rng } from '@arkv/rng'`.
-initSync({ module: decodeBase64(WASM_BASE64) });
+// `wasmMemory` is exported so batch methods can create zero-copy typed array views.
+export const { memory: wasmMemory } = initSync({
+  module: decodeBase64(WASM_BASE64),
+});

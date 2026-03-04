@@ -1,4 +1,4 @@
-import './init.js';
+import { wasmMemory } from './init.js';
 import { ArkvRng as WasmRng } from './wasm/arkv_rng.js';
 
 export type RngAlgorithm =
@@ -43,15 +43,19 @@ export class Rng {
     return this.engine.next_u32();
   }
 
-  /** * Generates an array of `length` random unsigned 32-bit integers
+  /**
+   * Generates an array of `length` random unsigned 32-bit integers
    * in a single WebAssembly boundary crossing.
-   * Returns a highly optimized Uint32Array.
+   * Returns a Uint32Array view into WASM memory — valid until the next
+   * call on this instance. Call `.slice()` if you need a persistent copy.
    */
   public ints(length: number): Uint32Array {
     if (length < 0) {
       throw new Error('Length cannot be negative.');
     }
-    return this.engine.next_u32_array(length);
+    if (length === 0) return new Uint32Array(0);
+    const ptr = this.engine.fill_u32s(length);
+    return new Uint32Array(wasmMemory.buffer, ptr, length);
   }
 
   /** Random float in [0, 1). */
@@ -62,13 +66,16 @@ export class Rng {
   /**
    * Generates an array of `length` random floats in [0, 1)
    * in a single WebAssembly boundary crossing.
-   * Returns a Float64Array.
+   * Returns a Float64Array view into WASM memory — valid until the next
+   * call on this instance. Call `.slice()` if you need a persistent copy.
    */
   public floats(length: number): Float64Array {
     if (length < 0) {
       throw new Error('Length cannot be negative.');
     }
-    return this.engine.next_f64_array(length);
+    if (length === 0) return new Float64Array(0);
+    const ptr = this.engine.fill_f64s(length);
+    return new Float64Array(wasmMemory.buffer, ptr, length);
   }
 
   /** Random integer in [min, max). */
@@ -79,7 +86,8 @@ export class Rng {
   /**
    * Generates an array of `length` random integers in [min, max)
    * in a single WebAssembly boundary crossing.
-   * Returns a Uint32Array.
+   * Returns a Uint32Array view into WASM memory — valid until the next
+   * call on this instance. Call `.slice()` if you need a persistent copy.
    */
   public ranges(
     min: number,
@@ -89,7 +97,13 @@ export class Rng {
     if (length < 0) {
       throw new Error('Length cannot be negative.');
     }
-    return this.engine.next_range_array(min, max, length);
+    if (length === 0) return new Uint32Array(0);
+    const ptr = this.engine.fill_range_u32s(
+      min,
+      max,
+      length,
+    );
+    return new Uint32Array(wasmMemory.buffer, ptr, length);
   }
 
   /**
@@ -123,12 +137,16 @@ export class Rng {
       return result;
     }
 
-    // Single Wasm boundary crossing!
-    const indices = this.engine.next_shuffle_indices(len);
+    // Single Wasm boundary crossing — zero-copy view into preallocated buffer.
+    const ptr = this.engine.fill_shuffle_u32s(len);
+    const indices = new Uint32Array(
+      wasmMemory.buffer,
+      ptr,
+      len - 1,
+    );
 
     let indexPointer = 0;
     for (let i = len - 1; i > 0; i--) {
-      // Pull the pre-calculated random index
       const j = indices[indexPointer++];
       const tmp = result[i] as T;
       result[i] = result[j] as T;

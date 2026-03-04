@@ -183,120 +183,120 @@ Compared against: `seedrandom` (all 7 algorithm variants), `pure-rand` (all 4 al
 
 | Library | ms | ops/sec | vs fastest |
 |:--------|---:|-------:|----------:|
-| **@arkv/rng  · pcg64** | 2.90 | 34,470,456 | 8.25x |
-| **@arkv/rng  · xoroshiro128+** | 1.61 | 61,967,275 | 4.59x |
-| **@arkv/rng  · xorshift128+** | 1.08 | 92,718,363 | 3.07x |
-| **@arkv/rng  · mersenne** | 1.07 | 93,289,152 | 3.05x |
-| **@arkv/rng  · lcg32** | 0.66 | 151,118,123 | 1.88x |
-| seedrandom  · default/ARC4 | 3.93 | 25,446,672 | 11.18x |
-| seedrandom  · alea | 0.70 | 142,372,872 | 2.00x |
-| seedrandom  · xor128 | 0.35 | 284,518,495 | **fastest** |
-| seedrandom  · tychei | 1.46 | 68,617,979 | 4.15x |
-| seedrandom  · xorwow | 3.07 | 32,529,560 | 8.75x |
-| seedrandom  · xor4096 | 2.60 | 38,470,179 | 7.40x |
-| seedrandom  · xorshift7 | 0.55 | 181,960,773 | 1.56x |
-| pure-rand  · xoroshiro128+  (uniform) | 9.08 | 11,011,354 | 25.84x |
-| pure-rand  · xorshift128+  (uniform) | 2.97 | 33,671,780 | 8.45x |
-| pure-rand  · mersenne  (uniform) | 3.20 | 31,235,915 | 9.11x |
-| pure-rand  · congruential32  (uniform) | 3.54 | 28,247,774 | 10.07x |
-| random-js  · MersenneTwister | 5.86 | 17,075,281 | 16.66x |
+| **@arkv/rng  · pcg64** | 2.21 | 45,350,672 | 6.21x |
+| **@arkv/rng  · xoroshiro128+** | 1.55 | 64,723,914 | 4.35x |
+| **@arkv/rng  · xorshift128+** | 0.94 | 106,120,162 | 2.66x |
+| **@arkv/rng  · mersenne** | 1.04 | 95,946,914 | 2.94x |
+| **@arkv/rng  · lcg32** | 0.61 | 162,818,453 | 1.73x |
+| seedrandom  · default/ARC4 | 2.90 | 34,463,507 | 8.18x |
+| seedrandom  · alea | 0.67 | 148,381,822 | 1.90x |
+| seedrandom  · xor128 | 0.35 | 281,821,922 | **fastest** |
+| seedrandom  · tychei | 1.14 | 87,875,702 | 3.21x |
+| seedrandom  · xorwow | 2.05 | 48,789,127 | 5.78x |
+| seedrandom  · xor4096 | 2.21 | 45,349,273 | 6.21x |
+| seedrandom  · xorshift7 | 0.48 | 208,572,757 | 1.35x |
+| pure-rand  · xoroshiro128+  (uniform) | 8.68 | 11,514,614 | 24.48x |
+| pure-rand  · xorshift128+  (uniform) | 2.75 | 36,387,374 | 7.75x |
+| pure-rand  · mersenne  (uniform) | 4.01 | 24,925,262 | 11.31x |
+| pure-rand  · congruential32  (uniform) | 3.04 | 32,842,362 | 8.58x |
+| random-js  · MersenneTwister | 3.76 | 26,582,503 | 10.60x |
 
 ### 2 · Batched u32 Array (100 k elements)  (N=100,000)
 
 | Library | ms | ops/sec | vs fastest |
 |:--------|---:|-------:|----------:|
-| **@arkv/rng  · pcg64  [native batch]** | 1.02 | 98,214,075 | 1.56x |
-| **@arkv/rng  · xoroshiro128+  [native batch]** | 0.65 | 153,328,611 | **fastest** |
-| **@arkv/rng  · xorshift128+  [native batch]** | 0.71 | 140,382,599 | 1.09x |
-| **@arkv/rng  · mersenne  [native batch]** | 0.82 | 121,336,988 | 1.26x |
-| **@arkv/rng  · lcg32  [native batch]** | 0.65 | 153,246,136 | **fastest** |
-| pure-rand  · xoroshiro128+  loop | 6.32 | 15,828,813 | 9.69x |
-| pure-rand  · xorshift128+  loop | 5.74 | 17,433,986 | 8.79x |
-| pure-rand  · mersenne  loop | 6.89 | 14,513,194 | 10.56x |
-| pure-rand  · congruential32  loop | 2.31 | 43,204,849 | 3.55x |
-| random-js  loop | 1.77 | 56,468,973 | 2.72x |
+| **@arkv/rng  · pcg64  [native batch]** | 0.46 | 218,323,451 | 1.83x |
+| **@arkv/rng  · xoroshiro128+  [native batch]** | 0.38 | 263,861,293 | 1.52x |
+| **@arkv/rng  · xorshift128+  [native batch]** | 0.31 | 322,519,262 | 1.24x |
+| **@arkv/rng  · mersenne  [native batch]** | 0.36 | 276,967,647 | 1.45x |
+| **@arkv/rng  · lcg32  [native batch]** | 0.25 | 400,310,641 | **fastest** |
+| pure-rand  · xoroshiro128+  loop | 5.48 | 18,251,356 | 21.93x |
+| pure-rand  · xorshift128+  loop | 3.49 | 28,651,653 | 13.97x |
+| pure-rand  · mersenne  loop | 7.30 | 13,706,371 | 29.21x |
+| pure-rand  · congruential32  loop | 2.65 | 37,789,039 | 10.59x |
+| random-js  loop | 2.01 | 49,676,383 | 8.06x |
 
 ### 3 · Float [0, 1)  (N=100,000)
 
 | Library | ms | ops/sec | vs fastest |
 |:--------|---:|-------:|----------:|
-| **@arkv/rng  · pcg64  [batch]** | 0.81 | 123,862,478 | 2.24x |
-| **@arkv/rng  · xoroshiro128+  [batch]** | 0.85 | 117,421,058 | 2.36x |
-| **@arkv/rng  · xorshift128+  [batch]** | 0.84 | 119,345,557 | 2.32x |
-| **@arkv/rng  · mersenne  [batch]** | 0.89 | 112,824,285 | 2.46x |
-| **@arkv/rng  · lcg32  [batch]** | 0.78 | 128,330,333 | 2.16x |
-| **@arkv/rng  · pcg64  [single]** | 1.15 | 87,249,757 | 3.18x |
-| seedrandom  · default/ARC4 | 3.41 | 29,293,411 | 9.47x |
-| seedrandom  · alea | 0.78 | 127,655,229 | 2.17x |
-| seedrandom  · xor128 | 0.36 | 277,344,043 | **fastest** |
-| seedrandom  · tychei | 0.70 | 141,863,490 | 1.96x |
-| seedrandom  · xorwow | 0.77 | 130,309,289 | 2.13x |
-| seedrandom  · xor4096 | 0.96 | 104,678,391 | 2.65x |
-| seedrandom  · xorshift7 | 0.65 | 154,524,875 | 1.79x |
-| pure-rand  · xoroshiro128+ | 2.11 | 47,365,552 | 5.86x |
-| pure-rand  · xorshift128+ | 2.15 | 46,577,421 | 5.95x |
-| pure-rand  · mersenne | 4.22 | 23,689,329 | 11.71x |
-| pure-rand  · congruential32 | 1.80 | 55,467,793 | 5.00x |
-| random-js  · Random.real(0, 1) | 1.93 | 51,895,563 | 5.34x |
+| **@arkv/rng  · pcg64  [batch]** | 0.45 | 220,937,837 | 1.62x |
+| **@arkv/rng  · xoroshiro128+  [batch]** | 0.28 | 357,021,725 | **fastest** |
+| **@arkv/rng  · xorshift128+  [batch]** | 0.28 | 357,514,417 | **fastest** |
+| **@arkv/rng  · mersenne  [batch]** | 0.42 | 237,001,083 | 1.51x |
+| **@arkv/rng  · lcg32  [batch]** | 0.28 | 358,741,821 | **fastest** |
+| **@arkv/rng  · pcg64  [single]** | 1.06 | 93,996,800 | 3.82x |
+| seedrandom  · default/ARC4 | 2.91 | 34,375,306 | 10.44x |
+| seedrandom  · alea | 0.71 | 141,633,631 | 2.53x |
+| seedrandom  · xor128 | 0.34 | 291,158,111 | 1.23x |
+| seedrandom  · tychei | 0.70 | 142,689,381 | 2.51x |
+| seedrandom  · xorwow | 0.73 | 137,859,728 | 2.60x |
+| seedrandom  · xor4096 | 1.13 | 88,506,071 | 4.05x |
+| seedrandom  · xorshift7 | 0.84 | 119,243,377 | 3.01x |
+| pure-rand  · xoroshiro128+ | 1.56 | 64,170,684 | 5.59x |
+| pure-rand  · xorshift128+ | 1.67 | 59,781,082 | 6.00x |
+| pure-rand  · mersenne | 2.38 | 41,957,185 | 8.55x |
+| pure-rand  · congruential32 | 1.68 | 59,413,153 | 6.04x |
+| random-js  · Random.real(0, 1) | 2.03 | 49,287,621 | 7.28x |
 
 ### 4 · Bounded Range [1, 1000)  — uniform distribution  (N=100,000)
 
 | Library | ms | ops/sec | vs fastest |
 |:--------|---:|-------:|----------:|
-| **@arkv/rng  · pcg64  ranges [batch]** | 0.95 | 105,388,626 | 2.42x |
-| **@arkv/rng  · xoroshiro128+  ranges [batch]** | 0.49 | 204,394,481 | 1.25x |
-| **@arkv/rng  · xorshift128+  ranges [batch]** | 0.47 | 214,592,275 | 1.19x |
-| **@arkv/rng  · mersenne  ranges [batch]** | 0.63 | 159,347,059 | 1.60x |
-| **@arkv/rng  · lcg32  ranges [batch]** | 0.49 | 203,337,583 | 1.25x |
-| **@arkv/rng  · pcg64  range() [single]** | 2.23 | 44,938,367 | 5.67x |
-| seedrandom  · default/ARC4  + floor | 3.18 | 31,407,272 | 8.12x |
-| seedrandom  · alea  + floor | 0.78 | 128,015,239 | 1.99x |
-| seedrandom  · xor128  + floor | 0.39 | 254,877,722 | **fastest** |
-| seedrandom  · tychei  + floor | 1.52 | 65,779,520 | 3.87x |
-| seedrandom  · xorwow  + floor | 2.19 | 45,745,780 | 5.57x |
-| seedrandom  · xor4096  + floor | 2.23 | 44,771,315 | 5.69x |
-| seedrandom  · xorshift7  + floor | 0.61 | 164,224,646 | 1.55x |
-| pure-rand  · xoroshiro128+  uniformInt | 15.05 | 6,643,356 | 38.37x |
-| pure-rand  · xorshift128+  uniformInt | 10.99 | 9,102,609 | 28.00x |
-| pure-rand  · mersenne  uniformInt | 11.53 | 8,669,354 | 29.40x |
-| pure-rand  · congruential32  uniformInt | 11.12 | 8,992,384 | 28.34x |
-| random-js  · Random.integer(1, 999) | 4.85 | 20,612,726 | 12.37x |
+| **@arkv/rng  · pcg64  ranges [batch]** | 0.89 | 112,764,743 | 2.59x |
+| **@arkv/rng  · xoroshiro128+  ranges [batch]** | 0.34 | 292,295,101 | **fastest** |
+| **@arkv/rng  · xorshift128+  ranges [batch]** | 0.36 | 279,967,748 | 1.04x |
+| **@arkv/rng  · mersenne  ranges [batch]** | 0.50 | 199,319,523 | 1.47x |
+| **@arkv/rng  · lcg32  ranges [batch]** | 0.36 | 275,942,758 | 1.06x |
+| **@arkv/rng  · pcg64  range() [single]** | 1.30 | 77,205,352 | 3.79x |
+| seedrandom  · default/ARC4  + floor | 2.96 | 33,737,383 | 8.66x |
+| seedrandom  · alea  + floor | 0.86 | 116,745,373 | 2.50x |
+| seedrandom  · xor128  + floor | 0.39 | 255,027,875 | 1.15x |
+| seedrandom  · tychei  + floor | 1.33 | 75,138,311 | 3.89x |
+| seedrandom  · xorwow  + floor | 2.03 | 49,201,073 | 5.94x |
+| seedrandom  · xor4096  + floor | 2.68 | 37,381,347 | 7.82x |
+| seedrandom  · xorshift7  + floor | 0.83 | 120,460,158 | 2.43x |
+| pure-rand  · xoroshiro128+  uniformInt | 16.21 | 6,168,270 | 47.39x |
+| pure-rand  · xorshift128+  uniformInt | 12.26 | 8,157,234 | 35.83x |
+| pure-rand  · mersenne  uniformInt | 12.56 | 7,959,431 | 36.72x |
+| pure-rand  · congruential32  uniformInt | 12.64 | 7,912,157 | 36.94x |
+| random-js  · Random.integer(1, 999) | 5.57 | 17,967,076 | 16.27x |
 
 ### 5 · Array Shuffle (100 k elements)  (N=100,000)
 
 | Library | ms | ops/sec | vs fastest |
 |:--------|---:|-------:|----------:|
-| **@arkv/rng  · pcg64  shuffle()** | 2.80 | 35,680,733 | 2.04x |
-| **@arkv/rng  · xoroshiro128+  shuffle()** | 3.25 | 30,813,393 | 2.36x |
-| **@arkv/rng  · xorshift128+  shuffle()** | 1.37 | 72,786,561 | **fastest** |
-| **@arkv/rng  · mersenne  shuffle()** | 3.06 | 32,655,834 | 2.23x |
-| **@arkv/rng  · lcg32  shuffle()** | 2.12 | 47,249,824 | 1.54x |
-| seedrandom  · default/ARC4  Fisher-Yates | 8.99 | 11,128,938 | 6.54x |
-| seedrandom  · alea  Fisher-Yates | 4.17 | 24,005,731 | 3.03x |
-| seedrandom  · xor128  Fisher-Yates | 7.96 | 12,564,156 | 5.79x |
-| seedrandom  · tychei  Fisher-Yates | 9.63 | 10,381,012 | 7.01x |
-| seedrandom  · xorwow  Fisher-Yates | 7.90 | 12,664,759 | 5.75x |
-| seedrandom  · xor4096  Fisher-Yates | 9.46 | 10,575,869 | 6.88x |
-| seedrandom  · xorshift7  Fisher-Yates | 7.55 | 13,251,369 | 5.49x |
-| pure-rand  · xoroshiro128+  Fisher-Yates | 12.44 | 8,037,612 | 9.06x |
-| pure-rand  · xorshift128+  Fisher-Yates | 16.12 | 6,203,138 | 11.73x |
-| pure-rand  · mersenne  Fisher-Yates | 14.28 | 7,002,782 | 10.39x |
-| pure-rand  · congruential32  Fisher-Yates | 15.05 | 6,645,919 | 10.95x |
-| random-js  · Random.shuffle()  [in-place] | 3.68 | 27,170,007 | 2.68x |
+| **@arkv/rng  · pcg64  shuffle()** | 2.48 | 40,244,898 | 1.25x |
+| **@arkv/rng  · xoroshiro128+  shuffle()** | 2.34 | 42,692,350 | 1.18x |
+| **@arkv/rng  · xorshift128+  shuffle()** | 3.21 | 31,159,938 | 1.62x |
+| **@arkv/rng  · mersenne  shuffle()** | 2.65 | 37,674,830 | 1.34x |
+| **@arkv/rng  · lcg32  shuffle()** | 1.98 | 50,498,241 | **fastest** |
+| seedrandom  · default/ARC4  Fisher-Yates | 7.71 | 12,971,693 | 3.89x |
+| seedrandom  · alea  Fisher-Yates | 3.57 | 28,014,720 | 1.80x |
+| seedrandom  · xor128  Fisher-Yates | 6.52 | 15,334,067 | 3.29x |
+| seedrandom  · tychei  Fisher-Yates | 9.13 | 10,949,091 | 4.61x |
+| seedrandom  · xorwow  Fisher-Yates | 8.50 | 11,770,951 | 4.29x |
+| seedrandom  · xor4096  Fisher-Yates | 7.90 | 12,652,875 | 3.99x |
+| seedrandom  · xorshift7  Fisher-Yates | 3.74 | 26,764,181 | 1.89x |
+| pure-rand  · xoroshiro128+  Fisher-Yates | 16.94 | 5,904,427 | 8.55x |
+| pure-rand  · xorshift128+  Fisher-Yates | 15.20 | 6,578,188 | 7.68x |
+| pure-rand  · mersenne  Fisher-Yates | 15.66 | 6,386,026 | 7.91x |
+| pure-rand  · congruential32  Fisher-Yates | 13.55 | 7,379,014 | 6.84x |
+| random-js  · Random.shuffle()  [in-place] | 2.79 | 35,853,281 | 1.41x |
 
 ### 6 · String-seeded Float [0, 1)  (N=100,000)
 
 | Library | ms | ops/sec | vs fastest |
 |:--------|---:|-------:|----------:|
-| **@arkv/rng  · pcg64  [string seed]** | 1.14 | 87,491,513 | 3.33x |
-| **@arkv/rng  · xoroshiro128+  [string seed]** | 1.06 | 94,547,985 | 3.08x |
-| **@arkv/rng  · xorshift128+  [string seed]** | 1.03 | 96,619,571 | 3.01x |
-| **@arkv/rng  · mersenne  [string seed]** | 1.56 | 64,018,068 | 4.54x |
-| **@arkv/rng  · lcg32  [string seed]** | 0.82 | 122,169,336 | 2.38x |
-| seedrandom  · default/ARC4  [string seed] | 3.17 | 31,533,824 | 9.23x |
-| seedrandom  · alea  [string seed] | 0.79 | 125,841,882 | 2.31x |
-| seedrandom  · xor128  [string seed] | 0.34 | 290,939,560 | **fastest** |
-| seedrandom  · tychei  [string seed] | 0.71 | 141,307,005 | 2.06x |
-| seedrandom  · xorwow  [string seed] | 0.82 | 122,126,516 | 2.38x |
-| seedrandom  · xor4096  [string seed] | 0.89 | 112,872,040 | 2.58x |
-| seedrandom  · xorshift7  [string seed] | 0.95 | 105,505,376 | 2.76x |
+| **@arkv/rng  · pcg64  [string seed]** | 1.01 | 99,472,794 | 2.01x |
+| **@arkv/rng  · xoroshiro128+  [string seed]** | 0.84 | 118,623,681 | 1.68x |
+| **@arkv/rng  · xorshift128+  [string seed]** | 0.98 | 101,834,757 | 1.96x |
+| **@arkv/rng  · mersenne  [string seed]** | 0.86 | 115,722,525 | 1.73x |
+| **@arkv/rng  · lcg32  [string seed]** | 0.65 | 152,974,669 | 1.31x |
+| seedrandom  · default/ARC4  [string seed] | 3.19 | 31,319,833 | 6.38x |
+| seedrandom  · alea  [string seed] | 0.75 | 133,166,077 | 1.50x |
+| seedrandom  · xor128  [string seed] | 0.50 | 199,721,189 | **fastest** |
+| seedrandom  · tychei  [string seed] | 0.65 | 153,936,147 | 1.30x |
+| seedrandom  · xorwow  [string seed] | 0.73 | 136,379,692 | 1.46x |
+| seedrandom  · xor4096  [string seed] | 1.10 | 90,554,529 | 2.21x |
+| seedrandom  · xorshift7  [string seed] | 0.53 | 187,386,982 | 1.07x |
