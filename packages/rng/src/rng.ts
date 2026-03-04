@@ -14,13 +14,25 @@ export class Rng {
   /**
    * Pass a seed for deterministic output, or omit for system entropy.
    * `algorithm` selects the PRNG backend (default: `'pcg64'`).
+   *
+   * String seeds are hashed to a u64 via FNV-1a 64-bit (UTF-8 bytes) inside
+   * the WebAssembly layer, so `new Rng('hello.')` is fully deterministic and
+   * cross-platform. Note that `new Rng('42')` and `new Rng(42)` produce
+   * different sequences.
    */
   constructor(
-    seed?: number | bigint,
+    seed?: number | bigint | string,
     algorithm: RngAlgorithm = 'pcg64',
   ) {
     if (seed !== undefined) {
-      this.engine = new WasmRng(BigInt(seed), algorithm);
+      if (typeof seed === 'string') {
+        this.engine = WasmRng.from_str_seed(
+          seed,
+          algorithm,
+        );
+      } else {
+        this.engine = new WasmRng(BigInt(seed), algorithm);
+      }
     } else {
       this.engine = WasmRng.from_entropy(algorithm);
     }

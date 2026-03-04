@@ -30,6 +30,24 @@ describe('@arkv/rng', () => {
       expect(rng).toBeInstanceOf(Rng);
       rng.free();
     });
+
+    it('creates instance with string seed', () => {
+      const rng = new Rng('hello.');
+      expect(rng).toBeInstanceOf(Rng);
+      rng.free();
+    });
+
+    it('creates instance with empty string seed', () => {
+      const rng = new Rng('');
+      expect(rng).toBeInstanceOf(Rng);
+      rng.free();
+    });
+
+    it('creates instance with Unicode/emoji string seed', () => {
+      const rng = new Rng('🎲🌟');
+      expect(rng).toBeInstanceOf(Rng);
+      rng.free();
+    });
   });
 
   // ── Per-algorithm tests ────────────────────────────────────────────────────
@@ -159,6 +177,22 @@ describe('@arkv/rng', () => {
         const rng = new Rng(1n, algo);
         expect(() => rng.free()).not.toThrow();
       });
+
+      it('creates instance with string seed', () => {
+        const rng = new Rng('hello.', algo);
+        expect(rng).toBeInstanceOf(Rng);
+        rng.free();
+      });
+
+      it('is deterministic for string seeds', () => {
+        const rng1 = new Rng('hello.', algo);
+        const rng2 = new Rng('hello.', algo);
+        for (let i = 0; i < 10; i++) {
+          expect(rng1.int()).toBe(rng2.int());
+        }
+        rng1.free();
+        rng2.free();
+      });
     });
   }
 
@@ -176,6 +210,117 @@ describe('@arkv/rng', () => {
       // At least two values must differ (all distinct algorithms)
       const unique = new Set(results);
       expect(unique.size).toBeGreaterThan(1);
+    });
+  });
+
+  // ── String seeds ────────────────────────────────────────────────────────────
+
+  describe('string seeds', () => {
+    it('same string → same sequence (determinism)', () => {
+      const rng1 = new Rng('hello.');
+      const rng2 = new Rng('hello.');
+      for (let i = 0; i < 10; i++) {
+        expect(rng1.int()).toBe(rng2.int());
+      }
+      rng1.free();
+      rng2.free();
+    });
+
+    it('different strings → different sequences', () => {
+      const rng1 = new Rng('hello.');
+      const rng2 = new Rng('world.');
+      const seq1 = Array.from({ length: 5 }, () =>
+        rng1.int(),
+      );
+      const seq2 = Array.from({ length: 5 }, () =>
+        rng2.int(),
+      );
+      expect(seq1).not.toEqual(seq2);
+      rng1.free();
+      rng2.free();
+    });
+
+    it('numeric-looking string "42" gives different sequence than number 42', () => {
+      const rngStr = new Rng('42');
+      const rngNum = new Rng(42);
+      const seqStr = Array.from({ length: 5 }, () =>
+        rngStr.int(),
+      );
+      const seqNum = Array.from({ length: 5 }, () =>
+        rngNum.int(),
+      );
+      expect(seqStr).not.toEqual(seqNum);
+      rngStr.free();
+      rngNum.free();
+    });
+
+    it('empty string seed is deterministic', () => {
+      const rng1 = new Rng('');
+      const rng2 = new Rng('');
+      for (let i = 0; i < 10; i++) {
+        expect(rng1.int()).toBe(rng2.int());
+      }
+      rng1.free();
+      rng2.free();
+    });
+
+    it('empty string and non-empty string produce different sequences', () => {
+      const rng1 = new Rng('');
+      const rng2 = new Rng('a');
+      const seq1 = Array.from({ length: 5 }, () =>
+        rng1.int(),
+      );
+      const seq2 = Array.from({ length: 5 }, () =>
+        rng2.int(),
+      );
+      expect(seq1).not.toEqual(seq2);
+      rng1.free();
+      rng2.free();
+    });
+
+    it('Unicode/emoji seed is deterministic', () => {
+      const rng1 = new Rng('🎲🌟');
+      const rng2 = new Rng('🎲🌟');
+      for (let i = 0; i < 10; i++) {
+        expect(rng1.int()).toBe(rng2.int());
+      }
+      rng1.free();
+      rng2.free();
+    });
+
+    it('different Unicode seeds produce different sequences', () => {
+      const rng1 = new Rng('🎲');
+      const rng2 = new Rng('🌟');
+      const seq1 = Array.from({ length: 5 }, () =>
+        rng1.int(),
+      );
+      const seq2 = Array.from({ length: 5 }, () =>
+        rng2.int(),
+      );
+      expect(seq1).not.toEqual(seq2);
+      rng1.free();
+      rng2.free();
+    });
+
+    it('very long string seed works and is deterministic', () => {
+      const longSeed = 'a'.repeat(10_000);
+      const rng1 = new Rng(longSeed);
+      const rng2 = new Rng(longSeed);
+      for (let i = 0; i < 5; i++) {
+        expect(rng1.int()).toBe(rng2.int());
+      }
+      rng1.free();
+      rng2.free();
+    });
+
+    it('string seed produces values in valid range', () => {
+      const rng = new Rng('test seed');
+      for (let i = 0; i < 20; i++) {
+        const val = rng.int();
+        expect(val).toBeGreaterThanOrEqual(0);
+        expect(val).toBeLessThanOrEqual(2 ** 32 - 1);
+      }
+      rng.free();
     });
   });
 
@@ -230,6 +375,26 @@ describe('@arkv/rng', () => {
     it('throws on negative length', () => {
       const rng = new Rng(1n);
       expect(() => rng.ints(-5)).toThrow(
+        'Length cannot be negative.',
+      );
+      rng.free();
+    });
+  });
+
+  describe('floats() error handling', () => {
+    it('throws on negative length', () => {
+      const rng = new Rng(1n);
+      expect(() => rng.floats(-1)).toThrow(
+        'Length cannot be negative.',
+      );
+      rng.free();
+    });
+  });
+
+  describe('ranges() error handling', () => {
+    it('throws on negative length', () => {
+      const rng = new Rng(1n);
+      expect(() => rng.ranges(0, 10, -1)).toThrow(
         'Length cannot be negative.',
       );
       rng.free();

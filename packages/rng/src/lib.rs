@@ -150,6 +150,20 @@ impl SeedableRng for Lcg32Rng {
     }
 }
 
+// ── FNV-1a 64-bit — deterministic string → u64 ───────────────────────────────
+
+const FNV1A_PRIME: u64 = 1_099_511_628_211;
+const FNV1A_OFFSET: u64 = 14_695_981_039_346_656_037;
+
+fn fnv1a_64(s: &str) -> u64 {
+    let mut h = FNV1A_OFFSET;
+    for byte in s.as_bytes() {
+        h ^= *byte as u64;
+        h = h.wrapping_mul(FNV1A_PRIME);
+    }
+    h
+}
+
 // ── Inner enum ────────────────────────────────────────────────────────────────
 
 enum Inner {
@@ -227,6 +241,14 @@ impl ArkvRng {
     pub fn new(seed: u64, algorithm: &str) -> ArkvRng {
         ArkvRng {
             inner: Inner::from_seed(algorithm, seed),
+        }
+    }
+
+    /// Create a seeded RNG from a string seed.
+    /// The string is hashed to a u64 via FNV-1a 64-bit (UTF-8 bytes).
+    pub fn from_str_seed(seed: &str, algorithm: &str) -> ArkvRng {
+        ArkvRng {
+            inner: Inner::from_seed(algorithm, fnv1a_64(seed)),
         }
     }
 

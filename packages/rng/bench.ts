@@ -7,6 +7,7 @@ import seedrandom from 'seedrandom';
 import { Rng } from './src/index.js';
 
 const SEED = 12345;
+const STRING_SEED = 'hello benchmark seed';
 const N = 100_000;
 
 // ── Table helpers ──────────────────────────────────────────────────────────────
@@ -361,6 +362,49 @@ function main() {
       }),
     },
   ]);
+
+  // ── 6. String-seeded float [0, 1) ─────────────────────────────────────────
+  const arkvPcg64Str = new Rng(STRING_SEED, 'pcg64');
+  const arkvXoroshiroStr = new Rng(
+    STRING_SEED,
+    'xoroshiro128+',
+  );
+  const arkvXorshiftStr = new Rng(
+    STRING_SEED,
+    'xorshift128+',
+  );
+  const arkvMersenneStr = new Rng(STRING_SEED, 'mersenne');
+  const arkvLcg32Str = new Rng(STRING_SEED, 'lcg32');
+
+  const arkvStrInstances: Array<[string, Rng]> = [
+    ['pcg64', arkvPcg64Str],
+    ['xoroshiro128+', arkvXoroshiroStr],
+    ['xorshift128+', arkvXorshiftStr],
+    ['mersenne', arkvMersenneStr],
+    ['lcg32', arkvLcg32Str],
+  ];
+
+  printTable('6 · String-seeded Float [0, 1)', [
+    ...arkvStrInstances.map(([algo, rng]) => ({
+      label: `@arkv/rng  · ${algo}  [string seed]`,
+      ms: bench(() => {
+        for (let i = 0; i < N; i++) rng.float();
+      }),
+    })),
+    ...srVariants.map(([name, rng]) => ({
+      label: `seedrandom  · ${name}  [string seed]`,
+      ms: bench(() => {
+        for (let i = 0; i < N; i++) rng();
+      }),
+    })),
+  ]);
+
+  console.log();
+  arkvPcg64Str.free();
+  arkvXoroshiroStr.free();
+  arkvXorshiftStr.free();
+  arkvMersenneStr.free();
+  arkvLcg32Str.free();
 
   console.log();
   arkvPcg64.free();
