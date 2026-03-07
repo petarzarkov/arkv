@@ -6,7 +6,7 @@ A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 
 [![CI](https://github.com/petarzarkov/arkv/actions/workflows/ci.yml/badge.svg)](https://github.com/petarzarkov/arkv/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-black.svg)](https://bun.sh)
 
 </div>
@@ -20,7 +20,8 @@ A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 | [`@arkv/colors`](./packages/colors) | [![npm](https://img.shields.io/npm/v/@arkv/colors)](https://www.npmjs.com/package/@arkv/colors) | Lightweight, zero-dependency ANSI color and style utilities |
 | [`@arkv/shared`](./packages/shared) | [![npm](https://img.shields.io/npm/v/@arkv/shared)](https://www.npmjs.com/package/@arkv/shared) | Shared utilities across packages |
 | [`@arkv/logger`](./packages/logger) | [![npm](https://img.shields.io/npm/v/@arkv/logger)](https://www.npmjs.com/package/@arkv/logger) | Framework-agnostic structured logger with async context, sanitization, and colored output |
-| [`@arkv/rng`](./packages/rng) | [![npm](https://img.shields.io/npm/v/@arkv/rng)](https://www.npmjs.com/package/@arkv/rng) | Lightweight, blazing fast, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG. |
+| [`@arkv/rng`](./packages/rng) | [![npm](https://img.shields.io/npm/v/@arkv/rng)](https://www.npmjs.com/package/@arkv/rng) | Lightweight, blazing fast, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG |
+| [`@arkv/temporal`](./packages/temporal) | [![npm](https://img.shields.io/npm/v/@arkv/temporal)](https://www.npmjs.com/package/@arkv/temporal) | Drop-in Day.js-compatible date library powered by the native Temporal API — timezone-safe, DST-correct, nanosecond-precise |
 
 ## Project Structure
 
@@ -30,6 +31,8 @@ arkv/
     shared/          # Shared utilities (@arkv/shared)
     colors/          # ANSI color & style utilities (@arkv/colors)
     logger/          # Structured logger (@arkv/logger)
+    rng/             # Pseudo-RNG with WASM support (@arkv/rng)
+    temporal/        # Day.js-compatible Temporal adapter (@arkv/temporal)
   scripts/           # Monorepo-level scripts (versioning, env docs)
   .github/workflows/ # CI/CD pipeline
   .husky/            # Git hooks (pre-commit, commit-msg)
