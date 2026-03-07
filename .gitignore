@@ -144,3 +144,6 @@ packages/rng/src/wasm/
 
 # Rust build cache
 target
+
+# Temporary folders
+tmp
