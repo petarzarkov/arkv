@@ -17,25 +17,27 @@ A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [`@arkv/colors`](./packages/colors) | [![npm](https://img.shields.io/npm/v/@arkv/colors)](https://www.npmjs.com/package/@arkv/colors) | Lightweight, zero-dependency ANSI color and style utilities |
-| [`@arkv/shared`](./packages/shared) | [![npm](https://img.shields.io/npm/v/@arkv/shared)](https://www.npmjs.com/package/@arkv/shared) | Shared utilities across packages |
-| [`@arkv/logger`](./packages/logger) | [![npm](https://img.shields.io/npm/v/@arkv/logger)](https://www.npmjs.com/package/@arkv/logger) | Framework-agnostic structured logger with async context, sanitization, and colored output |
-| [`@arkv/rng`](./packages/rng) | [![npm](https://img.shields.io/npm/v/@arkv/rng)](https://www.npmjs.com/package/@arkv/rng) | Lightweight, blazing fast, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG |
-| [`@arkv/temporal`](./packages/temporal) | [![npm](https://img.shields.io/npm/v/@arkv/temporal)](https://www.npmjs.com/package/@arkv/temporal) | Drop-in Day.js-compatible date library powered by the native Temporal API — timezone-safe, DST-correct, nanosecond-precise |
+| [`@arkv/colors`](./packages/colors) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fcolors)](https://www.npmjs.com/package/%40arkv%2Fcolors) | Lightweight, zero-dependency ANSI color and style utilities for terminals |
+| [`@arkv/logger`](./packages/logger) | [![npm](https://img.shields.io/npm/v/%40arkv%2Flogger)](https://www.npmjs.com/package/%40arkv%2Flogger) | Framework-agnostic structured logger with async context, sanitization, and colored output |
+| [`@arkv/nestjs-context-logger`](./packages/nestjs-context-logger) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fnestjs-context-logger)](https://www.npmjs.com/package/%40arkv%2Fnestjs-context-logger) | NestJS module for structured async-context logging powered by @arkv/logger |
+| [`@arkv/rng`](./packages/rng) | [![npm](https://img.shields.io/npm/v/%40arkv%2Frng)](https://www.npmjs.com/package/%40arkv%2Frng) | Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG. |
+| [`@arkv/shared`](./packages/shared) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fshared)](https://www.npmjs.com/package/%40arkv%2Fshared) | Shared utilities for @arkv packages |
+| [`@arkv/temporal`](./packages/temporal) | [![npm](https://img.shields.io/npm/v/%40arkv%2Ftemporal)](https://www.npmjs.com/package/%40arkv%2Ftemporal) | Drop-in Day.js-compatible API powered by the native Temporal API. Same chainable interface, zero timezone bugs. |
 
 ## Project Structure
 
 ```
 arkv/
-  packages/
-    shared/          # Shared utilities (@arkv/shared)
-    colors/          # ANSI color & style utilities (@arkv/colors)
-    logger/          # Structured logger (@arkv/logger)
-    rng/             # Pseudo-RNG with WASM support (@arkv/rng)
-    temporal/        # Day.js-compatible Temporal adapter (@arkv/temporal)
-  scripts/           # Monorepo-level scripts (versioning, env docs)
-  .github/workflows/ # CI/CD pipeline
-  .husky/            # Git hooks (pre-commit, commit-msg)
+├── packages/                  # Published packages
+│   ├── colors                 # Lightweight, zero-dependency ANSI color and style utilities for terminals
+│   ├── logger                 # Framework-agnostic structured logger with async context, sanitization, and colored output
+│   ├── nestjs-context-logger  # NestJS module for structured async-context logging powered by @arkv/logger
+│   ├── rng                    # Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG.
+│   ├── shared                 # Shared utilities for @arkv packages
+│   └── temporal               # Drop-in Day.js-compatible API powered by the native Temporal API
+├── scripts/                   # Monorepo-level scripts
+├── .github/workflows/         # CI/CD pipeline
+└── .husky/                    # Git hooks
 ```
 
 ## Getting Started
