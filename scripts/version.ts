@@ -111,7 +111,9 @@ const getChangedSrcPackages = (): Set<string> | null => {
 
     const dirs = new Set<string>();
     for (const file of out.split('\n')) {
-      const match = file.match(/^packages\/([^/]+)\/src\//);
+      const match = file.match(
+        /^packages\/([^/]+)\/(src\/|package\.json|README\.md)/,
+      );
       if (match) dirs.add(match[1]);
     }
     return dirs;
