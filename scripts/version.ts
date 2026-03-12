@@ -264,6 +264,23 @@ type PublishablePackage = {
   packageJsonPath: string;
 };
 
+const isVersionPublished = (
+  name: string,
+  version: string,
+): boolean => {
+  try {
+    const out = execSync(
+      `bunx npm view ${name}@${version} version --json`,
+      { stdio: 'pipe' },
+    )
+      .toString()
+      .trim();
+    return out.includes(version);
+  } catch {
+    return false;
+  }
+};
+
 const runForcePublish = (
   packages: PublishablePackage[],
 ): void => {
@@ -276,20 +293,27 @@ const runForcePublish = (
     process.exit(0);
   }
 
-  if (isDryRun) {
-    for (const { name, packageJsonPath } of packages) {
-      const pkg = JSON.parse(
-        readFileSync(packageJsonPath, 'utf-8'),
-      );
-      console.log(
-        `[DRY RUN] Would publish ${name}@${pkg.version}`,
-      );
-    }
-    return;
-  }
+  for (const { name, dir, packageJsonPath } of packages) {
+    const pkg = JSON.parse(
+      readFileSync(packageJsonPath, 'utf-8'),
+    );
+    const { version } = pkg;
 
-  for (const { name, dir } of packages) {
-    console.log(`Publishing ${name}...`);
+    if (isVersionPublished(name, version)) {
+      console.log(
+        `Skipping ${name}@${version}: already published.`,
+      );
+      continue;
+    }
+
+    if (isDryRun) {
+      console.log(
+        `[DRY RUN] Would publish ${name}@${version}`,
+      );
+      continue;
+    }
+
+    console.log(`Publishing ${name}@${version}...`);
     publishPackage(dir);
   }
 };
