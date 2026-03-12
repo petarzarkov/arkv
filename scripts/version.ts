@@ -10,6 +10,23 @@ import { semver } from 'bun';
 
 const isDryRun = process.env.DRY_RUN === 'true';
 
+const checkForcePublish = (): boolean => {
+  if (process.env.FORCE_PUBLISH === 'true') return true;
+  try {
+    const commitMessage = execSync(
+      'git log -1 --pretty=format:"%s%n%b"',
+      { stdio: 'pipe' },
+    )
+      .toString()
+      .trim();
+    return commitMessage.includes('[force-publish]');
+  } catch {
+    return false;
+  }
+};
+
+const isForcePublish = checkForcePublish();
+
 const bumpVersion = (
   version: string,
   type: 'major' | 'minor' | 'patch',
@@ -241,11 +258,45 @@ const publishPackage = (pkgDir: string): void => {
   });
 };
 
-(async () => {
-  if (isDryRun) {
-    console.log('\n--- DRY RUN MODE ENABLED ---\n');
+type PublishablePackage = {
+  name: string;
+  dir: string;
+  packageJsonPath: string;
+};
+
+const runForcePublish = (
+  packages: PublishablePackage[],
+): void => {
+  console.log(
+    '\n--- FORCE PUBLISH MODE: publishing all packages at current versions ---\n',
+  );
+
+  if (packages.length === 0) {
+    console.log('No publishable packages found.');
+    process.exit(0);
   }
 
+  if (isDryRun) {
+    for (const { name, packageJsonPath } of packages) {
+      const pkg = JSON.parse(
+        readFileSync(packageJsonPath, 'utf-8'),
+      );
+      console.log(
+        `[DRY RUN] Would publish ${name}@${pkg.version}`,
+      );
+    }
+    return;
+  }
+
+  for (const { name, dir } of packages) {
+    console.log(`Publishing ${name}...`);
+    publishPackage(dir);
+  }
+};
+
+const runVersionBump = (
+  allPackages: PublishablePackage[],
+): void => {
   const changedSrcPackages = getChangedSrcPackages();
 
   if (
@@ -271,11 +322,10 @@ const publishPackage = (pkgDir: string): void => {
   const bumpType = determineBumpType();
   console.log(`Determined version bump type: ${bumpType}`);
 
-  const allPublishablePackages = findPublishablePackages();
   const publishablePackages =
     changedSrcPackages === null
-      ? allPublishablePackages
-      : allPublishablePackages.filter(pkg =>
+      ? allPackages
+      : allPackages.filter(pkg =>
           changedSrcPackages.has(basename(pkg.dir)),
         );
 
@@ -289,21 +339,35 @@ const publishPackage = (pkgDir: string): void => {
     bumpType,
   );
 
-  if (!isDryRun && bumpedPackages.length > 0) {
-    try {
-      console.log('Committing version changes...');
-      pushVersionCommit(
-        bumpedPackages.map(p => p.packageJsonPath),
-      );
+  if (isDryRun || bumpedPackages.length === 0) return;
 
-      console.log('Publishing bumped packages...');
-      for (const { dir } of bumpedPackages) {
-        console.log(`Publishing ${basename(dir)}...`);
-        publishPackage(dir);
-      }
-    } catch (error) {
-      console.error('Failed to version packages:', error);
-      process.exit(1);
+  console.log('Committing version changes...');
+  pushVersionCommit(
+    bumpedPackages.map(p => p.packageJsonPath),
+  );
+
+  console.log('Publishing bumped packages...');
+  for (const { dir } of bumpedPackages) {
+    console.log(`Publishing ${basename(dir)}...`);
+    publishPackage(dir);
+  }
+};
+
+(async () => {
+  if (isDryRun) {
+    console.log('\n--- DRY RUN MODE ENABLED ---\n');
+  }
+
+  const allPublishablePackages = findPublishablePackages();
+
+  try {
+    if (isForcePublish) {
+      runForcePublish(allPublishablePackages);
+    } else {
+      runVersionBump(allPublishablePackages);
     }
+  } catch (error) {
+    console.error('Failed to process packages:', error);
+    process.exit(1);
   }
 })();

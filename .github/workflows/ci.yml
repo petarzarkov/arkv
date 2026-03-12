@@ -77,4 +77,6 @@ jobs:
       - name: Version bump & publish
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: bun run version
+        env:
+          FORCE_PUBLISH: ${{ contains(github.event.head_commit.message, '[force-publish]') }}
 
