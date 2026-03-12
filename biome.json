@@ -52,6 +52,18 @@
       "arrowParentheses": "asNeeded"
     }
   },
+  "overrides": [
+    {
+      "includes": ["packages/nestjs-context-logger/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useImportType": "off"
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "enabled": true,
     "actions": {

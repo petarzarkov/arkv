@@ -56,13 +56,15 @@ export interface LoggerModuleAsyncOptions
    * Inject dependencies via the inject array.
    */
   useFactory?: (
-    ...args: unknown[]
+    // biome-ignore lint/suspicious/noExplicitAny: allow any args for factory function
+    ...args: any[]
   ) => Promise<LoggerModuleConfig> | LoggerModuleConfig;
 
   /**
    * Tokens to inject into the useFactory function.
    */
-  inject?: unknown[];
+  // biome-ignore lint/suspicious/noExplicitAny: injection tokens can be any provider token
+  inject?: any[];
 
   /**
    * Class that implements LoggerModuleOptionsFactory.

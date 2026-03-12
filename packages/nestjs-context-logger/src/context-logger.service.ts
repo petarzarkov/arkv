@@ -1,7 +1,7 @@
 import { Logger, type LogLevel } from '@arkv/logger';
 import type { LoggerService } from '@nestjs/common';
 import { Inject, Injectable } from '@nestjs/common';
-import type { ContextService } from './context.service.js';
+import { ContextService } from './context.service.js';
 import {
   LOGGER_MODULE_OPTIONS,
   type LoggerModuleConfig,
