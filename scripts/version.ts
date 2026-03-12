@@ -270,12 +270,18 @@ const isVersionPublished = (
 ): boolean => {
   try {
     const out = execSync(
-      `bunx npm view ${name}@${version} version --json`,
+      `bunx npm view ${name} versions --json`,
       { stdio: 'pipe' },
     )
       .toString()
       .trim();
-    return out.includes(version);
+    // npm returns a single quoted string when only one version exists,
+    // or a JSON array when multiple versions exist
+    const parsed: string | string[] = JSON.parse(out);
+    const versions = Array.isArray(parsed)
+      ? parsed
+      : [parsed];
+    return versions.includes(version);
   } catch {
     return false;
   }
