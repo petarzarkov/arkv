@@ -1,6 +1,6 @@
 {
   "name": "@arkv/temporal",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Drop-in Day.js-compatible API powered by the native Temporal API. Same chainable interface, zero timezone bugs.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
