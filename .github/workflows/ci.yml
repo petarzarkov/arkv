@@ -52,11 +52,11 @@ jobs:
         with:
           version: latest
 
-      - name: Lint
-        run: bun run lint
-
       - name: Build
         run: bun run build
+
+      - name: Lint
+        run: bun run lint
 
       - name: Typecheck
         run: bun run typecheck
