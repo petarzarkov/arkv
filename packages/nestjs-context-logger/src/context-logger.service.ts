@@ -2,10 +2,7 @@ import { Logger, type LogLevel } from '@arkv/logger';
 import type { LoggerService } from '@nestjs/common';
 import { Inject, Injectable } from '@nestjs/common';
 import { ContextService } from './context.service.js';
-import {
-  LOGGER_MODULE_OPTIONS,
-  type LoggerModuleConfig,
-} from './types.js';
+import { LOGGER_MODULE_OPTIONS, type LoggerModuleConfig } from './types.js';
 
 /**
  * Injectable NestJS structured logger service.

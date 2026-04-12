@@ -16,10 +16,7 @@ import {
 import { safeStringify } from '@arkv/shared';
 import type { LogEntry, LogLevel } from './types.js';
 
-export function formatColoredJson(
-  obj: LogEntry,
-  level: LogLevel,
-): string {
+export function formatColoredJson(obj: LogEntry, level: LogLevel): string {
   const jsonString = safeStringify(obj);
 
   const colorMap = {
@@ -43,13 +40,10 @@ export function formatColoredJson(
   return jsonString.replace(
     /(".*?":\s*)(.*?)(?=,|\n|$)/g,
     (_: string, key: string, value: string) => {
-      const keyWithoutQuotes = key
-        .replace(/"/g, '')
-        .slice(0, -1);
+      const keyWithoutQuotes = key.replace(/"/g, '').slice(0, -1);
       const colorizer =
-        colorMap[
-          keyWithoutQuotes as keyof typeof colorMap
-        ] || getValueColor(value);
+        colorMap[keyWithoutQuotes as keyof typeof colorMap] ||
+        getValueColor(value);
       return `${cyan(key)}${colorizer(value)}`;
     },
   );

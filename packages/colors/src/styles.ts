@@ -2,14 +2,8 @@ import { ANSIPairs } from './ansi.js';
 import { createColor } from './color.js';
 
 // Style modifiers
-export const bold = createColor(
-  ANSIPairs.bold.open,
-  ANSIPairs.bold.close,
-);
-export const dim = createColor(
-  ANSIPairs.dim.open,
-  ANSIPairs.dim.close,
-);
+export const bold = createColor(ANSIPairs.bold.open, ANSIPairs.bold.close);
+export const dim = createColor(ANSIPairs.dim.open, ANSIPairs.dim.close);
 export const italic = createColor(
   ANSIPairs.italic.open,
   ANSIPairs.italic.close,

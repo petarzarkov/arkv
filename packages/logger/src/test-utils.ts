@@ -13,13 +13,7 @@ export const defaultTestConfig: LoggerConfig = {
   env: 'local',
   isDevelopment: true,
   level: LogLevel.DEBUG,
-  maskFields: [
-    'password',
-    'token',
-    'apiKey',
-    'apiSecret',
-    'apiPass',
-  ],
+  maskFields: ['password', 'token', 'apiKey', 'apiSecret', 'apiPass'],
   filterEvents: ['/health'],
   maxArrayLength: 1,
 };

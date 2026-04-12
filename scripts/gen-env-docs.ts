@@ -34,9 +34,7 @@ interface ParsedVariable {
  * Main function to generate the documentation.
  */
 function generateEnvDocs(): void {
-  console.log(
-    'Generating environment variable documentation...',
-  );
+  console.log('Generating environment variable documentation...');
 
   const envFiles = findAllEnvSampleFiles();
   if (envFiles.length === 0) {
@@ -44,19 +42,14 @@ function generateEnvDocs(): void {
     process.exit(1);
   }
 
-  console.log(
-    `Found ${envFiles.length} .env.sample files:`,
-  );
+  console.log(`Found ${envFiles.length} .env.sample files:`);
   // biome-ignore lint/suspicious/useIterableCallbackReturn: nn
-  envFiles.forEach(file => console.log(`  - ${file}`));
+  envFiles.forEach((file) => console.log(`  - ${file}`));
 
   const allParsedVars: ParsedVariable[] = [];
 
   for (const filePath of envFiles) {
-    const relativePath = path.relative(
-      process.cwd(),
-      filePath,
-    );
+    const relativePath = path.relative(process.cwd(), filePath);
     const parsedVars = parseEnvFile(filePath, relativePath);
     allParsedVars.push(...parsedVars);
   }
@@ -94,9 +87,7 @@ function parseEnvFile(
   relativePath: string,
 ): ParsedVariable[] {
   if (!fs.existsSync(filePath)) {
-    console.warn(
-      `Warning: .env.sample file not found at ${filePath}`,
-    );
+    console.warn(`Warning: .env.sample file not found at ${filePath}`);
     return [];
   }
 
@@ -111,9 +102,7 @@ function parseEnvFile(
 
     const match = line.match(/^([^#=]+)=([^#]*)#?(.*)$/);
     if (match) {
-      const [, name, value, description] = match.map(s =>
-        s.trim(),
-      );
+      const [, name, value, description] = match.map((s) => s.trim());
       parsedVars.push({
         name,
         value,
@@ -142,9 +131,7 @@ function groupVariables(
       const prefixes = groupConfig[title];
 
       // Handle both string and array of strings
-      const prefixesToCheck = Array.isArray(prefixes)
-        ? prefixes
-        : [prefixes];
+      const prefixesToCheck = Array.isArray(prefixes) ? prefixes : [prefixes];
 
       for (const prefix of prefixesToCheck) {
         // The catch-all group has an empty prefix, so it shouldn't match here.
@@ -164,9 +151,7 @@ function groupVariables(
 
     if (!assigned) {
       const generalTitle =
-        groupTitles.find(
-          title => groupConfig[title] === '',
-        ) || 'General';
+        groupTitles.find((title) => groupConfig[title] === '') || 'General';
       if (!grouped[generalTitle]) {
         grouped[generalTitle] = [];
       }
@@ -196,15 +181,12 @@ function generateMarkdown(
     }
 
     markdown += `### ${title}\n\n`;
-    markdown +=
-      '| Variable | Description | Default Value | Source |\n';
+    markdown += '| Variable | Description | Default Value | Source |\n';
     markdown += '|---|---|---|---|\n';
 
     const uniqueVars = vars.reduce(
       (acc: ParsedVariable[], current: ParsedVariable) => {
-        const existing = acc.find(
-          v => v.name === current.name,
-        );
+        const existing = acc.find((v) => v.name === current.name);
         if (!existing) {
           acc.push(current);
         } else {
@@ -216,8 +198,7 @@ function generateMarkdown(
     );
 
     for (const v of uniqueVars) {
-      const description =
-        v.description || 'No description provided.';
+      const description = v.description || 'No description provided.';
       markdown += `| \`${v.name}\` | ${description} | \`${v.value}\` | ${v.source} |\n`;
     }
     markdown += '\n';

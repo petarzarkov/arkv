@@ -52,7 +52,7 @@ jobs:
         with:
           version: latest
 
-      - name: Lint & Format
+      - name: Lint
         run: bun run lint
 
       - name: Build
@@ -79,4 +79,3 @@ jobs:
         run: bun run version
         env:
           FORCE_PUBLISH: ${{ contains(github.event.head_commit.message, '[force-publish]') }}
-

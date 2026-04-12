@@ -1,17 +1,7 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  spyOn,
-} from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
 import { ContextStore } from './context.js';
 import { Logger } from './logger.js';
-import {
-  defaultTestConfig,
-  parseLogOutput,
-} from './test-utils.js';
+import { defaultTestConfig, parseLogOutput } from './test-utils.js';
 import { LogLevel } from './types.js';
 
 describe('Logger', () => {
@@ -27,10 +17,8 @@ describe('Logger', () => {
       event: '/test',
     });
     logger = new Logger(defaultTestConfig, contextStore);
-    consoleLogSpy = spyOn(
-      console,
-      'log',
-    ).mockImplementation(() => {});
+    // eslint-disable-next-line no-empty-function
+    consoleLogSpy = spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -45,8 +33,7 @@ describe('Logger', () => {
 
       logger.log('Test', nestedObject);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.message).toBe('Test');
@@ -58,8 +45,7 @@ describe('Logger', () => {
     it('should log debug messages', () => {
       logger.debug('Debug message');
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('debug');
@@ -69,8 +55,7 @@ describe('Logger', () => {
     it('should log warn messages', () => {
       logger.warn('Warning message');
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('warn');
@@ -88,8 +73,7 @@ describe('Logger', () => {
 
       verboseLogger.verbose('Verbose message');
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('verbose');
@@ -103,15 +87,12 @@ describe('Logger', () => {
 
       logger.error('Error occurred', error);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
       expect(logData.message).toBe('Error occurred');
-      expect(logData.error.message).toBe(
-        'Test error message',
-      );
+      expect(logData.error.message).toBe('Test error message');
       expect(logData.error.stack).toBeDefined();
     });
 
@@ -120,8 +101,7 @@ describe('Logger', () => {
 
       logger.fatal('Fatal error occurred', error);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('fatal');
@@ -133,14 +113,9 @@ describe('Logger', () => {
       const error = new Error('Position test');
       const extraData = { userId: '123' };
 
-      logger.error(
-        'Error with extra data',
-        extraData,
-        error,
-      );
+      logger.error('Error with extra data', extraData, error);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.error.message).toBe('Position test');
@@ -153,8 +128,7 @@ describe('Logger', () => {
 
       logger.error('Nested error', errorWrapper);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.error.message).toBe('Nested error');
@@ -164,15 +138,12 @@ describe('Logger', () => {
       const error = 'Request failed with status 500';
       logger.error('Some error', { error });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
       expect(logData.message).toBe('Some error');
-      expect(logData.error.message).toBe(
-        'Request failed with status 500',
-      );
+      expect(logData.error.message).toBe('Request failed with status 500');
       expect(logData.error.name).toBe('Error');
       expect(logData.error.stack).toBeDefined();
     });
@@ -183,8 +154,7 @@ describe('Logger', () => {
         statusCode: 500,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
@@ -194,18 +164,12 @@ describe('Logger', () => {
     });
 
     it('should handle string error messages', () => {
-      logger.error(
-        'String error',
-        'This is a string error',
-      );
+      logger.error('String error', 'This is a string error');
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
-      expect(logData.error.message).toBe(
-        'This is a string error',
-      );
+      expect(logData.error.message).toBe('This is a string error');
     });
   });
 
@@ -213,8 +177,7 @@ describe('Logger', () => {
     it('should include context information', () => {
       logger.log('Test with context');
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.requestId).toBe('test-request-id');
@@ -225,8 +188,7 @@ describe('Logger', () => {
     it('should include app metadata', () => {
       logger.log('Test app metadata');
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.appId).toBe('test-app-1.0.0-local');
@@ -292,9 +254,8 @@ describe('Logger', () => {
 
       devLogger.log('Development test');
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
-      // biome-ignore lint/suspicious/noControlCharactersInRegex: test code
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
+      // eslint-disable-next-line no-control-regex
       expect(logCall).toMatch(/\u001b\[[0-9;]*m/);
     });
 
@@ -309,8 +270,7 @@ describe('Logger', () => {
 
       prodLogger.log('Production test');
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       expect(logCall).toMatch(/^\{.*\}$/);
     });
   });

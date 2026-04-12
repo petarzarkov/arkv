@@ -1,16 +1,12 @@
 /**
  * Deep clones a JSON-serializable value.
  */
-export const deepClone = <T>(value: T): T =>
-  structuredClone(value);
+export const deepClone = <T>(value: T): T => structuredClone(value);
 
 /**
  * Picks specified keys from an object.
  */
-export const pick = <
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
+export const pick = <T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
   keys: K[],
 ): Pick<T, K> => {
@@ -24,10 +20,7 @@ export const pick = <
 /**
  * Omits specified keys from an object.
  */
-export const omit = <
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
+export const omit = <T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
   keys: K[],
 ): Omit<T, K> => {
@@ -39,9 +32,7 @@ export const omit = <
 /**
  * Checks if a value is a plain object (not an array, Error, or null).
  */
-export const isPlainObject = (
-  obj: unknown,
-): obj is Record<string, unknown> =>
+export const isPlainObject = (obj: unknown): obj is Record<string, unknown> =>
   typeof obj === 'object' &&
   obj !== null &&
   !Array.isArray(obj) &&

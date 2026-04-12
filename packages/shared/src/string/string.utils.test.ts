@@ -26,8 +26,6 @@ describe('safeStringify', () => {
   });
 
   it('handles nested objects', () => {
-    expect(safeStringify({ a: { b: { c: 1 } } })).toBe(
-      '{"a":{"b":{"c":1}}}',
-    );
+    expect(safeStringify({ a: { b: { c: 1 } } })).toBe('{"a":{"b":{"c":1}}}');
   });
 });

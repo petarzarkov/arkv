@@ -1,8 +1,4 @@
-import {
-  type DynamicModule,
-  Module,
-  type Provider,
-} from '@nestjs/common';
+import { type DynamicModule, Module, type Provider } from '@nestjs/common';
 import { ContextService } from './context.service.js';
 import { ContextLogger } from './context-logger.service.js';
 import {
@@ -12,16 +8,11 @@ import {
   type LoggerModuleOptionsFactory,
 } from './types.js';
 
-const CORE_PROVIDERS: Provider[] = [
-  ContextService,
-  ContextLogger,
-];
+const CORE_PROVIDERS: Provider[] = [ContextService, ContextLogger];
 
 const CORE_EXPORTS = [ContextService, ContextLogger];
 
-function buildAsyncProvider(
-  options: LoggerModuleAsyncOptions,
-): Provider {
+function buildAsyncProvider(options: LoggerModuleAsyncOptions): Provider {
   if (options.useFactory) {
     return {
       provide: LOGGER_MODULE_OPTIONS,
@@ -33,9 +24,8 @@ function buildAsyncProvider(
   if (options.useClass) {
     return {
       provide: LOGGER_MODULE_OPTIONS,
-      useFactory: async (
-        factory: LoggerModuleOptionsFactory,
-      ) => factory.createLoggerOptions(),
+      useFactory: async (factory: LoggerModuleOptionsFactory) =>
+        factory.createLoggerOptions(),
       inject: [options.useClass],
     };
   }
@@ -43,9 +33,8 @@ function buildAsyncProvider(
   if (options.useExisting) {
     return {
       provide: LOGGER_MODULE_OPTIONS,
-      useFactory: async (
-        factory: LoggerModuleOptionsFactory,
-      ) => factory.createLoggerOptions(),
+      useFactory: async (factory: LoggerModuleOptionsFactory) =>
+        factory.createLoggerOptions(),
       inject: [options.useExisting],
     };
   }
@@ -108,9 +97,7 @@ export class NestJsContextLoggerModule {
    * Register the logger module with static config.
    * All options are optional.
    */
-  static forRoot(
-    config: LoggerModuleConfig = {},
-  ): DynamicModule {
+  static forRoot(config: LoggerModuleConfig = {}): DynamicModule {
     const { isGlobal = true, ...loggerConfig } = config;
 
     return {
@@ -131,9 +118,7 @@ export class NestJsContextLoggerModule {
    * Register the logger module with async config.
    * Supports useFactory, useClass, and useExisting.
    */
-  static forRootAsync(
-    options: LoggerModuleAsyncOptions,
-  ): DynamicModule {
+  static forRootAsync(options: LoggerModuleAsyncOptions): DynamicModule {
     const { isGlobal = true, ...asyncOptions } = options;
 
     const classProvider: Provider[] = asyncOptions.useClass

@@ -97,11 +97,8 @@ export function formatDate(
   template: string,
   locale: ILocale,
 ): string {
-  return template.replace(
-    REGEX_FORMAT,
-    (match, escaped?: string) => {
-      if (escaped != null) return escaped;
-      return matchToken(zdt, locale, match) ?? match;
-    },
-  );
+  return template.replace(REGEX_FORMAT, (match, escaped?: string) => {
+    if (escaped != null) return escaped;
+    return matchToken(zdt, locale, match) ?? match;
+  });
 }

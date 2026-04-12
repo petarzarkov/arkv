@@ -35,10 +35,7 @@ function endWeek(
 ): Temporal.ZonedDateTime {
   const dow = zdt.dayOfWeek % 7;
   const diff = (dow - weekStart + 7) % 7;
-  return zdt
-    .subtract({ days: diff })
-    .add({ days: 6 })
-    .with(MAX_TIME);
+  return zdt.subtract({ days: diff }).add({ days: 6 }).with(MAX_TIME);
 }
 
 export function startOfHelper(

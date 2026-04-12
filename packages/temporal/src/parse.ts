@@ -4,25 +4,18 @@ const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const HAS_OFFSET = /Z|[+-]\d{2}:\d{2}/;
 const HAS_ANNOTATION = /\[/;
 
-function parseString(
-  s: string,
-  tz: string,
-): Temporal.ZonedDateTime | null {
+function parseString(s: string, tz: string): Temporal.ZonedDateTime | null {
   try {
     if (HAS_ANNOTATION.test(s)) {
       return Temporal.ZonedDateTime.from(s);
     }
     if (HAS_OFFSET.test(s)) {
-      return Temporal.Instant.from(s).toZonedDateTimeISO(
-        tz,
-      );
+      return Temporal.Instant.from(s).toZonedDateTimeISO(tz);
     }
     if (DATE_ONLY.test(s)) {
       return Temporal.PlainDate.from(s).toZonedDateTime(tz);
     }
-    return Temporal.PlainDateTime.from(s).toZonedDateTime(
-      tz,
-    );
+    return Temporal.PlainDateTime.from(s).toZonedDateTime(tz);
   } catch {
     return null;
   }
@@ -46,9 +39,7 @@ export function parseInput(
     return date.$zdt;
   }
   if (typeof date === 'number') {
-    return Temporal.Instant.fromEpochMilliseconds(
-      date,
-    ).toZonedDateTimeISO(tz);
+    return Temporal.Instant.fromEpochMilliseconds(date).toZonedDateTimeISO(tz);
   }
   if (date instanceof Date) {
     return Temporal.Instant.fromEpochMilliseconds(

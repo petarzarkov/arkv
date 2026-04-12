@@ -22,11 +22,7 @@ interface WasmEngine {
   next_range(min: number, max: number): number;
   fill_u32s(length: number): number;
   fill_f64s(length: number): number;
-  fill_range_u32s(
-    min: number,
-    max: number,
-    length: number,
-  ): number;
+  fill_range_u32s(min: number, max: number, length: number): number;
   fill_shuffle_u32s(length: number): number;
   free(): void;
 }
@@ -177,20 +173,12 @@ export class Rng {
    * Returns a Uint32Array view into WASM memory — valid until the next
    * call on this instance. Call `.slice()` if you need a persistent copy.
    */
-  public ranges(
-    min: number,
-    max: number,
-    length: number,
-  ): Uint32Array {
+  public ranges(min: number, max: number, length: number): Uint32Array {
     if (length < 0) {
       throw new Error('Length cannot be negative.');
     }
     if (length === 0) return new Uint32Array(0);
-    const ptr = this.engine.fill_range_u32s(
-      min,
-      max,
-      length,
-    );
+    const ptr = this.engine.fill_range_u32s(min, max, length);
     return new Uint32Array(wasmMemory.buffer, ptr, length);
   }
 
@@ -227,11 +215,7 @@ export class Rng {
 
     // Single Wasm boundary crossing — zero-copy view into preallocated buffer.
     const ptr = this.engine.fill_shuffle_u32s(len);
-    const indices = new Uint32Array(
-      wasmMemory.buffer,
-      ptr,
-      len - 1,
-    );
+    const indices = new Uint32Array(wasmMemory.buffer, ptr, len - 1);
 
     let indexPointer = 0;
     for (let i = len - 1; i > 0; i--) {

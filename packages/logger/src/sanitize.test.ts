@@ -1,17 +1,7 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  spyOn,
-} from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
 import { ContextStore } from './context.js';
 import { Logger } from './logger.js';
-import {
-  defaultTestConfig,
-  parseLogOutput,
-} from './test-utils.js';
+import { defaultTestConfig, parseLogOutput } from './test-utils.js';
 
 describe('Logger - sanitization', () => {
   let logger: Logger;
@@ -26,10 +16,8 @@ describe('Logger - sanitization', () => {
       event: '/test',
     });
     logger = new Logger(defaultTestConfig, contextStore);
-    consoleLogSpy = spyOn(
-      console,
-      'log',
-    ).mockImplementation(() => {});
+    // eslint-disable-next-line no-empty-function
+    consoleLogSpy = spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -46,8 +34,7 @@ describe('Logger - sanitization', () => {
 
       logger.log('Sensitive data test', sensitiveData);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.password).toBe('[MASKED]');
@@ -66,13 +53,9 @@ describe('Logger - sanitization', () => {
         public: 'visible',
       };
 
-      logger.log(
-        'Nested sensitive data',
-        nestedSensitiveData,
-      );
+      logger.log('Nested sensitive data', nestedSensitiveData);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.user.password).toBe('[MASKED]');
@@ -96,8 +79,7 @@ describe('Logger - sanitization', () => {
         responseBody,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.responseBody).toHaveLength(1);
@@ -105,15 +87,9 @@ describe('Logger - sanitization', () => {
         'c0d92e74-1328-4f3c-9c2e-28e989bcfb08',
       );
       expect(logData.responseBody[0].provider).toBe('okx');
-      expect(logData.responseBody[0].apiKey).toBe(
-        '[MASKED]',
-      );
-      expect(logData.responseBody[0].apiSecret).toBe(
-        '[MASKED]',
-      );
-      expect(logData.responseBody[0].apiPass).toBe(
-        '[MASKED]',
-      );
+      expect(logData.responseBody[0].apiKey).toBe('[MASKED]');
+      expect(logData.responseBody[0].apiSecret).toBe('[MASKED]');
+      expect(logData.responseBody[0].apiPass).toBe('[MASKED]');
     });
 
     it('should mask sensitive fields in nested arrays', () => {
@@ -151,18 +127,13 @@ describe('Logger - sanitization', () => {
 
       testLogger.log('Complex nested data', complexData);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.users).toHaveLength(2);
       expect(logData.users[0].name).toBe('John');
-      expect(logData.users[0].credentials.password).toBe(
-        '[MASKED]',
-      );
-      expect(logData.users[0].credentials.apiKey).toBe(
-        '[MASKED]',
-      );
+      expect(logData.users[0].credentials.password).toBe('[MASKED]');
+      expect(logData.users[0].credentials.apiKey).toBe('[MASKED]');
       expect(logData.users[1].name).toBe('Jane');
       expect(logData.users[1].auth.token).toBe('[MASKED]');
       expect(logData.users[1].auth.secret).toBe('[MASKED]');
@@ -182,14 +153,11 @@ describe('Logger - sanitization', () => {
 
       logger.log('Database operation failed', nestedData);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.details.dbError).toBeDefined();
-      expect(logData.details.dbError.message).toBe(
-        'Connection refused',
-      );
+      expect(logData.details.dbError.message).toBe('Connection refused');
       expect(logData.details.dbError.name).toBe('Error');
     });
 
@@ -208,17 +176,12 @@ describe('Logger - sanitization', () => {
         arrow: arrowFunction,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
-      expect(logData.regular).toBe(
-        '[Function: testFunction]',
-      );
+      expect(logData.regular).toBe('[Function: testFunction]');
       expect(logData.named).toBe('[Function: namedFunc]');
-      expect(logData.arrow).toBe(
-        '[Function: arrowFunction]',
-      );
+      expect(logData.arrow).toBe('[Function: arrowFunction]');
     });
 
     it('should handle BigInt values safely', () => {
@@ -228,13 +191,10 @@ describe('Logger - sanitization', () => {
         value: bigIntValue,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
-      expect(logData.value).toBe(
-        '[BigInt: 123456789012345]',
-      );
+      expect(logData.value).toBe('[BigInt: 123456789012345]');
     });
 
     it('should handle Symbol values safely', () => {
@@ -246,16 +206,11 @@ describe('Logger - sanitization', () => {
         global: symbolWithDesc,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
-      expect(logData.basic).toMatch(
-        /\[Symbol: Symbol\(test\)\]/,
-      );
-      expect(logData.global).toMatch(
-        /\[Symbol: Symbol\(globalSymbol\)\]/,
-      );
+      expect(logData.basic).toMatch(/\[Symbol: Symbol\(test\)\]/);
+      expect(logData.global).toMatch(/\[Symbol: Symbol\(globalSymbol\)\]/);
     });
 
     it('should handle Date objects safely', () => {
@@ -265,8 +220,7 @@ describe('Logger - sanitization', () => {
         date: testDate,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.date).toBe('2023-01-01T00:00:00.000Z');
@@ -279,13 +233,10 @@ describe('Logger - sanitization', () => {
         pattern: regex,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
-      expect(logData.pattern).toBe(
-        '[RegExp: /test.*pattern/gi]',
-      );
+      expect(logData.pattern).toBe('[RegExp: /test.*pattern/gi]');
     });
 
     it('should handle mixed problematic types in arrays', () => {
@@ -306,14 +257,11 @@ describe('Logger - sanitization', () => {
         mixed: mixedArray,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.mixed[0]).toBe('string');
-      expect(logData.mixed[1]).toBe(
-        '[TRUNCATED: 6 more items]',
-      );
+      expect(logData.mixed[1]).toBe('[TRUNCATED: 6 more items]');
     });
 
     it('should handle objects with non-serializable properties', () => {
@@ -327,24 +275,16 @@ describe('Logger - sanitization', () => {
         },
       };
 
-      logger.log(
-        'Problematic object test',
-        problematicObject,
-      );
+      logger.log('Problematic object test', problematicObject);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.normal).toBe('string');
       expect(logData.func).toBe('[Function: func]');
       expect(logData.nested.bigint).toBe('[BigInt: 789]');
-      expect(logData.nested.symbol).toMatch(
-        /\[Symbol: Symbol\(nested\)\]/,
-      );
-      expect(logData.nested.date).toBe(
-        '2023-06-15T12:00:00.000Z',
-      );
+      expect(logData.nested.symbol).toMatch(/\[Symbol: Symbol\(nested\)\]/);
+      expect(logData.nested.date).toBe('2023-06-15T12:00:00.000Z');
     });
 
     it('should truncate arrays based on maxArrayLength configuration', () => {
@@ -356,29 +296,20 @@ describe('Logger - sanitization', () => {
         contextStore,
       );
 
-      const longArray = [
-        'item1',
-        'item2',
-        'item3',
-        'item4',
-        'item5',
-      ];
+      const longArray = ['item1', 'item2', 'item3', 'item4', 'item5'];
 
       testLogger.log('Array truncation test', {
         array: longArray,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.array).toHaveLength(4);
       expect(logData.array[0]).toBe('item1');
       expect(logData.array[1]).toBe('item2');
       expect(logData.array[2]).toBe('item3');
-      expect(logData.array[3]).toBe(
-        '[TRUNCATED: 2 more items]',
-      );
+      expect(logData.array[3]).toBe('[TRUNCATED: 2 more items]');
     });
 
     it('should not truncate arrays when length is within maxArrayLength', () => {
@@ -396,8 +327,7 @@ describe('Logger - sanitization', () => {
         array: shortArray,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.array).toHaveLength(3);

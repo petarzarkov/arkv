@@ -5,10 +5,7 @@ import type { ColorFn } from './types.js';
  * Creates a color/style function from open and close sequences.
  * Uses string concatenation for maximum performance.
  */
-export const createColor = (
-  open: string,
-  close: string,
-): ColorFn => {
+export const createColor = (open: string, close: string): ColorFn => {
   return (text: string) => open + text + close;
 };
 
@@ -17,53 +14,35 @@ export const createColor = (
  * Pre-computes the combined open and close strings at creation time.
  */
 export const createComposedColor = (
-  ...pairs: ReadonlyArray<{
+  ...pairs: readonly {
     readonly open: string;
     readonly close: string;
-  }>
+  }[]
 ): ColorFn => {
-  const open = pairs.map(p => p.open).join('');
+  const open = pairs.map((p) => p.open).join('');
   const close = pairs
     .slice()
     .reverse()
-    .map(p => p.close)
+    .map((p) => p.close)
     .join('');
   return (text: string) => open + text + close;
 };
 
 // Foreground colors
-export const black = createColor(
-  ANSIPairs.black.open,
-  ANSIPairs.black.close,
-);
-export const red = createColor(
-  ANSIPairs.red.open,
-  ANSIPairs.red.close,
-);
-export const green = createColor(
-  ANSIPairs.green.open,
-  ANSIPairs.green.close,
-);
+export const black = createColor(ANSIPairs.black.open, ANSIPairs.black.close);
+export const red = createColor(ANSIPairs.red.open, ANSIPairs.red.close);
+export const green = createColor(ANSIPairs.green.open, ANSIPairs.green.close);
 export const yellow = createColor(
   ANSIPairs.yellow.open,
   ANSIPairs.yellow.close,
 );
-export const blue = createColor(
-  ANSIPairs.blue.open,
-  ANSIPairs.blue.close,
-);
+export const blue = createColor(ANSIPairs.blue.open, ANSIPairs.blue.close);
 export const magenta = createColor(
   ANSIPairs.magenta.open,
   ANSIPairs.magenta.close,
 );
-export const cyan = createColor(
-  ANSIPairs.cyan.open,
-  ANSIPairs.cyan.close,
-);
-export const white = createColor(
-  ANSIPairs.white.open,
-  ANSIPairs.white.close,
-);
+export const cyan = createColor(ANSIPairs.cyan.open, ANSIPairs.cyan.close);
+export const white = createColor(ANSIPairs.white.open, ANSIPairs.white.close);
 
 // Bright foreground
 export const brightRed = createColor(
@@ -100,10 +79,7 @@ export const bgBlack = createColor(
   ANSIPairs.bgBlack.open,
   ANSIPairs.bgBlack.close,
 );
-export const bgRed = createColor(
-  ANSIPairs.bgRed.open,
-  ANSIPairs.bgRed.close,
-);
+export const bgRed = createColor(ANSIPairs.bgRed.open, ANSIPairs.bgRed.close);
 export const bgGreen = createColor(
   ANSIPairs.bgGreen.open,
   ANSIPairs.bgGreen.close,
@@ -164,13 +140,7 @@ export const bgGreenBlack = createComposedColor(
   ANSIPairs.bgGreen,
   ANSIPairs.black,
 );
-export const bgRedWhite = createComposedColor(
-  ANSIPairs.bgRed,
-  ANSIPairs.white,
-);
+export const bgRedWhite = createComposedColor(ANSIPairs.bgRed, ANSIPairs.white);
 
 // Alias: gray uses dim styling
-export const gray = createColor(
-  ANSIPairs.dim.open,
-  ANSIPairs.dim.close,
-);
+export const gray = createColor(ANSIPairs.dim.open, ANSIPairs.dim.close);

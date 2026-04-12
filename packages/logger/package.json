@@ -2,6 +2,30 @@
   "name": "@arkv/logger",
   "version": "0.6.2",
   "description": "Framework-agnostic structured logger with async context, sanitization, and colored output",
+  "keywords": [
+    "async-context",
+    "logger",
+    "logging",
+    "structured",
+    "typescript"
+  ],
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/logger#readme",
+  "license": "MIT",
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/arkv",
+    "directory": "packages/logger"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
@@ -12,21 +36,9 @@
       "require": "./dist/cjs/index.js"
     }
   },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "dist"
-  ],
   "publishConfig": {
     "access": "public"
   },
-  "keywords": [
-    "logger",
-    "logging",
-    "structured",
-    "async-context",
-    "typescript"
-  ],
   "scripts": {
     "prebuild": "rm -rf dist",
     "build:esm": "tsc -p tsconfig.build.esm.json",
@@ -41,17 +53,5 @@
   "dependencies": {
     "@arkv/colors": "workspace:*",
     "@arkv/shared": "workspace:*"
-  },
-  "author": {
-    "name": "Petar Zarkov",
-    "email": "pzarko1@gmail.com",
-    "url": "https://github.com/petarzarkov"
-  },
-  "license": "MIT",
-  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/logger#readme",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/petarzarkov/arkv",
-    "directory": "packages/logger"
   }
 }

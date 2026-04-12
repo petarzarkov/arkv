@@ -24,7 +24,7 @@ export function sanitizeLogEntry(
       continue;
     }
 
-    const shouldMask = options.maskFields.some(field =>
+    const shouldMask = options.maskFields.some((field) =>
       key.toLowerCase().includes(field.toLowerCase()),
     );
 
@@ -34,17 +34,9 @@ export function sanitizeLogEntry(
       const safeValue = makeSafeForJson(value, options);
       if (safeValue !== undefined) {
         if (Array.isArray(safeValue)) {
-          cleaned[key] = sanitizeArray(
-            safeValue,
-            options,
-            visited,
-          );
+          cleaned[key] = sanitizeArray(safeValue, options, visited);
         } else if (isPlainObject(safeValue)) {
-          cleaned[key] = sanitizeLogEntry(
-            safeValue,
-            options,
-            visited,
-          );
+          cleaned[key] = sanitizeLogEntry(safeValue, options, visited);
         } else {
           cleaned[key] = safeValue;
         }
@@ -59,7 +51,7 @@ function sanitizeArray(
   options: SanitizeOptions,
   visited: WeakSet<object>,
 ): unknown[] {
-  return array.map(item => {
+  return array.map((item) => {
     if (isPlainObject(item)) {
       return sanitizeLogEntry(item, options, visited);
     }
@@ -100,10 +92,7 @@ export function findNestedError(
           return item;
         }
         if (isPlainObject(item)) {
-          const nestedError = findNestedError(
-            item,
-            visited,
-          );
+          const nestedError = findNestedError(item, visited);
           if (nestedError) {
             return nestedError;
           }
@@ -115,10 +104,7 @@ export function findNestedError(
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: handles many type serialization cases
-function makeSafeForJson(
-  value: unknown,
-  options: SanitizeOptions,
-): unknown {
+function makeSafeForJson(value: unknown, options: SanitizeOptions): unknown {
   if (value === null || value === undefined) {
     return value;
   }
@@ -130,11 +116,11 @@ function makeSafeForJson(
   }
 
   if (valueType === 'symbol') {
-    return `[Symbol: ${value.toString()}]`;
+    return `[Symbol: ${(value as symbol).toString()}]`;
   }
 
   if (valueType === 'bigint') {
-    return `[BigInt: ${value.toString()}]`;
+    return `[BigInt: ${(value as bigint).toString()}]`;
   }
 
   if (valueType !== 'object') {
@@ -157,10 +143,7 @@ function makeSafeForJson(
     };
   }
 
-  if (
-    typeof FormData !== 'undefined' &&
-    value instanceof FormData
-  ) {
+  if (typeof FormData !== 'undefined' && value instanceof FormData) {
     const entries: Record<string, unknown> = {};
     try {
       for (const [key, val] of value.entries()) {
@@ -194,8 +177,7 @@ function makeSafeForJson(
     'name' in value &&
     'size' in value &&
     'type' in value &&
-    typeof (value as { arrayBuffer?: unknown })
-      .arrayBuffer === 'function'
+    typeof (value as { arrayBuffer?: unknown }).arrayBuffer === 'function'
   ) {
     const file = value as {
       name: string;
@@ -205,17 +187,11 @@ function makeSafeForJson(
     return `[File: ${file.name} (${file.size} bytes, ${file.type})]`;
   }
 
-  if (
-    typeof Blob !== 'undefined' &&
-    value instanceof Blob
-  ) {
+  if (typeof Blob !== 'undefined' && value instanceof Blob) {
     return `[Blob: ${value.size} bytes, ${value.type}]`;
   }
 
-  if (
-    typeof ArrayBuffer !== 'undefined' &&
-    value instanceof ArrayBuffer
-  ) {
+  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
     return `[ArrayBuffer: ${value.byteLength} bytes]`;
   }
 
@@ -231,29 +207,21 @@ function makeSafeForJson(
     JSON.stringify(value);
     return value;
   } catch {
-    if (
-      (value as { constructor?: { name?: string } })
-        .constructor?.name
-    ) {
+    if ((value as { constructor?: { name?: string } }).constructor?.name) {
       return `[${(value as { constructor: { name: string } }).constructor.name}: object not serializable]`;
     }
     return '[Object: not serializable]';
   }
 }
 
-function sliceArray<T>(
-  array: T[],
-  options: SanitizeOptions,
-): unknown[] {
+function sliceArray<T>(array: T[], options: SanitizeOptions): unknown[] {
   if (array.length <= options.maxArrayLength) {
-    return array.map(item =>
-      makeSafeForJson(item, options),
-    );
+    return array.map((item) => makeSafeForJson(item, options));
   }
 
   const slicedArray = array
     .slice(0, options.maxArrayLength)
-    .map(item => makeSafeForJson(item, options));
+    .map((item) => makeSafeForJson(item, options));
 
   return [
     ...slicedArray,

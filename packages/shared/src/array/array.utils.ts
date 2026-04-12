@@ -17,13 +17,10 @@ export const groupBy = <T>(
 /**
  * Returns a new array with only unique elements, using an optional key function.
  */
-export const unique = <T>(
-  items: T[],
-  keyFn?: (item: T) => unknown,
-): T[] => {
+export const unique = <T>(items: T[], keyFn?: (item: T) => unknown): T[] => {
   if (!keyFn) return [...new Set(items)];
   const seen = new Set<unknown>();
-  return items.filter(item => {
+  return items.filter((item) => {
     const key = keyFn(item);
     if (seen.has(key)) return false;
     seen.add(key);
@@ -34,12 +31,8 @@ export const unique = <T>(
 /**
  * Chunks an array into smaller arrays of the given size.
  */
-export const chunk = <T>(
-  items: T[],
-  size: number,
-): T[][] => {
-  if (size < 1)
-    throw new RangeError('size must be at least 1');
+export const chunk = <T>(items: T[], size: number): T[][] => {
+  if (size < 1) throw new RangeError('size must be at least 1');
   const result: T[][] = [];
   for (let i = 0; i < items.length; i += size) {
     result.push(items.slice(i, i + size));

@@ -43,16 +43,9 @@ export {
 // Composition
 export { compose } from './compose.js';
 // Detection
-export {
-  createConditionalColor,
-  isColorSupported,
-} from './detect.js';
+export { createConditionalColor, isColorSupported } from './detect.js';
 // Log level utilities
-export {
-  getLevelColorFn,
-  getValueColor,
-  levelColorMap,
-} from './levels.js';
+export { getLevelColorFn, getValueColor, levelColorMap } from './levels.js';
 // Strip
 export { strip, visibleLength } from './strip.js';
 // Style modifiers
@@ -66,7 +59,4 @@ export {
   underline,
 } from './styles.js';
 // Types
-export type {
-  ColorFn,
-  ColorLogLevels,
-} from './types.js';
+export type { ColorFn, ColorLogLevels } from './types.js';

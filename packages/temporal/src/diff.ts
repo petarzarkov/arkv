@@ -11,11 +11,9 @@ function monthDiff(
   const whole = dur.months;
   if (!float) return whole;
   const anchor = from.add({ months: whole });
-  const remaining =
-    to.epochMilliseconds - anchor.epochMilliseconds;
+  const remaining = to.epochMilliseconds - anchor.epochMilliseconds;
   const nextMs =
-    anchor.add({ months: 1 }).epochMilliseconds -
-    anchor.epochMilliseconds;
+    anchor.add({ months: 1 }).epochMilliseconds - anchor.epochMilliseconds;
   return whole + remaining / nextMs;
 }
 

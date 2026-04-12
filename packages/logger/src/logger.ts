@@ -1,10 +1,7 @@
 import { isPlainObject, safeStringify } from '@arkv/shared';
 import type { ContextStore } from './context.js';
 import { formatColoredJson } from './format.js';
-import {
-  findNestedError,
-  sanitizeLogEntry,
-} from './sanitize.js';
+import { findNestedError, sanitizeLogEntry } from './sanitize.js';
 import {
   DEFAULT_MASK_FIELDS,
   LOG_LEVELS,
@@ -24,23 +21,14 @@ export class Logger {
   readonly #appVersion?: string;
   readonly #appEnv?: string;
 
-  constructor(
-    config?: LoggerConfig,
-    context?: ContextStore,
-  ) {
+  constructor(config?: LoggerConfig, context?: ContextStore) {
     const cfg = config ?? {};
     this.logLevel = cfg.level ?? LogLevel.DEBUG;
     this.#isDevelopment =
-      cfg.isDevelopment ??
-      process.env.NODE_ENV !== 'production';
+      cfg.isDevelopment ?? process.env.NODE_ENV !== 'production';
     this.#maskFields =
       cfg.maskFields && cfg.maskFields.length > 0
-        ? Array.from(
-            new Set([
-              ...DEFAULT_MASK_FIELDS,
-              ...cfg.maskFields,
-            ]),
-          )
+        ? Array.from(new Set([...DEFAULT_MASK_FIELDS, ...cfg.maskFields]))
         : [...DEFAULT_MASK_FIELDS];
     this.#maxArrayLength = cfg.maxArrayLength ?? 100;
     this.#filterEvents = cfg.filterEvents ?? [];
@@ -67,10 +55,7 @@ export class Logger {
     this.#writeLog(LogLevel.LOG, message, optionalParams);
   }
 
-  error(
-    message: string,
-    ...optionalParams: unknown[]
-  ): void;
+  error(message: string, ...optionalParams: unknown[]): void;
   error(message: Record<string, unknown>): void;
   error(message: Error): void;
   error(
@@ -90,10 +75,7 @@ export class Logger {
     this.#writeLog(LogLevel.WARN, message, optionalParams);
   }
 
-  debug(
-    message: string,
-    ...optionalParams: unknown[]
-  ): void;
+  debug(message: string, ...optionalParams: unknown[]): void;
   debug(message: Record<string, unknown>): void;
   debug(message: Error): void;
   debug(
@@ -103,27 +85,17 @@ export class Logger {
     this.#writeLog(LogLevel.DEBUG, message, optionalParams);
   }
 
-  verbose(
-    message: string,
-    ...optionalParams: unknown[]
-  ): void;
+  verbose(message: string, ...optionalParams: unknown[]): void;
   verbose(message: Record<string, unknown>): void;
   verbose(message: Error): void;
   verbose(
     message: string | Record<string, unknown> | Error,
     ...optionalParams: unknown[]
   ): void {
-    this.#writeLog(
-      LogLevel.VERBOSE,
-      message,
-      optionalParams,
-    );
+    this.#writeLog(LogLevel.VERBOSE, message, optionalParams);
   }
 
-  fatal(
-    message: string,
-    ...optionalParams: unknown[]
-  ): void;
+  fatal(message: string, ...optionalParams: unknown[]): void;
   fatal(message: Record<string, unknown>): void;
   fatal(message: Error): void;
   fatal(
@@ -142,16 +114,9 @@ export class Logger {
       return;
     }
 
-    const {
-      preparedMessage,
-      invalidMessageInfo,
-      messageError,
-      messageExtra,
-    } = this.#prepareMessage(message);
-    const { error, extra } = this.#extractErrorAndExtra(
-      optionalParams,
-      level,
-    );
+    const { preparedMessage, invalidMessageInfo, messageError, messageExtra } =
+      this.#prepareMessage(message);
+    const { error, extra } = this.#extractErrorAndExtra(optionalParams, level);
 
     const finalError = messageError || error;
     const finalExtra = {
@@ -179,13 +144,7 @@ export class Logger {
     console.log(output);
   }
 
-  #prepareMessage(
-    message:
-      | string
-      | Record<string, unknown>
-      | Error
-      | unknown,
-  ): {
+  #prepareMessage(message: unknown): {
     preparedMessage: string;
     invalidMessageInfo?: LogEntry;
     messageError?: Error;
@@ -217,18 +176,14 @@ export class Logger {
       };
     }
 
-    const stack = new Error().stack
-      ?.split('\n')
-      .slice(2, 7)
-      .join('\n');
+    const stack = new Error().stack?.split('\n').slice(2, 7).join('\n');
     const preparedMessage =
       message === null || message === undefined
         ? `[${String(message)}]`
         : `[OBJECT]: ${safeStringify(message as LogEntry)}`;
 
     const invalidMessageInfo = {
-      invalidMessageWarning:
-        'Logger called with non-string message parameter',
+      invalidMessageWarning: 'Logger called with non-string message parameter',
       invalidMessageCallstack: stack,
       originalMessageType: typeof message,
       originalMessage: safeStringify(message as LogEntry),
@@ -278,17 +233,11 @@ export class Logger {
           error = param.error;
           const { error: _, ...rest } = param;
           Object.assign(extra, rest);
-        } else if (
-          isErrorLevel &&
-          typeof param.err === 'string'
-        ) {
+        } else if (isErrorLevel && typeof param.err === 'string') {
           error = new Error(param.err);
           const { err: _, ...rest } = param;
           Object.assign(extra, rest);
-        } else if (
-          isErrorLevel &&
-          typeof param.error === 'string'
-        ) {
+        } else if (isErrorLevel && typeof param.error === 'string') {
           error = new Error(param.error as string);
           const { error: _, ...rest } = param;
           Object.assign(extra, rest);
@@ -311,9 +260,7 @@ export class Logger {
     error?: Error | null,
     invalidMessageInfo?: LogEntry,
   ): LogEntry {
-    const ctx = this.#context
-      ? this.#context.getContext()
-      : {};
+    const ctx = this.#context ? this.#context.getContext() : {};
 
     const logEntry: LogEntry = {
       level,
@@ -323,7 +270,7 @@ export class Logger {
       ...(this.appId ? { appId: this.appId } : {}),
       ...ctx,
       ...extra,
-      ...(invalidMessageInfo || {}),
+      ...invalidMessageInfo,
     };
 
     if (error) {
@@ -346,10 +293,7 @@ export class Logger {
 
     if (this.#context) {
       const ctx = this.#context.getContext();
-      if (
-        ctx.event &&
-        this.#filterEvents.includes(ctx.event as string)
-      ) {
+      if (ctx.event && this.#filterEvents.includes(ctx.event as string)) {
         return false;
       }
     }

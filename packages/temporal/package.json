@@ -2,6 +2,34 @@
   "name": "@arkv/temporal",
   "version": "0.2.1",
   "description": "Drop-in Day.js-compatible API powered by the native Temporal API. Same chainable interface, zero timezone bugs.",
+  "keywords": [
+    "browser",
+    "date",
+    "dayjs",
+    "javascript",
+    "node",
+    "temporal",
+    "time",
+    "timezone",
+    "typescript"
+  ],
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/temporal#readme",
+  "license": "MIT",
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/arkv",
+    "directory": "packages/temporal"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
@@ -12,25 +40,9 @@
       "require": "./dist/cjs/index.js"
     }
   },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "dist"
-  ],
   "publishConfig": {
     "access": "public"
   },
-  "keywords": [
-    "temporal",
-    "dayjs",
-    "date",
-    "time",
-    "timezone",
-    "typescript",
-    "javascript",
-    "node",
-    "browser"
-  ],
   "scripts": {
     "prebuild": "rm -rf dist",
     "build:esm": "tsc -p tsconfig.build.esm.json",
@@ -44,17 +56,5 @@
   },
   "dependencies": {
     "temporal-polyfill": "0.3.0"
-  },
-  "author": {
-    "name": "Petar Zarkov",
-    "email": "pzarko1@gmail.com",
-    "url": "https://github.com/petarzarkov"
-  },
-  "license": "MIT",
-  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/temporal#readme",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/petarzarkov/arkv",
-    "directory": "packages/temporal"
   }
 }

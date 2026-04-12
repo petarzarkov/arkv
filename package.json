@@ -1,8 +1,19 @@
 {
   "name": "arkv",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "description": "The arkv monorepo",
+  "homepage": "https://github.com/petarzarkov/arkv#readme",
+  "license": "MIT",
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/arkv"
+  },
   "workspaces": [
     "packages/*"
   ],
@@ -11,8 +22,8 @@
     "build": "bun run --filter '*' build",
     "test": "bun run --filter '*' test",
     "test:cov": "bun run --filter '*' test:cov",
-    "lint": "biome check --write --unsafe .",
-    "format": "biome format --write .",
+    "lint": "oxlint --fix .",
+    "format": "oxfmt --write .",
     "typecheck": "bun run --filter '*' typecheck",
     "gen:env:docs": "bun ./scripts/gen-env-docs.ts",
     "gen:readme": "bun ./scripts/update-readme.ts",
@@ -20,29 +31,20 @@
     "version:dry-run": "DRY_RUN=true bun ./scripts/version.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.6",
-    "@types/bun": "1.3.10",
-    "@types/node": "25.3.5",
+    "@types/bun": "1.3.12",
+    "@types/node": "25.6.0",
     "glob": "13.0.6",
     "husky": "9.1.7",
-    "lint-staged": "16.3.2",
-    "typescript": "6.0.1-rc"
+    "lint-staged": "16.4.0",
+    "oxfmt": "0.44.0",
+    "oxlint": "1.59.0",
+    "oxlint-tsgolint": "0.20.0",
+    "typescript": "6.0.2"
   },
   "lint-staged": {
     "*.ts": [
       "bun run lint",
       "bun run format"
     ]
-  },
-  "author": {
-    "name": "Petar Zarkov",
-    "email": "pzarko1@gmail.com",
-    "url": "https://github.com/petarzarkov"
-  },
-  "license": "MIT",
-  "homepage": "https://github.com/petarzarkov/arkv#readme",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/petarzarkov/arkv"
   }
 }

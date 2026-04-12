@@ -1,10 +1,5 @@
 import { execSync } from 'node:child_process';
-import {
-  existsSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { semver } from 'bun';
 
@@ -13,10 +8,9 @@ const isDryRun = process.env.DRY_RUN === 'true';
 const checkForcePublish = (): boolean => {
   if (process.env.FORCE_PUBLISH === 'true') return true;
   try {
-    const commitMessage = execSync(
-      'git log -1 --pretty=format:"%s%n%b"',
-      { stdio: 'pipe' },
-    )
+    const commitMessage = execSync('git log -1 --pretty=format:"%s%n%b"', {
+      stdio: 'pipe',
+    })
       .toString()
       .trim();
     return commitMessage.includes('[force-publish]');
@@ -31,9 +25,7 @@ const bumpVersion = (
   version: string,
   type: 'major' | 'minor' | 'patch',
 ): string => {
-  const [major, minor, patch] = version
-    .split('.')
-    .map(Number);
+  const [major, minor, patch] = version.split('.').map(Number);
 
   switch (type) {
     case 'major':
@@ -43,13 +35,11 @@ const bumpVersion = (
     case 'patch':
       return `${major}.${minor}.${patch + 1}`;
     default:
-      throw new Error(`Invalid bump type: ${type}`);
+      throw new Error(`Invalid bump type: ${String(type)}`);
   }
 };
 
-const extractCommitType = (
-  message: string,
-): string | null => {
+const extractCommitType = (message: string): string | null => {
   // Handle squashed merge commits: "Merge pull request #123 from branch\n\nfeat: message"
   // or "feat(scope): message (#123)"
   const mergeMatch = message.match(
@@ -63,15 +53,11 @@ const extractCommitType = (
   return null;
 };
 
-const determineBumpType = ():
-  | 'major'
-  | 'minor'
-  | 'patch' => {
+const determineBumpType = (): 'major' | 'minor' | 'patch' => {
   try {
-    const commitMessage = execSync(
-      'git log -1 --pretty=format:"%s%n%b"',
-      { stdio: 'pipe' },
-    )
+    const commitMessage = execSync('git log -1 --pretty=format:"%s%n%b"', {
+      stdio: 'pipe',
+    })
       .toString()
       .trim();
 
@@ -100,10 +86,9 @@ const determineBumpType = ():
 
 const getChangedSrcPackages = (): Set<string> | null => {
   try {
-    const out = execSync(
-      'git diff-tree --no-commit-id --name-only -r HEAD',
-      { stdio: 'pipe' },
-    )
+    const out = execSync('git diff-tree --no-commit-id --name-only -r HEAD', {
+      stdio: 'pipe',
+    })
       .toString()
       .trim();
 
@@ -122,32 +107,26 @@ const getChangedSrcPackages = (): Set<string> | null => {
   }
 };
 
-const findPublishablePackages = (): Array<{
+const findPublishablePackages = (): {
   name: string;
   dir: string;
   packageJsonPath: string;
-}> => {
+}[] => {
   const packagesDir = resolve(process.cwd(), 'packages');
   const entries = readdirSync(packagesDir, {
     withFileTypes: true,
   });
-  const packages: Array<{
+  const packages: {
     name: string;
     dir: string;
     packageJsonPath: string;
-  }> = [];
+  }[] = [];
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    const pkgJsonPath = join(
-      packagesDir,
-      entry.name,
-      'package.json',
-    );
+    const pkgJsonPath = join(packagesDir, entry.name, 'package.json');
     if (!existsSync(pkgJsonPath)) continue;
-    const pkg = JSON.parse(
-      readFileSync(pkgJsonPath, 'utf-8'),
-    );
+    const pkg = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
     if (pkg.private) continue;
     packages.push({
       name: pkg.name,
@@ -160,28 +139,24 @@ const findPublishablePackages = (): Array<{
 };
 
 const applyVersionBumps = (
-  packages: Array<{
+  packages: {
     name: string;
     dir: string;
     packageJsonPath: string;
-  }>,
+  }[],
   bumpType: 'major' | 'minor' | 'patch',
-): Array<{ packageJsonPath: string; dir: string }> => {
-  const bumped: Array<{
+): { packageJsonPath: string; dir: string }[] => {
+  const bumped: {
     packageJsonPath: string;
     dir: string;
-  }> = [];
+  }[] = [];
 
   for (const { name, dir, packageJsonPath } of packages) {
-    const pkg = JSON.parse(
-      readFileSync(packageJsonPath, 'utf-8'),
-    );
+    const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
     const oldVersion = pkg.version;
 
     if (!oldVersion) {
-      console.warn(
-        `No version found in ${name}. Skipping.`,
-      );
+      console.warn(`No version found in ${name}. Skipping.`);
       continue;
     }
 
@@ -197,14 +172,9 @@ const applyVersionBumps = (
     pkg.version = newVersion;
 
     if (!isDryRun) {
-      writeFileSync(
-        packageJsonPath,
-        `${JSON.stringify(pkg, null, 2)}\n`,
-      );
+      writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
       bumped.push({ packageJsonPath, dir });
-      console.log(
-        `Bumped ${name} from ${oldVersion} to ${newVersion}`,
-      );
+      console.log(`Bumped ${name} from ${oldVersion} to ${newVersion}`);
     } else {
       console.log(
         `[DRY RUN] Would bump ${name} from ${oldVersion} to ${newVersion}`,
@@ -218,9 +188,7 @@ const applyVersionBumps = (
 const pushVersionCommit = (bumpedFiles: string[]): void => {
   execSync(`git add ${bumpedFiles.join(' ')}`);
 
-  const pkg = JSON.parse(
-    readFileSync(bumpedFiles[0], 'utf-8'),
-  );
+  const pkg = JSON.parse(readFileSync(bumpedFiles[0], 'utf-8'));
   const commitMessage = `chore(release): bump version to ${pkg.version} [skip ci]`;
   execSync(`git commit -m "${commitMessage}" --no-verify`);
 
@@ -229,16 +197,13 @@ const pushVersionCommit = (bumpedFiles: string[]): void => {
     execSync('git branch --show-current').toString().trim();
 
   if (!branch) {
-    throw new Error(
-      'Unable to determine branch for pushing release commit.',
-    );
+    throw new Error('Unable to determine branch for pushing release commit.');
   }
 
   console.log(`Pushing to branch: ${branch}`);
   const token = process.env.GITHUB_TOKEN;
   if (token) {
-    const repo =
-      process.env.GITHUB_REPOSITORY ?? 'petarzarkov/arkv';
+    const repo = process.env.GITHUB_REPOSITORY ?? 'petarzarkov/arkv';
     execSync(
       `git push https://x-access-token:${token}@github.com/${repo}.git HEAD:refs/heads/${branch}`,
     );
@@ -260,38 +225,30 @@ const publishPackage = (pkgDir: string): void => {
   });
 };
 
-type PublishablePackage = {
+interface PublishablePackage {
   name: string;
   dir: string;
   packageJsonPath: string;
-};
+}
 
-const isVersionPublished = (
-  name: string,
-  version: string,
-): boolean => {
+const isVersionPublished = (name: string, version: string): boolean => {
   try {
-    const out = execSync(
-      `bunx npm view ${name} versions --json`,
-      { stdio: 'pipe' },
-    )
+    const out = execSync(`bunx npm view ${name} versions --json`, {
+      stdio: 'pipe',
+    })
       .toString()
       .trim();
     // npm returns a single quoted string when only one version exists,
     // or a JSON array when multiple versions exist
     const parsed: string | string[] = JSON.parse(out);
-    const versions = Array.isArray(parsed)
-      ? parsed
-      : [parsed];
+    const versions = Array.isArray(parsed) ? parsed : [parsed];
     return versions.includes(version);
   } catch {
     return false;
   }
 };
 
-const runForcePublish = (
-  packages: PublishablePackage[],
-): void => {
+const runForcePublish = (packages: PublishablePackage[]): void => {
   console.log(
     '\n--- FORCE PUBLISH MODE: publishing all packages at current versions ---\n',
   );
@@ -302,22 +259,16 @@ const runForcePublish = (
   }
 
   for (const { name, dir, packageJsonPath } of packages) {
-    const pkg = JSON.parse(
-      readFileSync(packageJsonPath, 'utf-8'),
-    );
+    const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
     const { version } = pkg;
 
     if (isVersionPublished(name, version)) {
-      console.log(
-        `Skipping ${name}@${version}: already published.`,
-      );
+      console.log(`Skipping ${name}@${version}: already published.`);
       continue;
     }
 
     if (isDryRun) {
-      console.log(
-        `[DRY RUN] Would publish ${name}@${version}`,
-      );
+      console.log(`[DRY RUN] Would publish ${name}@${version}`);
       continue;
     }
 
@@ -326,18 +277,11 @@ const runForcePublish = (
   }
 };
 
-const runVersionBump = (
-  allPackages: PublishablePackage[],
-): void => {
+const runVersionBump = (allPackages: PublishablePackage[]): void => {
   const changedSrcPackages = getChangedSrcPackages();
 
-  if (
-    changedSrcPackages !== null &&
-    changedSrcPackages.size === 0
-  ) {
-    console.log(
-      'No src changes detected, skipping version bump.',
-    );
+  if (changedSrcPackages !== null && changedSrcPackages.size === 0) {
+    console.log('No src changes detected, skipping version bump.');
     process.exit(0);
   }
 
@@ -346,9 +290,7 @@ const runVersionBump = (
       `Detected src changes in: ${[...changedSrcPackages].join(', ')}`,
     );
   } else {
-    console.log(
-      'Could not determine changed packages, processing all.',
-    );
+    console.log('Could not determine changed packages, processing all.');
   }
 
   const bumpType = determineBumpType();
@@ -357,26 +299,19 @@ const runVersionBump = (
   const publishablePackages =
     changedSrcPackages === null
       ? allPackages
-      : allPackages.filter(pkg =>
-          changedSrcPackages.has(basename(pkg.dir)),
-        );
+      : allPackages.filter((pkg) => changedSrcPackages.has(basename(pkg.dir)));
 
   if (publishablePackages.length === 0) {
     console.log('No publishable packages found.');
     process.exit(0);
   }
 
-  const bumpedPackages = applyVersionBumps(
-    publishablePackages,
-    bumpType,
-  );
+  const bumpedPackages = applyVersionBumps(publishablePackages, bumpType);
 
   if (isDryRun || bumpedPackages.length === 0) return;
 
   console.log('Committing version changes...');
-  pushVersionCommit(
-    bumpedPackages.map(p => p.packageJsonPath),
-  );
+  pushVersionCommit(bumpedPackages.map((p) => p.packageJsonPath));
 
   console.log('Publishing bumped packages...');
   for (const { dir } of bumpedPackages) {
@@ -385,7 +320,7 @@ const runVersionBump = (
   }
 };
 
-(async () => {
+void (async () => {
   if (isDryRun) {
     console.log('\n--- DRY RUN MODE ENABLED ---\n');
   }

@@ -2,6 +2,32 @@
   "name": "@arkv/nestjs-context-logger",
   "version": "0.2.3",
   "description": "NestJS module for structured async-context logging powered by @arkv/logger",
+  "keywords": [
+    "async-context",
+    "context",
+    "logger",
+    "logging",
+    "nestjs",
+    "structured",
+    "typescript"
+  ],
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/nestjs-context-logger#readme",
+  "license": "MIT",
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/arkv",
+    "directory": "packages/nestjs-context-logger"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
@@ -12,23 +38,9 @@
       "require": "./dist/cjs/index.js"
     }
   },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "dist"
-  ],
   "publishConfig": {
     "access": "public"
   },
-  "keywords": [
-    "nestjs",
-    "logger",
-    "structured",
-    "context",
-    "async-context",
-    "typescript",
-    "logging"
-  ],
   "scripts": {
     "prebuild": "rm -rf dist",
     "build:esm": "tsc -p tsconfig.build.esm.json",
@@ -45,17 +57,5 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "reflect-metadata": "^0.2.2"
-  },
-  "author": {
-    "name": "Petar Zarkov",
-    "email": "pzarko1@gmail.com",
-    "url": "https://github.com/petarzarkov"
-  },
-  "license": "MIT",
-  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/nestjs-context-logger#readme",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/petarzarkov/arkv",
-    "directory": "packages/nestjs-context-logger"
   }
 }

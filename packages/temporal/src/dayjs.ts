@@ -1,7 +1,4 @@
-import {
-  FORMAT_DEFAULT,
-  INVALID_DATE,
-} from './constants.js';
+import { FORMAT_DEFAULT, INVALID_DATE } from './constants.js';
 import { diffHelper } from './diff.js';
 import { formatDate } from './format.js';
 import {
@@ -69,14 +66,10 @@ export class TDayjs {
     this.$L = cfg.locale ?? getGlobalLocale();
     this.$tz = cfg.tz ?? DEFAULT_TZ;
     this.$zdt =
-      cfg.zdt !== undefined
-        ? cfg.zdt
-        : parseInput(cfg.date, this.$tz);
+      cfg.zdt !== undefined ? cfg.zdt : parseInput(cfg.date, this.$tz);
   }
 
-  private _clone(
-    zdt: Temporal.ZonedDateTime | null,
-  ): TDayjs {
+  private _clone(zdt: Temporal.ZonedDateTime | null): TDayjs {
     return new TDayjs({
       zdt,
       locale: this.$L,
@@ -137,9 +130,7 @@ export class TDayjs {
     }
     if (!this.$zdt) return this._clone(null);
     const current = this.$zdt.dayOfWeek % 7;
-    return this._clone(
-      this.$zdt.add({ days: value - current }),
-    );
+    return this._clone(this.$zdt.add({ days: value - current }));
   }
 
   hour(): number;
@@ -179,10 +170,7 @@ export class TDayjs {
       return this.$zdt?.millisecond ?? NaN;
     }
     if (!this.$zdt) return this._clone(null);
-    return this.add(
-      value - this.$zdt.millisecond,
-      'millisecond',
-    );
+    return this.add(value - this.$zdt.millisecond, 'millisecond');
   }
 
   get(unit: UnitType): number {
@@ -220,10 +208,7 @@ export class TDayjs {
     return this._setByUnit(u, value);
   }
 
-  private _setByUnit(
-    u: NormalizedUnit,
-    value: number,
-  ): TDayjs {
+  private _setByUnit(u: NormalizedUnit, value: number): TDayjs {
     switch (u) {
       case 'year':
         return this.year(value);
@@ -267,17 +252,13 @@ export class TDayjs {
   startOf(unit: OpUnitType): TDayjs {
     if (!this.$zdt) return this._clone(null);
     const u = normalizeUnit(unit);
-    return this._clone(
-      startOfHelper(this.$zdt, u, getLocaleObj(this.$L)),
-    );
+    return this._clone(startOfHelper(this.$zdt, u, getLocaleObj(this.$L)));
   }
 
   endOf(unit: OpUnitType): TDayjs {
     if (!this.$zdt) return this._clone(null);
     const u = normalizeUnit(unit);
-    return this._clone(
-      endOfHelper(this.$zdt, u, getLocaleObj(this.$L)),
-    );
+    return this._clone(endOfHelper(this.$zdt, u, getLocaleObj(this.$L)));
   }
 
   // --- Comparison ---
@@ -292,12 +273,7 @@ export class TDayjs {
     const other = this._toZdt(date);
     if (!other.isValid()) return false;
     if (!unit) {
-      return (
-        Temporal.ZonedDateTime.compare(
-          this.$zdt,
-          other.$zdt,
-        ) < 0
-      );
+      return Temporal.ZonedDateTime.compare(this.$zdt, other.$zdt) < 0;
     }
     return this.endOf(unit).valueOf() < other.valueOf();
   }
@@ -307,12 +283,7 @@ export class TDayjs {
     const other = this._toZdt(date);
     if (!other.isValid()) return false;
     if (!unit) {
-      return (
-        Temporal.ZonedDateTime.compare(
-          this.$zdt,
-          other.$zdt,
-        ) > 0
-      );
+      return Temporal.ZonedDateTime.compare(this.$zdt, other.$zdt) > 0;
     }
     return other.valueOf() < this.startOf(unit).valueOf();
   }
@@ -322,12 +293,7 @@ export class TDayjs {
     const other = this._toZdt(date);
     if (!other.isValid()) return false;
     if (!unit) {
-      return (
-        Temporal.ZonedDateTime.compare(
-          this.$zdt,
-          other.$zdt,
-        ) === 0
-      );
+      return Temporal.ZonedDateTime.compare(this.$zdt, other.$zdt) === 0;
     }
     const start = this.startOf(unit).valueOf();
     const end = this.endOf(unit).valueOf();
@@ -340,11 +306,7 @@ export class TDayjs {
   format(template?: string): string {
     if (!this.$zdt) return INVALID_DATE;
     const loc = getLocaleObj(this.$L);
-    return formatDate(
-      this.$zdt,
-      template ?? FORMAT_DEFAULT,
-      loc,
-    );
+    return formatDate(this.$zdt, template ?? FORMAT_DEFAULT, loc);
   }
 
   diff(
@@ -395,18 +357,13 @@ export class TDayjs {
   }
 
   toString(): string {
-    return this.isValid()
-      ? this.toDate().toUTCString()
-      : INVALID_DATE;
+    return this.isValid() ? this.toDate().toUTCString() : INVALID_DATE;
   }
 
   // --- Locale ---
 
   locale(): string;
-  locale(
-    preset: string | ILocale,
-    object?: Partial<ILocale>,
-  ): TDayjs;
+  locale(preset: string | ILocale, object?: Partial<ILocale>): TDayjs;
   locale(
     preset?: string | ILocale,
     object?: Partial<ILocale>,

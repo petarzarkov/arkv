@@ -1,17 +1,7 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  spyOn,
-} from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
 import { ContextStore } from './context.js';
 import { Logger } from './logger.js';
-import {
-  defaultTestConfig,
-  parseLogOutput,
-} from './test-utils.js';
+import { defaultTestConfig, parseLogOutput } from './test-utils.js';
 
 describe('Logger - cases', () => {
   let logger: Logger;
@@ -26,10 +16,8 @@ describe('Logger - cases', () => {
       event: '/test',
     });
     logger = new Logger(defaultTestConfig, contextStore);
-    consoleLogSpy = spyOn(
-      console,
-      'log',
-    ).mockImplementation(() => {});
+    // eslint-disable-next-line no-empty-function
+    consoleLogSpy = spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -44,8 +32,7 @@ describe('Logger - cases', () => {
 
       logger.log('Test', nestedObject);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.message).toBe('Test');
@@ -59,15 +46,12 @@ describe('Logger - cases', () => {
 
       logger.error('Error occurred', error);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
       expect(logData.message).toBe('Error occurred');
-      expect(logData.error.message).toBe(
-        'Test error message',
-      );
+      expect(logData.error.message).toBe('Test error message');
       expect(logData.error.stack).toBeDefined();
     });
 
@@ -79,8 +63,7 @@ describe('Logger - cases', () => {
 
       logger.error(objectMessage);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
@@ -95,8 +78,7 @@ describe('Logger - cases', () => {
 
       logger.error(emptyObject);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
@@ -108,8 +90,7 @@ describe('Logger - cases', () => {
       // @ts-expect-error - Intentionally calling with wrong type to test runtime handling
       logger.error(null);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
@@ -127,8 +108,7 @@ describe('Logger - cases', () => {
     it('Case 1: log(String)', () => {
       logger.log('Simple string message');
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('log');
@@ -145,8 +125,7 @@ describe('Logger - cases', () => {
 
       logger.log(testObject);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('log');
@@ -162,8 +141,7 @@ describe('Logger - cases', () => {
 
       logger.error(error);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
@@ -184,15 +162,12 @@ describe('Logger - cases', () => {
 
       logger.error(objectWithError);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
       expect(logData.message).toBe('Connection timeout');
-      expect(logData.error.message).toBe(
-        'Connection timeout',
-      );
+      expect(logData.error.message).toBe('Connection timeout');
       expect(logData.operation).toBe('database-query');
       expect(logData.metadata).toEqual({
         nested: {
@@ -208,21 +183,15 @@ describe('Logger - cases', () => {
 
       const calls = consoleLogSpy.mock.calls;
 
-      const warnData = parseLogOutput(
-        calls[0][0] as string,
-      );
+      const warnData = parseLogOutput(calls[0][0] as string);
       expect(warnData.level).toBe('warn');
       expect(warnData.message).toBe('Warning message');
 
-      const errorData = parseLogOutput(
-        calls[1][0] as string,
-      );
+      const errorData = parseLogOutput(calls[1][0] as string);
       expect(errorData.level).toBe('error');
       expect(errorData.message).toBe('Error message');
 
-      const fatalData = parseLogOutput(
-        calls[2][0] as string,
-      );
+      const fatalData = parseLogOutput(calls[2][0] as string);
       expect(fatalData.level).toBe('fatal');
       expect(fatalData.message).toBe('Fatal message');
     });
@@ -232,15 +201,12 @@ describe('Logger - cases', () => {
 
       logger.error('Operation failed', error);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
       expect(logData.message).toBe('Operation failed');
-      expect(logData.error.message).toBe(
-        'Database connection failed',
-      );
+      expect(logData.error.message).toBe('Database connection failed');
       expect(logData.error.stack).toBeDefined();
     });
 
@@ -252,15 +218,12 @@ describe('Logger - cases', () => {
         retryAfter: 30,
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
       expect(logData.message).toBe('API call failed');
-      expect(logData.error.message).toBe(
-        'API rate limit exceeded',
-      );
+      expect(logData.error.message).toBe('API rate limit exceeded');
       expect(logData.retryAfter).toBe(30);
     });
 
@@ -272,15 +235,12 @@ describe('Logger - cases', () => {
         field: 'email',
       });
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
       expect(logData.message).toBe('Request invalid');
-      expect(logData.error.message).toBe(
-        'Validation failed',
-      );
+      expect(logData.error.message).toBe('Validation failed');
       expect(logData.field).toBe('email');
     });
 
@@ -298,19 +258,13 @@ describe('Logger - cases', () => {
         },
       };
 
-      logger.error(
-        'Complex operation failed',
-        complexObject,
-      );
+      logger.error('Complex operation failed', complexObject);
 
-      const logCall = consoleLogSpy.mock
-        .calls[0][0] as string;
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
       expect(logData.level).toBe('error');
-      expect(logData.message).toBe(
-        'Complex operation failed',
-      );
+      expect(logData.message).toBe('Complex operation failed');
       expect(logData.error.message).toBe('File not found');
       expect(logData.operation).toBe('file-upload');
       expect(logData.metadata.size).toBe(1024);

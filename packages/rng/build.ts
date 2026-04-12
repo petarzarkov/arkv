@@ -15,8 +15,7 @@ async function build() {
   // Extract Wasm binary and write it as a Base64 TS file
   const wasmFile = Bun.file('./wasm-pkg/arkv_rng_bg.wasm');
   const wasmBuffer = await wasmFile.arrayBuffer();
-  const base64Wasm =
-    Buffer.from(wasmBuffer).toString('base64');
+  const base64Wasm = Buffer.from(wasmBuffer).toString('base64');
 
   await Bun.write(
     './src/wasm/inline.ts',
@@ -24,18 +23,13 @@ async function build() {
   );
 
   // Copy the generated bindings into src/ so tsc compiles them normally
-  await Bun.write(
-    './src/wasm/arkv_rng.js',
-    Bun.file('./wasm-pkg/arkv_rng.js'),
-  );
+  await Bun.write('./src/wasm/arkv_rng.js', Bun.file('./wasm-pkg/arkv_rng.js'));
   await Bun.write(
     './src/wasm/arkv_rng.d.ts',
     Bun.file('./wasm-pkg/arkv_rng.d.ts'),
   );
 
-  console.log(
-    '✅ Wasm build complete and staged for TypeScript!',
-  );
+  console.log('✅ Wasm build complete and staged for TypeScript!');
 }
 
-build();
+void build();

@@ -2,8 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AsyncContext } from './types.js';
 
 export class ContextStore {
-  private readonly asyncLocalStorage =
-    new AsyncLocalStorage<AsyncContext>();
+  private readonly asyncLocalStorage = new AsyncLocalStorage<AsyncContext>();
 
   getContext(): AsyncContext {
     const context = this.asyncLocalStorage.getStore();
@@ -20,10 +19,7 @@ export class ContextStore {
     }
   }
 
-  runWithContext<T>(
-    context: AsyncContext,
-    callback: () => T,
-  ): T {
+  runWithContext<T>(context: AsyncContext, callback: () => T): T {
     return this.asyncLocalStorage.run(context, callback);
   }
 }

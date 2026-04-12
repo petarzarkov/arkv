@@ -51,10 +51,7 @@ describe('createColor', () => {
 
 describe('createComposedColor', () => {
   it('combines multiple pairs', () => {
-    const fn = createComposedColor(
-      ANSIPairs.bgGreen,
-      ANSIPairs.black,
-    );
+    const fn = createComposedColor(ANSIPairs.bgGreen, ANSIPairs.black);
     const result = fn('test');
     expect(result).toContain('\x1b[42m');
     expect(result).toContain('\x1b[30m');
@@ -62,15 +59,10 @@ describe('createComposedColor', () => {
   });
 
   it('closes in reverse order', () => {
-    const fn = createComposedColor(
-      ANSIPairs.bgRed,
-      ANSIPairs.white,
-    );
+    const fn = createComposedColor(ANSIPairs.bgRed, ANSIPairs.white);
     const result = fn('x');
     // open: bgRed + white, close: white-close + bgRed-close
-    expect(result).toBe(
-      '\x1b[41m\x1b[37mx\x1b[39m\x1b[49m',
-    );
+    expect(result).toBe('\x1b[41m\x1b[37mx\x1b[39m\x1b[49m');
   });
 });
 
@@ -147,16 +139,12 @@ describe('gray alias', () => {
 describe('composed colors', () => {
   it('bgGreenBlack', () => {
     const result = bgGreenBlack('t');
-    expect(result).toBe(
-      '\x1b[42m\x1b[30mt\x1b[39m\x1b[49m',
-    );
+    expect(result).toBe('\x1b[42m\x1b[30mt\x1b[39m\x1b[49m');
   });
 
   it('bgRedWhite', () => {
     const result = bgRedWhite('t');
-    expect(result).toBe(
-      '\x1b[41m\x1b[37mt\x1b[39m\x1b[49m',
-    );
+    expect(result).toBe('\x1b[41m\x1b[37mt\x1b[39m\x1b[49m');
   });
 });
 

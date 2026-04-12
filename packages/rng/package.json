@@ -2,6 +2,38 @@
   "name": "@arkv/rng",
   "version": "0.6.1",
   "description": "Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG.",
+  "keywords": [
+    "browser",
+    "crypto",
+    "fast",
+    "fastest",
+    "javascript",
+    "node",
+    "prng",
+    "random",
+    "rng",
+    "rust",
+    "seedable",
+    "typescript",
+    "web-assembly"
+  ],
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/rng#readme",
+  "license": "MIT",
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/arkv",
+    "directory": "packages/rng"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
@@ -12,29 +44,9 @@
       "require": "./dist/cjs/index.js"
     }
   },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "dist"
-  ],
   "publishConfig": {
     "access": "public"
   },
-  "keywords": [
-    "rng",
-    "random",
-    "fast",
-    "fastest",
-    "crypto",
-    "web-assembly",
-    "rust",
-    "prng",
-    "seedable",
-    "typescript",
-    "javascript",
-    "node",
-    "browser"
-  ],
   "scripts": {
     "prebuild": "rm -rf dist wasm-pkg src/wasm",
     "build:wasm": "bun run build.ts",
@@ -50,18 +62,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {},
-  "author": {
-    "name": "Petar Zarkov",
-    "email": "pzarko1@gmail.com",
-    "url": "https://github.com/petarzarkov"
-  },
-  "license": "MIT",
-  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/rng#readme",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/petarzarkov/arkv",
-    "directory": "packages/rng"
-  },
   "devDependencies": {
     "@types/seedrandom": "^3.0.8",
     "pure-rand": "^7.0.1",

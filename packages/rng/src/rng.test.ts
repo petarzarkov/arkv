@@ -150,12 +150,8 @@ describe('@arkv/rng', () => {
       it('produces different sequences for different seeds', () => {
         const rng1 = new Rng(1n, algo);
         const rng2 = new Rng(2n, algo);
-        const seq1 = Array.from({ length: 5 }, () =>
-          rng1.int(),
-        );
-        const seq2 = Array.from({ length: 5 }, () =>
-          rng2.int(),
-        );
+        const seq1 = Array.from({ length: 5 }, () => rng1.int());
+        const seq2 = Array.from({ length: 5 }, () => rng2.int());
         expect(seq1).not.toEqual(seq2);
         rng1.free();
         rng2.free();
@@ -166,10 +162,10 @@ describe('@arkv/rng', () => {
         const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         const shuffled = rng.shuffle(arr);
         expect(shuffled).toHaveLength(arr.length);
-        expect(shuffled.sort()).toEqual([...arr].sort());
-        expect(arr).toEqual([
-          1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-        ]); // not mutated
+        expect(shuffled.sort((a, b) => a - b)).toEqual(
+          [...arr].sort((a, b) => a - b),
+        );
+        expect(arr).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]); // not mutated
         rng.free();
       });
 
@@ -220,7 +216,7 @@ describe('@arkv/rng', () => {
   describe('cross-algorithm isolation', () => {
     it('different algorithms with the same seed produce different sequences', () => {
       // Collect the first int from every algorithm
-      const results = ALGORITHMS.map(algo => {
+      const results = ALGORITHMS.map((algo) => {
         const rng = new Rng(12345n, algo);
         const val = rng.int();
         rng.free();
@@ -248,12 +244,8 @@ describe('@arkv/rng', () => {
     it('different strings → different sequences', () => {
       const rng1 = new Rng('hello.');
       const rng2 = new Rng('world.');
-      const seq1 = Array.from({ length: 5 }, () =>
-        rng1.int(),
-      );
-      const seq2 = Array.from({ length: 5 }, () =>
-        rng2.int(),
-      );
+      const seq1 = Array.from({ length: 5 }, () => rng1.int());
+      const seq2 = Array.from({ length: 5 }, () => rng2.int());
       expect(seq1).not.toEqual(seq2);
       rng1.free();
       rng2.free();
@@ -262,12 +254,8 @@ describe('@arkv/rng', () => {
     it('numeric-looking string "42" gives different sequence than number 42', () => {
       const rngStr = new Rng('42');
       const rngNum = new Rng(42);
-      const seqStr = Array.from({ length: 5 }, () =>
-        rngStr.int(),
-      );
-      const seqNum = Array.from({ length: 5 }, () =>
-        rngNum.int(),
-      );
+      const seqStr = Array.from({ length: 5 }, () => rngStr.int());
+      const seqNum = Array.from({ length: 5 }, () => rngNum.int());
       expect(seqStr).not.toEqual(seqNum);
       rngStr.free();
       rngNum.free();
@@ -286,12 +274,8 @@ describe('@arkv/rng', () => {
     it('empty string and non-empty string produce different sequences', () => {
       const rng1 = new Rng('');
       const rng2 = new Rng('a');
-      const seq1 = Array.from({ length: 5 }, () =>
-        rng1.int(),
-      );
-      const seq2 = Array.from({ length: 5 }, () =>
-        rng2.int(),
-      );
+      const seq1 = Array.from({ length: 5 }, () => rng1.int());
+      const seq2 = Array.from({ length: 5 }, () => rng2.int());
       expect(seq1).not.toEqual(seq2);
       rng1.free();
       rng2.free();
@@ -310,12 +294,8 @@ describe('@arkv/rng', () => {
     it('different Unicode seeds produce different sequences', () => {
       const rng1 = new Rng('🎲');
       const rng2 = new Rng('🌟');
-      const seq1 = Array.from({ length: 5 }, () =>
-        rng1.int(),
-      );
-      const seq2 = Array.from({ length: 5 }, () =>
-        rng2.int(),
-      );
+      const seq1 = Array.from({ length: 5 }, () => rng1.int());
+      const seq2 = Array.from({ length: 5 }, () => rng2.int());
       expect(seq1).not.toEqual(seq2);
       rng1.free();
       rng2.free();
@@ -354,15 +334,13 @@ describe('@arkv/rng', () => {
 
     it('always returns true with probability 1', () => {
       const rng = new Rng(1n);
-      for (let i = 0; i < 20; i++)
-        expect(rng.bool(1)).toBe(true);
+      for (let i = 0; i < 20; i++) expect(rng.bool(1)).toBe(true);
       rng.free();
     });
 
     it('always returns false with probability 0', () => {
       const rng = new Rng(1n);
-      for (let i = 0; i < 20; i++)
-        expect(rng.bool(0)).toBe(false);
+      for (let i = 0; i < 20; i++) expect(rng.bool(0)).toBe(false);
       rng.free();
     });
   });
@@ -383,9 +361,7 @@ describe('@arkv/rng', () => {
 
     it('throws on an empty array', () => {
       const rng = new Rng(1n);
-      expect(() => rng.pick([])).toThrow(
-        'Cannot pick from an empty array.',
-      );
+      expect(() => rng.pick([])).toThrow('Cannot pick from an empty array.');
       rng.free();
     });
   });
@@ -393,9 +369,7 @@ describe('@arkv/rng', () => {
   describe('ints() error handling', () => {
     it('throws on negative length', () => {
       const rng = new Rng(1n);
-      expect(() => rng.ints(-5)).toThrow(
-        'Length cannot be negative.',
-      );
+      expect(() => rng.ints(-5)).toThrow('Length cannot be negative.');
       rng.free();
     });
   });
@@ -403,9 +377,7 @@ describe('@arkv/rng', () => {
   describe('floats() error handling', () => {
     it('throws on negative length', () => {
       const rng = new Rng(1n);
-      expect(() => rng.floats(-1)).toThrow(
-        'Length cannot be negative.',
-      );
+      expect(() => rng.floats(-1)).toThrow('Length cannot be negative.');
       rng.free();
     });
   });
@@ -413,9 +385,7 @@ describe('@arkv/rng', () => {
   describe('ranges() error handling', () => {
     it('throws on negative length', () => {
       const rng = new Rng(1n);
-      expect(() => rng.ranges(0, 10, -1)).toThrow(
-        'Length cannot be negative.',
-      );
+      expect(() => rng.ranges(0, 10, -1)).toThrow('Length cannot be negative.');
       rng.free();
     });
   });
@@ -470,12 +440,7 @@ describe('@arkv/rng', () => {
       const rng2 = new Rng(7n);
       const stream = rng1.intStream(4);
       const batch = Array.from(rng2.ints(4));
-      expect([
-        stream(),
-        stream(),
-        stream(),
-        stream(),
-      ]).toEqual(batch);
+      expect([stream(), stream(), stream(), stream()]).toEqual(batch);
       rng1.free();
       rng2.free();
     });

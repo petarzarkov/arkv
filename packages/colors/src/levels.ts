@@ -7,13 +7,10 @@ import {
   white,
   yellow,
 } from './color.js';
-import type { ColorFn, ColorLogLevels } from './types.js';
+import type { ColorFn } from './types.js';
 
 /** Maps log levels to their corresponding color functions. */
-export const levelColorMap: Record<
-  ColorLogLevels | string,
-  ColorFn
-> = {
+export const levelColorMap: Record<string, ColorFn> = {
   fatal: bgRedWhite,
   error: red,
   warn: yellow,
@@ -24,9 +21,7 @@ export const levelColorMap: Record<
 };
 
 /** Returns the color function for a given log level. */
-export const getLevelColorFn = (
-  level: ColorLogLevels | string,
-): ColorFn => {
+export const getLevelColorFn = (level: string): ColorFn => {
   return levelColorMap[level] || white;
 };
 
@@ -35,11 +30,7 @@ export const getLevelColorFn = (
  * Booleans and numbers: yellow, null: gray, everything else: white.
  */
 export const getValueColor = (value: string): ColorFn => {
-  if (
-    value === 'true' ||
-    value === 'false' ||
-    !Number.isNaN(Number(value))
-  ) {
+  if (value === 'true' || value === 'false' || !Number.isNaN(Number(value))) {
     return yellow;
   }
   if (value === 'null') {

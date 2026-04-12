@@ -56,10 +56,7 @@ describe('creation', () => {
 
   it('supports method chaining immutably', () => {
     const base = tdayjs('2026-03-07T12:00:00');
-    const chained = base
-      .add(1, 'month')
-      .subtract(2, 'days')
-      .startOf('day');
+    const chained = base.add(1, 'month').subtract(2, 'days').startOf('day');
 
     expect(base.format('YYYY-MM-DD')).toBe('2026-03-07'); // Base untouched
     expect(chained.format('YYYY-MM-DD')).toBe('2026-04-05');
@@ -307,9 +304,7 @@ describe('startOf / endOf', () => {
       weekdaysMin: [] as string[],
       weekStart: 1,
     };
-    const d = tdayjs('2026-03-07')
-      .locale(fr)
-      .startOf('week');
+    const d = tdayjs('2026-03-07').locale(fr).startOf('week');
     expect(d.day()).toBe(1); // Monday
     expect(d.date()).toBe(2);
   });
@@ -482,9 +477,7 @@ describe('invalid date propagation', () => {
     expect(mutated.isValid()).toBe(false);
 
     // Formatting an invalid date should return 'Invalid Date'
-    expect(mutated.format('YYYY-MM-DD')).toBe(
-      'Invalid Date',
-    );
+    expect(mutated.format('YYYY-MM-DD')).toBe('Invalid Date');
   });
 });
 

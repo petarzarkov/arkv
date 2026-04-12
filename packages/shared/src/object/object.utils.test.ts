@@ -34,9 +34,7 @@ describe('pick', () => {
 
   it('ignores keys not in the object', () => {
     const obj = { a: 1 } as Record<string, unknown>;
-    expect(
-      pick(obj, ['a', 'z'] as (keyof typeof obj)[]),
-    ).toEqual({
+    expect(pick(obj, ['a', 'z'] as (keyof typeof obj)[])).toEqual({
       a: 1,
     });
   });

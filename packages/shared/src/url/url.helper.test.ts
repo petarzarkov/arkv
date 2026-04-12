@@ -84,10 +84,10 @@ describe('UrlHelper', () => {
 
   describe('interpolate', () => {
     it('replaces placeholders with values', () => {
-      const result = helper.interpolate(
-        '/api/{version}/users/{id}',
-        { version: 'v1', id: 42 },
-      );
+      const result = helper.interpolate('/api/{version}/users/{id}', {
+        version: 'v1',
+        id: 42,
+      });
       expect(result).toBe('/api/v1/users/42');
     });
 
@@ -104,10 +104,9 @@ describe('UrlHelper', () => {
     });
 
     it('leaves unmatched placeholders as-is', () => {
-      const result = helper.interpolate(
-        '/api/{version}/{unknown}',
-        { version: 'v1' },
-      );
+      const result = helper.interpolate('/api/{version}/{unknown}', {
+        version: 'v1',
+      });
       expect(result).toBe('/api/v1/{unknown}');
     });
 

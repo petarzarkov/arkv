@@ -35,10 +35,7 @@ function tdayjs(date?: ConfigType): TDayjs {
   return new TDayjs({ date });
 }
 
-tdayjs.extend = <T>(
-  plugin: PluginFunc<T>,
-  option?: T,
-): typeof tdayjs => {
+tdayjs.extend = <T>(plugin: PluginFunc<T>, option?: T): typeof tdayjs => {
   if (!installed.has(plugin as PluginFunc)) {
     plugin(option as T, TDayjs, tdayjs);
     installed.add(plugin as PluginFunc);

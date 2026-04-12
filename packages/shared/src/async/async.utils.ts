@@ -12,8 +12,7 @@ export const retry = async <T>(
       return await fn();
     } catch (err) {
       lastError = err;
-      if (attempt < retries)
-        await new Promise(r => setTimeout(r, delayMs));
+      if (attempt < retries) await new Promise((r) => setTimeout(r, delayMs));
     }
   }
   throw lastError;
@@ -22,9 +21,7 @@ export const retry = async <T>(
 /**
  * Creates a debounced version of a function.
  */
-export const debounce = <
-  T extends (...args: unknown[]) => void,
->(
+export const debounce = <T extends (...args: unknown[]) => void>(
   fn: T,
   delayMs: number,
 ): ((...args: Parameters<T>) => void) => {
@@ -39,4 +36,4 @@ export const debounce = <
  * Sleeps for the given number of milliseconds.
  */
 export const sleep = (ms: number): Promise<void> =>
-  new Promise(r => setTimeout(r, ms));
+  new Promise((r) => setTimeout(r, ms));

@@ -6,7 +6,6 @@ This document outlines the environment variables required for the project. These
 
 ### General
 
-| Variable | Description | Default Value | Source |
-|---|---|---|---|
-| `NODE_ENV` | some description | `local` | .env.sample |
-
+| Variable   | Description      | Default Value | Source      |
+| ---------- | ---------------- | ------------- | ----------- |
+| `NODE_ENV` | some description | `local`       | .env.sample |

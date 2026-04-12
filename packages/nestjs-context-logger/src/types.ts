@@ -34,17 +34,17 @@ export interface LoggerModuleConfig extends LoggerConfig {
  * in forRootAsync.
  */
 export interface LoggerModuleOptionsFactory {
-  createLoggerOptions():
-    | Promise<LoggerModuleConfig>
-    | LoggerModuleConfig;
+  createLoggerOptions(): Promise<LoggerModuleConfig> | LoggerModuleConfig;
 }
 
 /**
  * Async options for NestJsContextLoggerModule.forRootAsync.
  * Supports useFactory, useClass, and useExisting patterns.
  */
-export interface LoggerModuleAsyncOptions
-  extends Pick<ModuleMetadata, 'imports'> {
+export interface LoggerModuleAsyncOptions extends Pick<
+  ModuleMetadata,
+  'imports'
+> {
   /**
    * Register as a global module.
    * @default true
@@ -56,15 +56,13 @@ export interface LoggerModuleAsyncOptions
    * Inject dependencies via the inject array.
    */
   useFactory?: (
-    // biome-ignore lint/suspicious/noExplicitAny: allow any args for factory function
-    ...args: any[]
+    ...args: unknown[]
   ) => Promise<LoggerModuleConfig> | LoggerModuleConfig;
 
   /**
    * Tokens to inject into the useFactory function.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: injection tokens can be any provider token
-  inject?: any[];
+  inject?: unknown[];
 
   /**
    * Class that implements LoggerModuleOptionsFactory.

@@ -8,7 +8,7 @@ describe('groupBy', () => {
       { type: 'vegetable', name: 'carrot' },
       { type: 'fruit', name: 'banana' },
     ];
-    const result = groupBy(items, i => i.type);
+    const result = groupBy(items, (i) => i.type);
     expect(result).toEqual({
       fruit: [
         { type: 'fruit', name: 'apple' },
@@ -23,7 +23,7 @@ describe('groupBy', () => {
   });
 
   it('handles single-item groups', () => {
-    const result = groupBy([1, 2, 3], n => String(n));
+    const result = groupBy([1, 2, 3], (n) => String(n));
     expect(Object.keys(result)).toHaveLength(3);
     expect(result['1']).toEqual([1]);
   });
@@ -40,7 +40,7 @@ describe('unique', () => {
       { id: 2, name: 'b' },
       { id: 1, name: 'c' },
     ];
-    const result = unique(items, i => i.id);
+    const result = unique(items, (i) => i.id);
     expect(result).toEqual([
       { id: 1, name: 'a' },
       { id: 2, name: 'b' },
@@ -52,21 +52,13 @@ describe('unique', () => {
   });
 
   it('handles strings', () => {
-    expect(unique(['a', 'b', 'a', 'c'])).toEqual([
-      'a',
-      'b',
-      'c',
-    ]);
+    expect(unique(['a', 'b', 'a', 'c'])).toEqual(['a', 'b', 'c']);
   });
 });
 
 describe('chunk', () => {
   it('splits array into chunks of given size', () => {
-    expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([
-      [1, 2],
-      [3, 4],
-      [5],
-    ]);
+    expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
   });
 
   it('handles exact divisions', () => {

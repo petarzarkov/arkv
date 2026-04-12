@@ -58,17 +58,10 @@ const UNIT_MAP: Record<string, NormalizedUnit> = {
 };
 
 export function normalizeUnit(u: string): NormalizedUnit {
-  return (
-    UNIT_MAP[u] ??
-    UNIT_MAP[u.toLowerCase()] ??
-    'millisecond'
-  );
+  return UNIT_MAP[u] ?? UNIT_MAP[u.toLowerCase()] ?? 'millisecond';
 }
 
-export const DURATION_KEY: Record<
-  NormalizedUnit,
-  DurationKey | null
-> = {
+export const DURATION_KEY: Record<NormalizedUnit, DurationKey | null> = {
   year: 'years',
   month: 'months',
   quarter: null,

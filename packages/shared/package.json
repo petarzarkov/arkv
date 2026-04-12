@@ -2,6 +2,28 @@
   "name": "@arkv/shared",
   "version": "0.6.2",
   "description": "Shared utilities for @arkv packages",
+  "keywords": [
+    "shared",
+    "typescript",
+    "utilities"
+  ],
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/shared#readme",
+  "license": "MIT",
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/arkv",
+    "directory": "packages/shared"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
@@ -12,19 +34,9 @@
       "require": "./dist/cjs/index.js"
     }
   },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "dist"
-  ],
   "publishConfig": {
     "access": "public"
   },
-  "keywords": [
-    "shared",
-    "utilities",
-    "typescript"
-  ],
   "scripts": {
     "prebuild": "rm -rf dist",
     "build:esm": "tsc -p tsconfig.build.esm.json",
@@ -36,17 +48,5 @@
     "test:cov": "bun test --coverage",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
-  "author": {
-    "name": "Petar Zarkov",
-    "email": "pzarko1@gmail.com",
-    "url": "https://github.com/petarzarkov"
-  },
-  "license": "MIT",
-  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/shared#readme",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/petarzarkov/arkv",
-    "directory": "packages/shared"
-  }
+  "dependencies": {}
 }

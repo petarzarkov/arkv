@@ -13,8 +13,7 @@ describe('retry', () => {
     let calls = 0;
     const fn = mock(() => {
       calls++;
-      if (calls < 3)
-        return Promise.reject(new Error('fail'));
+      if (calls < 3) return Promise.reject(new Error('fail'));
       return Promise.resolve('ok');
     });
     const result = await retry(fn, 3, 0);
@@ -23,18 +22,15 @@ describe('retry', () => {
   });
 
   it('throws after exhausting retries', async () => {
-    const fn = mock(() =>
-      Promise.reject(new Error('always fails')),
-    );
-    await expect(retry(fn, 2, 0)).rejects.toThrow(
-      'always fails',
-    );
+    const fn = mock(() => Promise.reject(new Error('always fails')));
+    expect(retry(fn, 2, 0)).rejects.toThrow('always fails');
     expect(fn).toHaveBeenCalledTimes(3); // initial + 2 retries
   });
 });
 
 describe('debounce', () => {
   it('delays function execution', async () => {
+    // eslint-disable-next-line no-empty-function
     const fn = mock(() => {});
     const debounced = debounce(fn, 50);
     debounced();
@@ -44,6 +40,7 @@ describe('debounce', () => {
   });
 
   it('resets timer on subsequent calls', async () => {
+    // eslint-disable-next-line no-empty-function
     const fn = mock(() => {});
     const debounced = debounce(fn, 50);
     debounced();

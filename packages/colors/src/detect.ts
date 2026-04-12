@@ -30,6 +30,5 @@ export const isColorSupported = (): boolean => {
 export const createConditionalColor = (
   colorFn: (text: string) => string,
 ): ((text: string) => string) => {
-  return (text: string) =>
-    isColorSupported() ? colorFn(text) : text;
+  return (text: string) => (isColorSupported() ? colorFn(text) : text);
 };

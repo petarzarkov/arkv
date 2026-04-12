@@ -35,7 +35,7 @@ const out = (msg: string) => {
 const mdBuffer: string[] = [];
 
 function printTable(title: string, rows: Result[]): void {
-  const best = Math.min(...rows.map(r => r.ms));
+  const best = Math.min(...rows.map((r) => r.ms));
   out(`\n${title}  (N=${N.toLocaleString('en-US')})`);
   out(hr('┌', '┬', '┐'));
   out(
@@ -43,13 +43,8 @@ function printTable(title: string, rows: Result[]): void {
   );
   out(hr('├', '┼', '┤'));
   for (const { label, ms } of rows) {
-    const ops = Math.round((N / ms) * 1000).toLocaleString(
-      'en-US',
-    );
-    const slow =
-      ms / best < 1.005
-        ? 'fastest'
-        : `${(ms / best).toFixed(2)}x`;
+    const ops = Math.round((N / ms) * 1000).toLocaleString('en-US');
+    const slow = ms / best < 1.005 ? 'fastest' : `${(ms / best).toFixed(2)}x`;
     out(
       `│ ${label.padEnd(LW - 2)} │ ${ms.toFixed(2).padStart(MW - 2)} │ ${ops.padStart(OW - 2)} │ ${slow.padStart(SW - 2)} │`,
     );
@@ -57,25 +52,15 @@ function printTable(title: string, rows: Result[]): void {
   out(hr('└', '┴', '┘'));
 
   // Markdown table for README
-  mdBuffer.push(
-    `### ${title}  (N=${N.toLocaleString('en-US')})\n`,
-  );
+  mdBuffer.push(`### ${title}  (N=${N.toLocaleString('en-US')})\n`);
   mdBuffer.push('| Library | ms | ops/sec | vs fastest |');
   mdBuffer.push('|:--------|---:|-------:|----------:|');
   for (const { label, ms } of rows) {
-    const ops = Math.round((N / ms) * 1000).toLocaleString(
-      'en-US',
-    );
+    const ops = Math.round((N / ms) * 1000).toLocaleString('en-US');
     const slow =
-      ms / best < 1.005
-        ? '**fastest**'
-        : `${(ms / best).toFixed(2)}x`;
-    const displayLabel = label.startsWith('@arkv')
-      ? `**${label}**`
-      : label;
-    mdBuffer.push(
-      `| ${displayLabel} | ${ms.toFixed(2)} | ${ops} | ${slow} |`,
-    );
+      ms / best < 1.005 ? '**fastest**' : `${(ms / best).toFixed(2)}x`;
+    const displayLabel = label.startsWith('@arkv') ? `**${label}**` : label;
+    mdBuffer.push(`| ${displayLabel} | ${ms.toFixed(2)} | ${ops} | ${slow} |`);
   }
   mdBuffer.push('');
 }
@@ -90,16 +75,8 @@ function bench(fn: () => void): number {
 
 /** 64-bit float in [0, 1) from a pure-rand generator (53-bit precision, mutates in-place). */
 function prandFloat64(rng: prand.RandomGenerator): number {
-  const g1 = prand.unsafeUniformIntDistribution(
-    0,
-    (1 << 26) - 1,
-    rng,
-  );
-  const g2 = prand.unsafeUniformIntDistribution(
-    0,
-    (1 << 27) - 1,
-    rng,
-  );
+  const g1 = prand.unsafeUniformIntDistribution(0, (1 << 26) - 1, rng);
+  const g2 = prand.unsafeUniformIntDistribution(0, (1 << 27) - 1, rng);
   return (g1 * 2 ** 27 + g2) * 2 ** -53;
 }
 
@@ -107,19 +84,11 @@ function prandFloat64(rng: prand.RandomGenerator): number {
 
 type PrandFactory = () => prand.RandomGenerator;
 
-function prandIntBench(
-  mk: PrandFactory,
-  min: number,
-  max: number,
-): number {
+function prandIntBench(mk: PrandFactory, min: number, max: number): number {
   return bench(() => {
     let s = mk();
     for (let i = 0; i < N; i++) {
-      const [, n] = prand.uniformIntDistribution(
-        min,
-        max,
-        s,
-      );
+      const [, n] = prand.uniformIntDistribution(min, max, s);
       s = n;
     }
   });
@@ -132,10 +101,7 @@ function prandFloatBench(mk: PrandFactory): number {
   });
 }
 
-function prandShuffleBench(
-  mk: PrandFactory,
-  src: number[],
-): number {
+function prandShuffleBench(mk: PrandFactory, src: number[]): number {
   return bench(() => {
     const arr = [...src];
     let s = mk();
@@ -171,14 +137,14 @@ function main() {
   const srXorshift7 = seedrandom.xorshift7(SEED.toString());
 
   // Lookup tables for map-based row generation
-  const arkvInstances: Array<[string, Rng]> = [
+  const arkvInstances: [string, Rng][] = [
     ['pcg64', arkvPcg64],
     ['xoroshiro128+', arkvXoroshiro],
     ['xorshift128+', arkvXorshift],
     ['mersenne', arkvMersenne],
     ['lcg32', arkvLcg32],
   ];
-  const srVariants: Array<[string, () => number]> = [
+  const srVariants: [string, () => number][] = [
     ['default/ARC4', srDefault],
     ['alea', srAlea],
     ['xor128', srXor128],
@@ -187,7 +153,7 @@ function main() {
     ['xor4096', srXor4096],
     ['xorshift7', srXorshift7],
   ];
-  const prandFactories: Array<[string, PrandFactory]> = [
+  const prandFactories: [string, PrandFactory][] = [
     ['xoroshiro128+', () => prand.xoroshiro128plus(SEED)],
     ['xorshift128+', () => prand.xorshift128plus(SEED)],
     ['mersenne', () => prand.mersenne(SEED)],
@@ -205,8 +171,7 @@ function main() {
     ...srVariants.map(([name, rng]) => ({
       label: `seedrandom  · ${name}`,
       ms: bench(() => {
-        for (let i = 0; i < N; i++)
-          Math.floor(rng() * 4294967296);
+        for (let i = 0; i < N; i++) Math.floor(rng() * 4294967296);
       }),
     })),
     ...prandFactories.map(([name, mk]) => ({
@@ -216,11 +181,8 @@ function main() {
     {
       label: 'random-js  · MersenneTwister',
       ms: bench(() => {
-        const r = new Random(
-          MersenneTwister19937.seed(SEED),
-        );
-        for (let i = 0; i < N; i++)
-          r.integer(0, 4294967295);
+        const r = new Random(MersenneTwister19937.seed(SEED));
+        for (let i = 0; i < N; i++) r.integer(0, 4294967295);
       }),
     },
   ]);
@@ -237,11 +199,7 @@ function main() {
         const a = new Uint32Array(N);
         let s = mk();
         for (let i = 0; i < N; i++) {
-          const [v, n] = prand.uniformIntDistribution(
-            0,
-            4294967295,
-            s,
-          );
+          const [v, n] = prand.uniformIntDistribution(0, 4294967295, s);
           a[i] = v;
           s = n;
         }
@@ -251,11 +209,8 @@ function main() {
       label: 'random-js  loop',
       ms: bench(() => {
         const a = new Uint32Array(N);
-        const r = new Random(
-          MersenneTwister19937.seed(SEED),
-        );
-        for (let i = 0; i < N; i++)
-          a[i] = r.integer(0, 4294967295);
+        const r = new Random(MersenneTwister19937.seed(SEED));
+        for (let i = 0; i < N; i++) a[i] = r.integer(0, 4294967295);
       }),
     },
   ]);
@@ -288,9 +243,7 @@ function main() {
       {
         label: 'random-js  · Random.real(0, 1)',
         ms: bench(() => {
-          const r = new Random(
-            MersenneTwister19937.seed(SEED),
-          );
+          const r = new Random(MersenneTwister19937.seed(SEED));
           for (let i = 0; i < N; i++) r.real(0, 1);
         }),
       },
@@ -309,15 +262,13 @@ function main() {
       {
         label: '@arkv/rng  · pcg64  range() [single]',
         ms: bench(() => {
-          for (let i = 0; i < N; i++)
-            arkvPcg64.range(1, 1000);
+          for (let i = 0; i < N; i++) arkvPcg64.range(1, 1000);
         }),
       },
       ...srVariants.map(([name, rng]) => ({
         label: `seedrandom  · ${name}  + floor`,
         ms: bench(() => {
-          for (let i = 0; i < N; i++)
-            Math.floor(rng() * 999) + 1;
+          for (let i = 0; i < N; i++) void (Math.floor(rng() * 999) + 1);
         }),
       })),
       ...prandFactories.map(([name, mk]) => ({
@@ -327,9 +278,7 @@ function main() {
       {
         label: 'random-js  · Random.integer(1, 999)',
         ms: bench(() => {
-          const r = new Random(
-            MersenneTwister19937.seed(SEED),
-          );
+          const r = new Random(MersenneTwister19937.seed(SEED));
           for (let i = 0; i < N; i++) r.integer(1, 999);
         }),
       },
@@ -362,27 +311,19 @@ function main() {
       label: 'random-js  · Random.shuffle()  [in-place]',
       ms: bench(() => {
         const arr = [...source];
-        new Random(MersenneTwister19937.seed(SEED)).shuffle(
-          arr,
-        );
+        new Random(MersenneTwister19937.seed(SEED)).shuffle(arr);
       }),
     },
   ]);
 
   // ── 6. String-seeded float [0, 1) ─────────────────────────────────────────
   const arkvPcg64Str = new Rng(STRING_SEED, 'pcg64');
-  const arkvXoroshiroStr = new Rng(
-    STRING_SEED,
-    'xoroshiro128+',
-  );
-  const arkvXorshiftStr = new Rng(
-    STRING_SEED,
-    'xorshift128+',
-  );
+  const arkvXoroshiroStr = new Rng(STRING_SEED, 'xoroshiro128+');
+  const arkvXorshiftStr = new Rng(STRING_SEED, 'xorshift128+');
   const arkvMersenneStr = new Rng(STRING_SEED, 'mersenne');
   const arkvLcg32Str = new Rng(STRING_SEED, 'lcg32');
 
-  const arkvStrInstances: Array<[string, Rng]> = [
+  const arkvStrInstances: [string, Rng][] = [
     ['pcg64', arkvPcg64Str],
     ['xoroshiro128+', arkvXoroshiroStr],
     ['xorshift128+', arkvXorshiftStr],
@@ -432,8 +373,7 @@ function main() {
     ...srVariants.map(([name, rng]) => ({
       label: `seedrandom  · ${name}`,
       ms: bench(() => {
-        for (let i = 0; i < N; i++)
-          Math.floor(rng() * 4294967296);
+        for (let i = 0; i < N; i++) Math.floor(rng() * 4294967296);
       }),
     })),
   ]);
@@ -453,13 +393,9 @@ function main() {
         label: `seedrandom  · ${name}  (2×32-bit + BigInt)`,
         ms: bench(() => {
           for (let i = 0; i < N; i++) {
-            const hi = BigInt(
-              Math.floor(rng() * 4294967296),
-            );
-            const lo = BigInt(
-              Math.floor(rng() * 4294967296),
-            );
-            (hi << 32n) | lo;
+            const hi = BigInt(Math.floor(rng() * 4294967296));
+            const lo = BigInt(Math.floor(rng() * 4294967296));
+            void ((hi << 32n) | lo);
           }
         }),
       })),
@@ -497,14 +433,9 @@ ${mdBuffer.join('\n').trimEnd()}
 `;
     writeFileSync(
       readmePath,
-      readme.replace(
-        /## Benchmark[\s\S]*$/,
-        `${benchmarkSection.trim()}\n`,
-      ),
+      readme.replace(/## Benchmark[\s\S]*$/, `${benchmarkSection.trim()}\n`),
     );
-    console.log(
-      '✅ README.md updated with latest benchmark results!',
-    );
+    console.log('✅ README.md updated with latest benchmark results!');
   } catch (err) {
     console.error('❌ Failed to update README.md:', err);
   }
