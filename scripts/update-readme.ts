@@ -49,24 +49,26 @@ function discoverPackages(): PackageEntry[] {
     });
 }
 
-function npmBadge(name: string): string {
+function npmBadges(name: string): string {
   const encoded = encodeURIComponent(name);
-  const shield = `https://img.shields.io/npm/v/${encoded}`;
   const npmUrl = `https://www.npmjs.com/package/${encoded}`;
-  return `[![npm](${shield})](${npmUrl})`;
+  const version = `[![npm](https://img.shields.io/npm/v/${encoded})](${npmUrl})`;
+  const downloads = `[![dls](https://img.shields.io/npm/dt/${encoded}?label=dls)](${npmUrl})`;
+  const size = `[![size](https://img.shields.io/npm/unpacked-size/${encoded}?label=size)](${npmUrl})`;
+  return `${version} ${downloads} ${size}`;
 }
 
 function buildPackagesTable(entries: PackageEntry[]): string {
-  const header = '| Package | Version | Description |';
+  const header = '| Package | Npm | Description |';
   const divider = '|---------|---------|-------------|';
 
   const rows = entries
     .filter((e) => !e.pkg.private)
     .map(({ folder, pkg }) => {
       const link = `[\`${pkg.name}\`](./packages/${folder})`;
-      const badge = npmBadge(pkg.name);
+      const badges = npmBadges(pkg.name);
       const desc = pkg.description ?? '';
-      return `| ${link} | ${badge} | ${desc} |`;
+      return `| ${link} | ${badges} | ${desc} |`;
     });
 
   return [header, divider, ...rows].join('\n');

@@ -15,14 +15,15 @@ A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 
 ## Packages
 
-| Package | Version | Description |
+| Package | Npm | Description |
 |---------|---------|-------------|
-| [`@arkv/colors`](./packages/colors) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fcolors)](https://www.npmjs.com/package/%40arkv%2Fcolors) | Lightweight, zero-dependency ANSI color and style utilities for terminals |
-| [`@arkv/logger`](./packages/logger) | [![npm](https://img.shields.io/npm/v/%40arkv%2Flogger)](https://www.npmjs.com/package/%40arkv%2Flogger) | Framework-agnostic structured logger with async context, sanitization, and colored output |
-| [`@arkv/nestjs-context-logger`](./packages/nestjs-context-logger) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fnestjs-context-logger)](https://www.npmjs.com/package/%40arkv%2Fnestjs-context-logger) | NestJS module for structured async-context logging powered by @arkv/logger |
-| [`@arkv/rng`](./packages/rng) | [![npm](https://img.shields.io/npm/v/%40arkv%2Frng)](https://www.npmjs.com/package/%40arkv%2Frng) | Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG. |
-| [`@arkv/shared`](./packages/shared) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fshared)](https://www.npmjs.com/package/%40arkv%2Fshared) | Shared utilities for @arkv packages |
-| [`@arkv/temporal`](./packages/temporal) | [![npm](https://img.shields.io/npm/v/%40arkv%2Ftemporal)](https://www.npmjs.com/package/%40arkv%2Ftemporal) | Drop-in Day.js-compatible API powered by the native Temporal API. Same chainable interface, zero timezone bugs. |
+| [`@arkv/colors`](./packages/colors) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fcolors)](https://www.npmjs.com/package/%40arkv%2Fcolors) [![dls](https://img.shields.io/npm/dt/%40arkv%2Fcolors?label=dls)](https://www.npmjs.com/package/%40arkv%2Fcolors) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Fcolors?label=size)](https://www.npmjs.com/package/%40arkv%2Fcolors) | Lightweight, zero-dependency ANSI color and style utilities for terminals |
+| [`@arkv/logger`](./packages/logger) | [![npm](https://img.shields.io/npm/v/%40arkv%2Flogger)](https://www.npmjs.com/package/%40arkv%2Flogger) [![dls](https://img.shields.io/npm/dt/%40arkv%2Flogger?label=dls)](https://www.npmjs.com/package/%40arkv%2Flogger) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Flogger?label=size)](https://www.npmjs.com/package/%40arkv%2Flogger) | Framework-agnostic structured logger with async context, sanitization, and colored output |
+| [`@arkv/nestjs-cms`](./packages/nestjs-cms) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fnestjs-cms)](https://www.npmjs.com/package/%40arkv%2Fnestjs-cms) [![dls](https://img.shields.io/npm/dt/%40arkv%2Fnestjs-cms?label=dls)](https://www.npmjs.com/package/%40arkv%2Fnestjs-cms) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Fnestjs-cms?label=size)](https://www.npmjs.com/package/%40arkv%2Fnestjs-cms) | Pluggable NestJS admin CMS — auto-generates a dashboard from your OpenAPI/Swagger spec |
+| [`@arkv/nestjs-context-logger`](./packages/nestjs-context-logger) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fnestjs-context-logger)](https://www.npmjs.com/package/%40arkv%2Fnestjs-context-logger) [![dls](https://img.shields.io/npm/dt/%40arkv%2Fnestjs-context-logger?label=dls)](https://www.npmjs.com/package/%40arkv%2Fnestjs-context-logger) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Fnestjs-context-logger?label=size)](https://www.npmjs.com/package/%40arkv%2Fnestjs-context-logger) | NestJS module for structured async-context logging powered by @arkv/logger |
+| [`@arkv/rng`](./packages/rng) | [![npm](https://img.shields.io/npm/v/%40arkv%2Frng)](https://www.npmjs.com/package/%40arkv%2Frng) [![dls](https://img.shields.io/npm/dt/%40arkv%2Frng?label=dls)](https://www.npmjs.com/package/%40arkv%2Frng) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Frng?label=size)](https://www.npmjs.com/package/%40arkv%2Frng) | Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG. |
+| [`@arkv/shared`](./packages/shared) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fshared)](https://www.npmjs.com/package/%40arkv%2Fshared) [![dls](https://img.shields.io/npm/dt/%40arkv%2Fshared?label=dls)](https://www.npmjs.com/package/%40arkv%2Fshared) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Fshared?label=size)](https://www.npmjs.com/package/%40arkv%2Fshared) | Shared utilities for @arkv packages |
+| [`@arkv/temporal`](./packages/temporal) | [![npm](https://img.shields.io/npm/v/%40arkv%2Ftemporal)](https://www.npmjs.com/package/%40arkv%2Ftemporal) [![dls](https://img.shields.io/npm/dt/%40arkv%2Ftemporal?label=dls)](https://www.npmjs.com/package/%40arkv%2Ftemporal) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Ftemporal?label=size)](https://www.npmjs.com/package/%40arkv%2Ftemporal) | Drop-in Day.js-compatible API powered by the native Temporal API. Same chainable interface, zero timezone bugs. |
 
 ## Project Structure
 
@@ -31,6 +32,7 @@ arkv/
 ├── packages/                  # Published packages
 │   ├── colors                 # Lightweight, zero-dependency ANSI color and style utilities for terminals
 │   ├── logger                 # Framework-agnostic structured logger with async context, sanitization, and colored output
+│   ├── nestjs-cms             # Pluggable NestJS admin CMS — auto-generates a dashboard from your OpenAPI/Swagger spec
 │   ├── nestjs-context-logger  # NestJS module for structured async-context logging powered by @arkv/logger
 │   ├── rng                    # Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG.
 │   ├── shared                 # Shared utilities for @arkv packages

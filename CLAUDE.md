@@ -139,3 +139,8 @@ Within a package: `tsc --noEmit`
 - Do not add docstrings/comments unless logic is non-obvious
 - Do not add error handling for impossible scenarios
 - Do not add speculative abstractions or future-proofing
+- Do not use section-divider comments (e.g. `// ─── Section ───`, `// --- Section ---`, `// === Section ===`) — if a file needs sections, split it into separate files instead
+
+## Do
+
+- When a bug/issue/BC is reported - write a test that reproduces the issue, then do the fix and rerun the test to verify it's been addressed
