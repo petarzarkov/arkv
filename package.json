@@ -15,7 +15,8 @@
     "url": "https://github.com/petarzarkov/arkv"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "prepare": "husky || true",
@@ -29,6 +30,9 @@
     "gen:readme": "bun ./scripts/update-readme.ts",
     "version": "bun ./scripts/version.ts",
     "version:dry-run": "DRY_RUN=true bun ./scripts/version.ts"
+  },
+  "dependencies": {
+    "drizzle-seed": "0.3.1"
   },
   "devDependencies": {
     "@types/bun": "1.3.12",

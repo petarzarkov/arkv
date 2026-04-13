@@ -87,8 +87,6 @@ export class TDayjs {
     return this._clone(this.$zdt);
   }
 
-  // --- Getters / Setters ---
-
   year(): number;
   year(value: number): TDayjs;
   year(value?: number): number | TDayjs {
@@ -231,8 +229,6 @@ export class TDayjs {
     }
   }
 
-  // --- Manipulation ---
-
   add(value: number, unit?: ManipulateType): TDayjs {
     if (!this.$zdt) return this._clone(null);
     const n = Number(value);
@@ -260,8 +256,6 @@ export class TDayjs {
     const u = normalizeUnit(unit);
     return this._clone(endOfHelper(this.$zdt, u, getLocaleObj(this.$L)));
   }
-
-  // --- Comparison ---
 
   private _toZdt(d?: ConfigType): TDayjs {
     if (d instanceof TDayjs) return d;
@@ -301,8 +295,6 @@ export class TDayjs {
     return start <= v && v <= end;
   }
 
-  // --- Display ---
-
   format(template?: string): string {
     if (!this.$zdt) return INVALID_DATE;
     const loc = getLocaleObj(this.$L);
@@ -341,8 +333,6 @@ export class TDayjs {
     return this.$zdt.offsetNanoseconds / 60_000_000_000;
   }
 
-  // --- Conversion ---
-
   toDate(): Date {
     return new Date(this.valueOf());
   }
@@ -359,8 +349,6 @@ export class TDayjs {
   toString(): string {
     return this.isValid() ? this.toDate().toUTCString() : INVALID_DATE;
   }
-
-  // --- Locale ---
 
   locale(): string;
   locale(preset: string | ILocale, object?: Partial<ILocale>): TDayjs;
