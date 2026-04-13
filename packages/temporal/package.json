@@ -1,6 +1,6 @@
 {
   "name": "@arkv/temporal",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Drop-in Day.js-compatible API powered by the native Temporal API. Same chainable interface, zero timezone bugs.",
   "keywords": [
     "browser",
