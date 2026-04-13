@@ -32,7 +32,6 @@ Package scope: `@arkv/<name>`. Each package produces three outputs: ESM (`dist/e
 - **Formatter**: `oxfmt` (no config file — uses defaults)
 - Run lint: `bun run lint` → `oxlint --fix .`
 - Run format: `bun run format` → `oxfmt --write .`
-- Check format (CI): `bun run format:check` → `oxfmt --check .`
 - Pre-commit hook runs lint-staged: lints then formats staged `.ts` files.
 - There is no ESLint or Biome — do not add them.
 
@@ -104,17 +103,31 @@ Within a package: `tsc --noEmit`
 | `@arkv/temporal`              | Day.js-compatible API over `Temporal` (polyfilled)  |
 | `@arkv/nestjs-context-logger` | NestJS DI wrapper around `@arkv/logger`             |
 
+### @arkv/rng notes
+
+- First-time setup requires Rust toolchain + wasm-pack: run `packages/rng/setup.sh`
+- Build order: `build:wasm` (Rust→WASM) runs first, then TS compilation (`build:ts`)
+- `bun run build` at package level handles this sequence automatically
+
 ### @arkv/temporal notes
 
 - Polyfill at top of `src/index.ts`: `import 'temporal-polyfill/global'`
 - Internal state: `Temporal.ZonedDateTime | null` (null = invalid)
 - `.month()` is 0-indexed (dayjs compat); `Temporal.month` is 1-indexed
 - `.day()` returns 0=Sun; `Temporal.dayOfWeek` is 1=Mon..7=Sun
+- `diff(a, b)` returns `a - b`; internally calls `diffHelper(from=b, to=a)` which computes `from.until(to)`
+- `Temporal.ZonedDateTimeLike.day` is required — use a local `WithPartial` type + include `day: this.$zdt.day` when calling `.with({})`
 
 ### @arkv/nestjs-context-logger notes
 
-- Static-only NestJS module class requires: `// biome-ignore` comments are gone — use `// oxlint-disable` if needed
+- `// oxlint-disable-next-line <rule>` syntax for inline disable (no Biome)
 - `useImportType` lint rule is off for this package (configured in `.oxlintrc.json`)
+
+## Repo Scripts
+
+- `bun run gen:readme` — regenerates root README from package metadata (`scripts/update-readme.ts`)
+- `bun run gen:env:docs` — regenerates env variable docs (`scripts/gen-env-docs.ts`)
+- `bun run version:dry-run` — previews version bumps without writing
 
 ## Do Not
 
