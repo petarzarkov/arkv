@@ -46,7 +46,8 @@ async function request<T>(
 
   if (res.status === 401) {
     clearToken();
-    window.location.hash = '#/login';
+    const { useCmsStore } = await import('./store.js');
+    useCmsStore.getState().setAuthenticated(false);
     throw new Error('Unauthorized');
   }
 

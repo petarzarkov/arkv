@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   ActionIcon,
   AppShell,
@@ -75,8 +75,9 @@ export function App() {
     activeModel,
     colorScheme,
     toggleColorScheme,
+    authenticated,
+    setAuthenticated,
   } = useCmsStore();
-  const [authenticated, setAuthenticated] = useState(false);
   const [opened, { toggle, close }] = useDisclosure();
 
   const { data, isLoading, isError, error } = useQuery<CmsBlueprint>({
