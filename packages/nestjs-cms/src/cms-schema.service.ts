@@ -65,11 +65,15 @@ export class CmsSchemaService {
   private document: OpenAPIObject | null = null;
 
   constructor(
-    @Optional() @Inject(CMS_OPTIONS) private readonly options: CmsOptions = {},
+    @Optional() @Inject(CMS_OPTIONS) private options: CmsOptions = {},
   ) {}
 
   setDocument(document: OpenAPIObject): void {
     this.document = document;
+  }
+
+  setOptions(options: CmsOptions): void {
+    this.options = { ...this.options, ...options };
   }
 
   getDocument(): OpenAPIObject | null {

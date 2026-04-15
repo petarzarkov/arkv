@@ -84,6 +84,7 @@ export class NestJsCmsModule {
     }
 
     const schemaService = app.get(CmsSchemaService);
+    schemaService.setOptions(options);
     if (document) {
       schemaService.setDocument(document);
     }
