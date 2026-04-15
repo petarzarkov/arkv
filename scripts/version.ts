@@ -5,21 +5,34 @@ import { semver } from 'bun';
 
 const isDryRun = process.env.DRY_RUN === 'true';
 
-const checkForcePublish = (): boolean => {
-  if (process.env.FORCE_PUBLISH === 'true') return true;
+const getForcePublishTarget = (): {
+  force: boolean;
+  package: string | null;
+} => {
+  const envForce = process.env.FORCE_PUBLISH;
+  if (envForce === 'true') return { force: true, package: null };
+  if (envForce && envForce !== 'false')
+    return { force: true, package: envForce };
+
   try {
     const commitMessage = execSync('git log -1 --pretty=format:"%s%n%b"', {
       stdio: 'pipe',
     })
       .toString()
       .trim();
-    return commitMessage.includes('[force-publish]');
+
+    const scopedMatch = commitMessage.match(/\[force-publish:([^\]]+)\]/);
+    if (scopedMatch) return { force: true, package: scopedMatch[1] };
+    if (commitMessage.includes('[force-publish]'))
+      return { force: true, package: null };
+
+    return { force: false, package: null };
   } catch {
-    return false;
+    return { force: false, package: null };
   }
 };
 
-const isForcePublish = checkForcePublish();
+const forcePublish = getForcePublishTarget();
 
 const bumpVersion = (
   version: string,
@@ -97,7 +110,7 @@ const getChangedSrcPackages = (): Set<string> | null => {
     const dirs = new Set<string>();
     for (const file of out.split('\n')) {
       const match = file.match(
-        /^packages\/([^/]+)\/(src\/|package\.json|README\.md)/,
+        /^packages\/([^/]+)\/(src\/|frontend\/src\/|package\.json|README\.md)/,
       );
       if (match) dirs.add(match[1]);
     }
@@ -248,17 +261,37 @@ const isVersionPublished = (name: string, version: string): boolean => {
   }
 };
 
-const runForcePublish = (packages: PublishablePackage[]): void => {
-  console.log(
-    '\n--- FORCE PUBLISH MODE: publishing all packages at current versions ---\n',
-  );
+const runForcePublish = (
+  packages: PublishablePackage[],
+  targetPackage: string | null,
+): void => {
+  const filtered = targetPackage
+    ? packages.filter(
+        (pkg) =>
+          basename(pkg.dir) === targetPackage || pkg.name === targetPackage,
+      )
+    : packages;
 
-  if (packages.length === 0) {
-    console.log('No publishable packages found.');
+  if (targetPackage) {
+    console.log(
+      `\n--- FORCE PUBLISH MODE: publishing ${targetPackage} at current version ---\n`,
+    );
+  } else {
+    console.log(
+      '\n--- FORCE PUBLISH MODE: publishing all packages at current versions ---\n',
+    );
+  }
+
+  if (filtered.length === 0) {
+    console.log(
+      targetPackage
+        ? `Package "${targetPackage}" not found.`
+        : 'No publishable packages found.',
+    );
     process.exit(0);
   }
 
-  for (const { name, dir, packageJsonPath } of packages) {
+  for (const { name, dir, packageJsonPath } of filtered) {
     const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
     const { version } = pkg;
 
@@ -328,8 +361,8 @@ void (async () => {
   const allPublishablePackages = findPublishablePackages();
 
   try {
-    if (isForcePublish) {
-      runForcePublish(allPublishablePackages);
+    if (forcePublish.force) {
+      runForcePublish(allPublishablePackages, forcePublish.package);
     } else {
       runVersionBump(allPublishablePackages);
     }
