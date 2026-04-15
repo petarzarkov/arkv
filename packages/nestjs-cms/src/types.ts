@@ -49,6 +49,13 @@ export interface CmsOptions {
    * }
    */
   lookups?: Record<string, CmsLookup>;
+  /**
+   * Pre-built blueprint. When provided, OpenAPI document parsing
+   * is skipped and this blueprint is served directly.
+   * Useful when the CRUD endpoints are dynamic or schema-driven
+   * and don't produce useful Swagger metadata.
+   */
+  blueprint?: CmsBlueprint;
 }
 
 export interface CmsModuleAsyncOptions {

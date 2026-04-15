@@ -47,11 +47,11 @@
     },
     "packages/colors": {
       "name": "@arkv/colors",
-      "version": "0.6.2",
+      "version": "0.7.0",
     },
     "packages/logger": {
       "name": "@arkv/logger",
-      "version": "0.6.2",
+      "version": "0.7.0",
       "dependencies": {
         "@arkv/colors": "workspace:*",
         "@arkv/shared": "workspace:*",
@@ -59,7 +59,7 @@
     },
     "packages/nestjs-cms": {
       "name": "@arkv/nestjs-cms",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "devDependencies": {
         "@mantine/core": "7.17.8",
         "@mantine/dates": "7.17.8",
@@ -81,12 +81,16 @@
         "@nestjs/common": "11.1.18",
         "@nestjs/core": "11.1.18",
         "@nestjs/swagger": "11.2.7",
+        "fastify": ">=4",
         "reflect-metadata": "0.2.2",
       },
+      "optionalPeers": [
+        "fastify",
+      ],
     },
     "packages/nestjs-context-logger": {
       "name": "@arkv/nestjs-context-logger",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@arkv/logger": "workspace:*",
       },
@@ -98,7 +102,7 @@
     },
     "packages/rng": {
       "name": "@arkv/rng",
-      "version": "0.6.1",
+      "version": "0.7.0",
       "devDependencies": {
         "@types/seedrandom": "^3.0.8",
         "pure-rand": "^7.0.1",
@@ -108,11 +112,11 @@
     },
     "packages/shared": {
       "name": "@arkv/shared",
-      "version": "0.6.2",
+      "version": "0.7.0",
     },
     "packages/temporal": {
       "name": "@arkv/temporal",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "temporal-polyfill": "0.3.0",
       },

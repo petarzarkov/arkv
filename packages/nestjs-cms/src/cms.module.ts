@@ -37,7 +37,7 @@ export class NestJsCmsModule {
 
   static async setup(
     app: INestApplication,
-    document: OpenAPIObject,
+    document?: OpenAPIObject,
     options: CmsOptions = {},
   ): Promise<void> {
     const cmsPath = (options.path ?? '/cms').replace(/\/$/, '');
@@ -59,7 +59,7 @@ export class NestJsCmsModule {
       throw new Error(`@arkv/nestjs-cms setup failed: ${detail}`);
     }
 
-    if (options.lookups) {
+    if (options.lookups && document) {
       const schemas = (document.components?.schemas ?? {}) as Record<
         string,
         Record<string, unknown>
@@ -84,7 +84,9 @@ export class NestJsCmsModule {
     }
 
     const schemaService = app.get(CmsSchemaService);
-    schemaService.setDocument(document);
+    if (document) {
+      schemaService.setDocument(document);
+    }
 
     // Cache the processed HTML once at startup — not per request
     const logoScript = options.logoUrl

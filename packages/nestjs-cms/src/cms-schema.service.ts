@@ -77,6 +77,13 @@ export class CmsSchemaService {
   }
 
   generateBlueprint(): CmsBlueprint {
+    if (this.options.blueprint) {
+      return {
+        ...this.options.blueprint,
+        title: this.options.title ?? this.options.blueprint.title,
+      };
+    }
+
     if (!this.document) {
       return {
         title: this.options.title ?? 'Admin',
