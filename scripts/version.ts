@@ -291,13 +291,25 @@ const runForcePublish = (
     process.exit(0);
   }
 
+  const bumpType = determineBumpType();
+  const bumpedFiles: string[] = [];
+
   for (const { name, dir, packageJsonPath } of filtered) {
     const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-    const { version } = pkg;
+    let { version } = pkg;
 
     if (isVersionPublished(name, version)) {
-      console.log(`Skipping ${name}@${version}: already published.`);
-      continue;
+      const newVersion = bumpVersion(version, bumpType);
+      console.log(
+        `${name}@${version} already published, bumping to ${newVersion}`,
+      );
+      pkg.version = newVersion;
+      version = newVersion;
+
+      if (!isDryRun) {
+        writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
+        bumpedFiles.push(packageJsonPath);
+      }
     }
 
     if (isDryRun) {
@@ -307,6 +319,11 @@ const runForcePublish = (
 
     console.log(`Publishing ${name}@${version}...`);
     publishPackage(dir);
+  }
+
+  if (!isDryRun && bumpedFiles.length > 0) {
+    console.log('Committing version changes...');
+    pushVersionCommit(bumpedFiles);
   }
 };
 
