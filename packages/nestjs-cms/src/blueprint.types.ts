@@ -75,6 +75,12 @@ export interface CmsModel {
   schema: Record<string, CmsField>;
   /** Fields derived from the create-request body — used for the create form only. */
   createSchema?: Record<string, CmsField>;
+  /**
+   * Maximum number of columns shown in the table by default.
+   * Users can still toggle hidden columns via the UI.
+   * When omitted, all columns are shown.
+   */
+  maxTableColumns?: number;
 }
 
 export interface CmsBlueprint {

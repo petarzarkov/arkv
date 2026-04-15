@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Table,
   Button,
@@ -15,6 +15,8 @@ import {
   ScrollArea,
   Paper,
   Stack,
+  Menu,
+  Checkbox,
 } from '@mantine/core';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -81,6 +83,24 @@ function InboxIcon() {
     >
       <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
       <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+    </svg>
+  );
+}
+
+function ColumnsIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="3" width="7" height="18" rx="1" />
+      <rect x="14" y="3" width="7" height="18" rx="1" />
     </svg>
   );
 }
@@ -180,9 +200,36 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
     setCursor(prev);
   }
 
-  const visibleFields = Object.entries(model.schema).filter(
+  const allFields = Object.entries(model.schema).filter(
     ([, f]) => !f.readOnly || f.type !== 'object',
   );
+
+  const defaultHidden = useMemo(() => {
+    if (model.maxTableColumns == null) return new Set<string>();
+    return new Set(
+      allFields.slice(model.maxTableColumns).map(([name]) => name),
+    );
+  }, [model.maxTableColumns, allFields.length]);
+
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(
+    defaultHidden,
+  );
+
+  const visibleFields = allFields.filter(
+    ([name]) => !hiddenColumns.has(name),
+  );
+
+  function toggleColumn(name: string) {
+    setHiddenColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  }
 
   const lookupColumns = visibleFields
     .filter(([, f]) => f.lookup)
@@ -254,11 +301,49 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
         <Text fw={700} size="xl" style={{ letterSpacing: '-0.01em' }}>
           {model.name}
         </Text>
-        {model.endpoints.create && (
-          <Button size="sm" radius="md" onClick={onCreate}>
-            + Create
-          </Button>
-        )}
+        <Group gap="xs">
+          <Menu
+            shadow="md"
+            width={220}
+            closeOnItemClick={false}
+            position="bottom-end"
+          >
+            <Menu.Target>
+              <Tooltip label="Toggle columns" withArrow>
+                <ActionIcon variant="default" size="md" radius="md">
+                  <ColumnsIcon />
+                </ActionIcon>
+              </Tooltip>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Visible columns</Menu.Label>
+              {allFields.map(([name]) => (
+                <Menu.Item
+                  key={name}
+                  leftSection={
+                    <Checkbox
+                      size="xs"
+                      checked={!hiddenColumns.has(name)}
+                      onChange={() => toggleColumn(name)}
+                      tabIndex={-1}
+                      styles={{ input: { cursor: 'pointer' } }}
+                    />
+                  }
+                  onClick={() => toggleColumn(name)}
+                >
+                  <Text size="sm">
+                    {name.replace(/([A-Z])/g, ' $1').trim()}
+                  </Text>
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
+          {model.endpoints.create && (
+            <Button size="sm" radius="md" onClick={onCreate}>
+              + Create
+            </Button>
+          )}
+        </Group>
       </Group>
 
       {deleteError && (
@@ -280,7 +365,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
               style={{ backgroundColor: 'var(--mantine-color-dark-6)' }}
             >
               <Table.Tr>
-                {visibleFields.slice(0, 6).map(([name]) => (
+                {visibleFields.map(([name]) => (
                   <Table.Th
                     key={name}
                     onClick={() => toggleSort(name)}
@@ -344,7 +429,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                   <Table.Tr>
                     <Table.Td
                       colSpan={
-                        visibleFields.slice(0, 6).length +
+                        visibleFields.length +
                         lookupColumns.length +
                         1
                       }
@@ -371,7 +456,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                         borderBottom: '1px solid var(--mantine-color-dark-5)',
                       }}
                     >
-                      {visibleFields.slice(0, 6).map(([name, field]) => (
+                      {visibleFields.map(([name, field]) => (
                         <Table.Td key={name} style={{ maxWidth: 220 }}>
                           <CellValue value={row[name]} fieldType={field.type} />
                         </Table.Td>
