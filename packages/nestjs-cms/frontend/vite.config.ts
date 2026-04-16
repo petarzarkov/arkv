@@ -9,14 +9,9 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-mantine': [
-            '@mantine/core',
-            '@mantine/hooks',
-            '@mantine/dates',
-          ],
-          'vendor-motion': ['framer-motion'],
-          'vendor-query': ['@tanstack/react-query'],
+        manualChunks(id: string) {
+          if (id.includes('@mantine')) return 'vendor-mantine';
+          if (id.includes('@tanstack/react-query')) return 'vendor-query';
         },
       },
     },

@@ -10,6 +10,8 @@ import {
 import { useState, useRef } from 'react';
 import { DateInput } from '@mantine/dates';
 import { useQuery } from '@tanstack/react-query';
+import { JsonView, darkStyles } from 'react-json-view-lite';
+import 'react-json-view-lite/dist/index.css';
 import { createApiClient } from '../api-client.js';
 import { toStr, toStrNullable } from '../utils.js';
 import type { CmsField } from '../types.js';
@@ -28,7 +30,7 @@ export function FieldRenderer({ name, field, value, onChange, scheme }: Props) {
     .replace(/([A-Z])/g, ' $1')
     .replace(/^./, (s) => s.toUpperCase());
 
-  if (field.readOnly) {
+  if (field.readOnly && field.type !== 'object' && field.type !== 'array') {
     return (
       <TextInput
         label={label}
@@ -96,13 +98,27 @@ export function FieldRenderer({ name, field, value, onChange, scheme }: Props) {
         label={label}
         description={field.description}
         required={field.required}
-        value={value ? new Date(value as string) : null}
-        onChange={(d) => onChange(name, d?.toISOString() ?? null)}
+        value={(value as string) ?? null}
+        onChange={(d) => onChange(name, d ?? null)}
       />
     );
   }
 
   if (field.type === 'object' || field.type === 'array') {
+    if (field.readOnly) {
+      const parsed =
+        typeof value === 'string' ? (JSON.parse(value) as object) : value;
+      return (
+        <div>
+          <Text size="sm" fw={500} mb={4}>
+            {label}
+          </Text>
+          <div style={{ borderRadius: 6, overflow: 'auto', maxHeight: 300 }}>
+            <JsonView data={parsed as object} style={darkStyles} />
+          </div>
+        </div>
+      );
+    }
     return (
       <JsonTextarea
         name={name}

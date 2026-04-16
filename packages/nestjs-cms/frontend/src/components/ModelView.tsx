@@ -1,4 +1,3 @@
-import { AnimatePresence } from 'framer-motion';
 import { DataTable } from './DataTable.js';
 import { DynamicForm } from './DynamicForm.js';
 import { useCmsStore } from '../store.js';
@@ -23,30 +22,27 @@ export function ModelView({ blueprint }: Props) {
       style={{
         flex: 1,
         padding: 'clamp(0.75rem, 3vw, 1.5rem)',
-        overflowY: 'auto',
       }}
     >
-      <AnimatePresence mode="wait">
-        {view === 'list' && (
-          <DataTable
-            key={`list-${activeModel}`}
-            model={model}
-            scheme={scheme}
-            onEdit={openEdit}
-            onCreate={openCreate}
-          />
-        )}
-        {(view === 'create' || view === 'edit') && (
-          <DynamicForm
-            key={`form-${activeModel}-${view}`}
-            model={model}
-            mode={view}
-            initial={view === 'edit' ? (editRow ?? undefined) : undefined}
-            scheme={scheme}
-            onBack={goBack}
-          />
-        )}
-      </AnimatePresence>
+      {view === 'list' && (
+        <DataTable
+          key={`list-${activeModel}`}
+          model={model}
+          scheme={scheme}
+          onEdit={openEdit}
+          onCreate={openCreate}
+        />
+      )}
+      {(view === 'create' || view === 'edit') && (
+        <DynamicForm
+          key={`form-${activeModel}-${view}`}
+          model={model}
+          mode={view}
+          initial={view === 'edit' ? (editRow ?? undefined) : undefined}
+          scheme={scheme}
+          onBack={goBack}
+        />
+      )}
     </div>
   );
 }

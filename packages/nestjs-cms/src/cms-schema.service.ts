@@ -52,8 +52,11 @@ function singularize(word: string): string {
   return word;
 }
 
-function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+function toPascalCase(str: string): string {
+  return str
+    .split('-')
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join('');
 }
 
 function isRef(obj: SchemaObject | ReferenceObject): obj is ReferenceObject {
@@ -174,7 +177,7 @@ export class CmsSchemaService {
         continue;
 
       const isDetailRoute = segments.some((s) => s.startsWith('{'));
-      const modelKey = capitalize(singularize(resourceSegment));
+      const modelKey = toPascalCase(singularize(resourceSegment));
 
       if (!models[modelKey]) {
         models[modelKey] = { name: modelKey, endpoints: {}, schema: {} };
@@ -217,10 +220,11 @@ export class CmsSchemaService {
             method: method === 'put' ? 'PUT' : 'PATCH',
             path: rawPath,
           };
-          if (Object.keys(model.schema).length === 0) {
-            const bodySchema = this.resolveRequestBodySchema(op);
-            if (bodySchema) {
-              const fields = this.schemaToFields(bodySchema);
+          const bodySchema = this.resolveRequestBodySchema(op);
+          if (bodySchema) {
+            const fields = this.schemaToFields(bodySchema);
+            model.updateSchema = fields;
+            if (Object.keys(model.schema).length === 0) {
               Object.assign(model.schema, fields);
             }
           }

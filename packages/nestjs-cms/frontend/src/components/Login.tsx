@@ -8,8 +8,8 @@ import {
   Alert,
   Stack,
 } from '@mantine/core';
-import { motion } from 'framer-motion';
 import { login } from '../api-client.js';
+import { useCmsStore } from '../store.js';
 import type { CmsAuth } from '../types.js';
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
 }
 
 export function Login({ auth, onSuccess }: Props) {
+  const { setUser } = useCmsStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +30,13 @@ export function Login({ auth, onSuccess }: Props) {
     setError(null);
     setLoading(true);
     try {
-      await login(auth.loginEndpoint, email, password, auth.tokenPath);
+      const data = await login(
+        auth.loginEndpoint,
+        email,
+        password,
+        auth.tokenPath,
+      );
+      setUser(data);
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -48,11 +55,13 @@ export function Login({ auth, onSuccess }: Props) {
         background: 'var(--mantine-color-dark-8)',
       }}
     >
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        style={{ width: '100%', maxWidth: 400, padding: '0 1rem' }}
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 400,
+          padding: '0 1rem',
+          animation: 'fadeSlideUp 0.4s ease-out',
+        }}
       >
         <Paper p="xl" radius="md" shadow="xl" withBorder>
           <Title order={2} mb="xl" ta="center">
@@ -92,7 +101,7 @@ export function Login({ auth, onSuccess }: Props) {
             </Stack>
           </form>
         </Paper>
-      </motion.div>
+      </div>
     </div>
   );
 }

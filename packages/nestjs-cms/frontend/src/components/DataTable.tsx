@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Table,
   Button,
@@ -17,9 +17,12 @@ import {
   Stack,
   Menu,
   Checkbox,
+  TextInput,
 } from '@mantine/core';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
+import { JsonView, darkStyles } from 'react-json-view-lite';
+import 'react-json-view-lite/dist/index.css';
 import { createApiClient } from '../api-client.js';
 import { toStr } from '../utils.js';
 import type { CmsField, CmsModel, CmsPagination } from '../types.js';
@@ -108,27 +111,101 @@ function ColumnsIcon() {
 export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
   const client = createApiClient(scheme);
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [jsonModal, setJsonModal] = useState<{
+    value: unknown;
+    model: string;
+    id: string;
+    column: string;
+  } | null>(null);
 
   const [page, setPage] = useState(1);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [cursor, setCursor] = useState<string | null>(
+    searchParams.get('cursor'),
+  );
+  const [cursorDirection, setCursorDirection] = useState<
+    'forward' | 'backward'
+  >((searchParams.get('direction') as 'forward' | 'backward') || 'forward');
+  const [sortBy, setSortBy] = useState<string | null>(
+    searchParams.get('sortBy'),
+  );
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(
+    searchParams.get('order') === 'DESC' ? 'desc' : 'asc',
+  );
+  const initialSearch = searchParams.get('search') ?? '';
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+    setCursor(null);
+    setCursorDirection('forward');
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+
+        if (debouncedSearch) next.set('search', debouncedSearch);
+        else next.delete('search');
+
+        if (cursor) {
+          next.set('cursor', cursor);
+          next.set('direction', cursorDirection);
+        } else {
+          next.delete('cursor');
+          next.delete('direction');
+        }
+
+        if (sortBy) {
+          next.set('sortBy', sortBy);
+          next.set('order', sortDir === 'asc' ? 'ASC' : 'DESC');
+        } else {
+          next.delete('sortBy');
+          next.delete('order');
+        }
+
+        return next;
+      },
+      { replace: true },
+    );
+  }, [
+    debouncedSearch,
+    cursor,
+    cursorDirection,
+    sortBy,
+    sortDir,
+    setSearchParams,
+  ]);
 
   const listEndpoint = model.endpoints.list;
   const pagination = listEndpoint?.pagination;
 
   function buildUrl(): string {
     if (!listEndpoint) return '';
-    if (!pagination || pagination.style === 'none') return listEndpoint.path;
+    if (!pagination || pagination.style === 'none') {
+      if (!debouncedSearch) return listEndpoint.path;
+      const params = new URLSearchParams();
+      params.set('search', debouncedSearch);
+      return `${listEndpoint.path}?${params.toString()}`;
+    }
 
     const params = new URLSearchParams();
     const size = String(pagination.pageSize);
 
     if (pagination.style === 'cursor') {
-      if (cursor) params.set(pagination.cursorParam ?? 'cursor', cursor);
+      if (cursor) {
+        params.set(pagination.cursorParam ?? 'cursor', cursor);
+        params.set('direction', cursorDirection);
+      }
       if (pagination.limitParam) params.set(pagination.limitParam, size);
     } else if (pagination.style === 'page') {
       params.set(pagination.pageParam ?? 'page', String(page));
@@ -141,11 +218,25 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
       if (pagination.limitParam) params.set(pagination.limitParam, size);
     }
 
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (sortBy) {
+      params.set('order', sortDir === 'asc' ? 'ASC' : 'DESC');
+    }
+
     return `${listEndpoint.path}?${params.toString()}`;
   }
 
   const { data, isLoading, isError, error } = useQuery<unknown>({
-    queryKey: ['list', model.name, page, cursor],
+    queryKey: [
+      'list',
+      model.name,
+      page,
+      cursor,
+      cursorDirection,
+      debouncedSearch,
+      sortBy,
+      sortDir,
+    ],
     queryFn: () => {
       if (!listEndpoint) throw new Error('No list endpoint');
       return client.get(buildUrl());
@@ -182,6 +273,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
       : rows.length;
 
   const nextCursor = extractNextCursor(data);
+  const prevCursor = extractPrevCursor(data);
   const totalPages = Math.max(
     1,
     Math.ceil(total / (pagination?.pageSize ?? 20)),
@@ -189,19 +281,23 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
 
   function goToNext() {
     if (!nextCursor) return;
-    setCursorHistory((h) => [...h, cursor ?? '']);
     setCursor(nextCursor);
+    setCursorDirection('forward');
   }
 
   function goToPrev() {
-    const history = [...cursorHistory];
-    const prev = history.pop() ?? null;
-    setCursorHistory(history);
-    setCursor(prev);
+    if (!prevCursor) return;
+    setCursor(prevCursor);
+    setCursorDirection('backward');
   }
 
   const allFields = Object.entries(model.schema).filter(
     ([, f]) => !f.readOnly || f.type !== 'object',
+  );
+
+  const booleanFilters = allFields.filter(([, f]) => f.type === 'boolean');
+  const [activeFilters, setActiveFilters] = useState<Record<string, boolean>>(
+    {},
   );
 
   const defaultHidden = useMemo(() => {
@@ -211,13 +307,10 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
     );
   }, [model.maxTableColumns, allFields.length]);
 
-  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(
-    defaultHidden,
-  );
+  const [hiddenColumns, setHiddenColumns] =
+    useState<Set<string>>(defaultHidden);
 
-  const visibleFields = allFields.filter(
-    ([name]) => !hiddenColumns.has(name),
-  );
+  const visibleFields = allFields.filter(([name]) => !hiddenColumns.has(name));
 
   function toggleColumn(name: string) {
     setHiddenColumns((prev) => {
@@ -250,12 +343,22 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
       setSortBy(name);
       setSortDir('asc');
     }
+    setPage(1);
+    setCursor(null);
+    setCursorDirection('forward');
   }
+
+  const filteredRows =
+    Object.keys(activeFilters).length === 0
+      ? rows
+      : rows.filter((row) =>
+          Object.entries(activeFilters).every(([key, val]) => row[key] === val),
+        );
 
   const sortedRows =
     sortBy === null
-      ? rows
-      : [...rows].sort((a, b) => {
+      ? filteredRows
+      : [...filteredRows].sort((a, b) => {
           const fieldType = model.schema[sortBy]?.type ?? 'string';
           const av = a[sortBy];
           const bv = b[sortBy];
@@ -292,11 +395,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-    >
+    <div style={{ animation: 'fadeIn 0.2s ease' }}>
       <Group justify="space-between" mb="md" align="center">
         <Text fw={700} size="xl" style={{ letterSpacing: '-0.01em' }}>
           {model.name}
@@ -358,11 +457,87 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
         </Alert>
       )}
 
-      <Paper shadow="xs" radius="md" withBorder style={{ overflow: 'hidden' }}>
-        <ScrollArea>
-          <Table highlightOnHover verticalSpacing="sm" horizontalSpacing="md">
+      <Paper shadow="xs" radius="md" withBorder>
+        <Group
+          px="md"
+          py="xs"
+          justify="space-between"
+          style={{ borderBottom: '1px solid var(--mantine-color-dark-5)' }}
+        >
+          <TextInput
+            placeholder="Search..."
+            size="xs"
+            radius="md"
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+            style={{ width: 220 }}
+            rightSection={
+              search ? (
+                <ActionIcon
+                  size="xs"
+                  variant="subtle"
+                  onClick={() => setSearch('')}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </ActionIcon>
+              ) : undefined
+            }
+          />
+          <Group gap="xs">
+            {booleanFilters.map(([name]) => (
+              <Button
+                key={name}
+                size="xs"
+                radius="md"
+                variant={
+                  activeFilters[name] !== undefined ? 'filled' : 'default'
+                }
+                color={
+                  activeFilters[name] === true
+                    ? 'teal'
+                    : activeFilters[name] === false
+                      ? 'red'
+                      : undefined
+                }
+                onClick={() => {
+                  setActiveFilters((prev) => {
+                    const current = prev[name];
+                    if (current === undefined) return { ...prev, [name]: true };
+                    if (current === true) return { ...prev, [name]: false };
+                    const { [name]: _, ...rest } = prev;
+                    return rest;
+                  });
+                }}
+              >
+                {name.replace(/([A-Z])/g, ' $1').trim()}
+                {activeFilters[name] !== undefined && (
+                  <Badge size="xs" ml={4} variant="white" color="dark">
+                    {activeFilters[name] ? 'Yes' : 'No'}
+                  </Badge>
+                )}
+              </Button>
+            ))}
+          </Group>
+        </Group>
+        <ScrollArea type="auto" offsetScrollbars>
+          <Table highlightOnHover verticalSpacing={2} horizontalSpacing={6}>
             <Table.Thead
-              style={{ backgroundColor: 'var(--mantine-color-dark-6)' }}
+              style={{
+                backgroundColor:
+                  'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))',
+              }}
             >
               <Table.Tr>
                 {visibleFields.map(([name]) => (
@@ -372,14 +547,14 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                     style={{
                       cursor: 'pointer',
                       userSelect: 'none',
-                      whiteSpace: 'nowrap',
-                      fontSize: '0.72rem',
+                      fontSize: '0.68rem',
                       fontWeight: 600,
                       textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
+                      letterSpacing: '0.04em',
                       color: 'var(--mantine-color-dimmed)',
-                      paddingTop: 10,
-                      paddingBottom: 10,
+                      paddingTop: 4,
+                      paddingBottom: 4,
+                      minWidth: 50,
                     }}
                   >
                     {name.replace(/([A-Z])/g, ' $1').trim()}
@@ -392,14 +567,14 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                   <Table.Th
                     key={`lookup-${name}`}
                     style={{
-                      whiteSpace: 'nowrap',
-                      fontSize: '0.72rem',
+                      fontSize: '0.68rem',
                       fontWeight: 600,
                       textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      color: 'var(--mantine-color-blue-4)',
-                      paddingTop: 10,
-                      paddingBottom: 10,
+                      letterSpacing: '0.04em',
+                      color: 'var(--mantine-color-violet-4)',
+                      paddingTop: 4,
+                      paddingBottom: 4,
+                      minWidth: 50,
                     }}
                   >
                     {header}
@@ -409,13 +584,13 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                   <Table.Th
                     style={{
                       width: 80,
-                      fontSize: '0.72rem',
+                      fontSize: '0.68rem',
                       fontWeight: 600,
                       textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
+                      letterSpacing: '0.04em',
                       color: 'var(--mantine-color-dimmed)',
-                      paddingTop: 10,
-                      paddingBottom: 10,
+                      paddingTop: 4,
+                      paddingBottom: 4,
                     }}
                   >
                     Actions
@@ -424,15 +599,11 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              <AnimatePresence>
-                {rows.length === 0 ? (
+              <>
+                {filteredRows.length === 0 ? (
                   <Table.Tr>
                     <Table.Td
-                      colSpan={
-                        visibleFields.length +
-                        lookupColumns.length +
-                        1
-                      }
+                      colSpan={visibleFields.length + lookupColumns.length + 1}
                     >
                       <Stack align="center" py="xl" gap="xs">
                         <Text c="dimmed" style={{ opacity: 0.4 }}>
@@ -446,19 +617,29 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                   </Table.Tr>
                 ) : (
                   sortedRows.map((row, i) => (
-                    <motion.tr
+                    <tr
                       key={toStr(row['id'] ?? i)}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ delay: i * 0.02 }}
                       style={{
                         borderBottom: '1px solid var(--mantine-color-dark-5)',
+                        animation: 'fadeIn 0.15s ease forwards',
+                        animationDelay: `${i * 0.02}s`,
+                        opacity: 0,
                       }}
                     >
                       {visibleFields.map(([name, field]) => (
                         <Table.Td key={name} style={{ maxWidth: 220 }}>
-                          <CellValue value={row[name]} fieldType={field.type} />
+                          <CellValue
+                            value={row[name]}
+                            fieldType={field.type}
+                            onJsonClick={(val) =>
+                              setJsonModal({
+                                value: val,
+                                model: model.name,
+                                id: toStr(row['id'] ?? ''),
+                                column: name,
+                              })
+                            }
+                          />
                         </Table.Td>
                       ))}
                       {lookupColumns.map(({ name, field }) => (
@@ -505,10 +686,10 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                           </Group>
                         </Table.Td>
                       )}
-                    </motion.tr>
+                    </tr>
                   ))
                 )}
-              </AnimatePresence>
+              </>
             </Table.Tbody>
           </Table>
         </ScrollArea>
@@ -549,19 +730,21 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
         </Group>
       </Modal>
 
+      <JsonModal data={jsonModal} onClose={() => setJsonModal(null)} />
+
       <PaginationControls
         pagination={pagination}
         page={page}
         totalPages={totalPages}
         hasNextCursor={!!nextCursor}
-        hasPrevCursor={cursorHistory.length > 0}
+        hasPrevCursor={!!prevCursor}
         onPageChange={(p) => {
           setPage(p);
         }}
         onNext={goToNext}
         onPrev={goToPrev}
       />
-    </motion.div>
+    </div>
   );
 }
 
@@ -633,13 +816,33 @@ function extractNextCursor(data: unknown): string | null {
   for (const key of [
     'nextCursor',
     'next_cursor',
-    'cursor',
-    'next',
     'nextPageToken',
     'next_page_token',
-    'after',
   ]) {
     if (typeof d[key] === 'string' && d[key]) return d[key] as string;
+  }
+  if (d['meta'] && typeof d['meta'] === 'object') {
+    const meta = d['meta'] as Record<string, unknown>;
+    if (typeof meta['nextCursor'] === 'string' && meta['nextCursor'])
+      return meta['nextCursor'] as string;
+    if (typeof meta['next_cursor'] === 'string' && meta['next_cursor'])
+      return meta['next_cursor'] as string;
+  }
+  return null;
+}
+
+function extractPrevCursor(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const d = data as Record<string, unknown>;
+  for (const key of ['previousCursor', 'prev_cursor', 'prevCursor']) {
+    if (typeof d[key] === 'string' && d[key]) return d[key] as string;
+  }
+  if (d['meta'] && typeof d['meta'] === 'object') {
+    const meta = d['meta'] as Record<string, unknown>;
+    for (const key of ['previousCursor', 'prev_cursor', 'prevCursor']) {
+      if (typeof meta[key] === 'string' && meta[key])
+        return meta[key] as string;
+    }
   }
   return null;
 }
@@ -647,13 +850,15 @@ function extractNextCursor(data: unknown): string | null {
 function CellValue({
   value,
   fieldType,
+  onJsonClick,
 }: {
   value: unknown;
   fieldType: string;
+  onJsonClick?: (val: unknown) => void;
 }) {
   if (value == null)
     return (
-      <Text c="dimmed" size="sm">
+      <Text c="dimmed" size="xs">
         —
       </Text>
     );
@@ -669,7 +874,20 @@ function CellValue({
       </Badge>
     );
   }
-  if (typeof value === 'object') {
+  // Detect JSON strings (e.g. text columns storing JSON)
+  let parsed = value;
+  if (
+    typeof value === 'string' &&
+    (value.startsWith('{') || value.startsWith('['))
+  ) {
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      // not valid JSON, keep as string
+    }
+  }
+
+  if (typeof parsed === 'object' && parsed !== null) {
     return (
       <Text
         size="xs"
@@ -679,16 +897,18 @@ function CellValue({
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          maxWidth: 200,
+          maxWidth: 180,
+          cursor: 'pointer',
         }}
+        onClick={() => onJsonClick?.(parsed)}
       >
-        {JSON.stringify(value)}
+        {JSON.stringify(parsed)}
       </Text>
     );
   }
   return (
     <Text
-      size="sm"
+      size="xs"
       style={{
         overflow: 'hidden',
         textOverflow: 'ellipsis',
@@ -697,6 +917,34 @@ function CellValue({
     >
       {toStr(value)}
     </Text>
+  );
+}
+
+function JsonModal({
+  data,
+  onClose,
+}: {
+  data: { value: unknown; model: string; id: string; column: string } | null;
+  onClose: () => void;
+}) {
+  if (!data) return null;
+  return (
+    <Modal
+      opened
+      onClose={onClose}
+      title={
+        <Text size="sm" fw={600}>
+          {data.model} #{data.id} — {data.column}
+        </Text>
+      }
+      size="lg"
+      centered
+      radius="md"
+    >
+      <div style={{ maxHeight: 500, overflow: 'auto', borderRadius: 6 }}>
+        <JsonView data={data.value as object} style={darkStyles} />
+      </div>
+    </Modal>
   );
 }
 
@@ -739,7 +987,7 @@ function LookupCell({
   return (
     <Text
       size="sm"
-      c="blue.4"
+      c="violet.4"
       style={{
         overflow: 'hidden',
         textOverflow: 'ellipsis',

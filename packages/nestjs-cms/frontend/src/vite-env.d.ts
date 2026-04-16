@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
-interface Window {
-  __CMS_LOGO__?: string;
+declare global {
+  interface Window {
+    __CMS_LOGO__?: string;
+    __CMS_TITLE__?: string;
+  }
 }
+
+export {};

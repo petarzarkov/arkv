@@ -93,9 +93,12 @@ export class NestJsCmsModule {
     const logoScript = options.logoUrl
       ? `\n    <script>window.__CMS_LOGO__=${JSON.stringify(options.logoUrl)};</script>`
       : '';
+    const titleScript = options.title
+      ? `\n    <script>window.__CMS_TITLE__=${JSON.stringify(options.title)};</script>`
+      : '';
     const indexHtml = readFileSync(indexPath, 'utf8').replace(
       '<head>',
-      `<head>\n    <base href="${cmsPath}/">${logoScript}`,
+      `<head>\n    <base href="${cmsPath}/">${logoScript}${titleScript}`,
     );
 
     const httpAdapter = app.getHttpAdapter();

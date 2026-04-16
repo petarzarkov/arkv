@@ -2,8 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MantineProvider, createTheme } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter } from 'react-router-dom';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
+import './animations.css';
 import { App } from './App.js';
 import { useCmsStore } from './store.js';
 
@@ -17,7 +19,7 @@ const queryClient = new QueryClient({
 });
 
 const theme = createTheme({
-  primaryColor: 'blue',
+  primaryColor: 'violet',
   defaultRadius: 'md',
   fontFamily: 'system-ui, -apple-system, sans-serif',
   components: {
@@ -29,6 +31,9 @@ const theme = createTheme({
 
 function Root() {
   const colorScheme = useCmsStore((s) => s.colorScheme);
+  const base =
+    document.querySelector('base')?.getAttribute('href')?.replace(/\/$/, '') ||
+    '/cms';
 
   return (
     <MantineProvider
@@ -37,7 +42,9 @@ function Root() {
       forceColorScheme={colorScheme}
     >
       <QueryClientProvider client={queryClient}>
-        <App />
+        <BrowserRouter basename={base}>
+          <App />
+        </BrowserRouter>
       </QueryClientProvider>
     </MantineProvider>
   );

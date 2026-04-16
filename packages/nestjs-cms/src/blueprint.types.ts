@@ -75,6 +75,8 @@ export interface CmsModel {
   schema: Record<string, CmsField>;
   /** Fields derived from the create-request body — used for the create form only. */
   createSchema?: Record<string, CmsField>;
+  /** Fields derived from the update-request body — used for the edit form only. */
+  updateSchema?: Record<string, CmsField>;
   /**
    * Maximum number of columns shown in the table by default.
    * Users can still toggle hidden columns via the UI.

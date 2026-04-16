@@ -4,6 +4,14 @@ import type { CmsBlueprint } from './types.js';
 
 type ColorScheme = 'light' | 'dark';
 
+interface ModelPrefs {
+  hiddenColumns?: string[];
+  take?: number;
+  sortBy?: string | null;
+  sortDir?: 'asc' | 'desc';
+  search?: string;
+}
+
 interface CmsStore {
   blueprint: CmsBlueprint | null;
   activeModel: string | null;
@@ -11,6 +19,9 @@ interface CmsStore {
   editRow: Record<string, unknown> | null;
   colorScheme: ColorScheme;
   authenticated: boolean;
+  modelPrefs: Record<string, ModelPrefs>;
+  sidebarOpen: boolean;
+  user: Record<string, unknown> | null;
 
   setBlueprint: (b: CmsBlueprint) => void;
   setActiveModel: (name: string) => void;
@@ -19,6 +30,9 @@ interface CmsStore {
   openEdit: (row: Record<string, unknown>) => void;
   goBack: () => void;
   toggleColorScheme: () => void;
+  setModelPrefs: (model: string, prefs: Partial<ModelPrefs>) => void;
+  toggleSidebar: () => void;
+  setUser: (user: Record<string, unknown> | null) => void;
 }
 
 export const useCmsStore = create<CmsStore>()(
@@ -30,6 +44,9 @@ export const useCmsStore = create<CmsStore>()(
       editRow: null,
       colorScheme: 'dark',
       authenticated: false,
+      modelPrefs: {},
+      sidebarOpen: true,
+      user: null,
 
       setBlueprint: (blueprint) =>
         set({
@@ -50,10 +67,26 @@ export const useCmsStore = create<CmsStore>()(
         set((s) => ({
           colorScheme: s.colorScheme === 'dark' ? 'light' : 'dark',
         })),
+
+      setModelPrefs: (model, prefs) =>
+        set((s) => ({
+          modelPrefs: {
+            ...s.modelPrefs,
+            [model]: { ...s.modelPrefs[model], ...prefs },
+          },
+        })),
+
+      toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+
+      setUser: (user) => set({ user }),
     }),
     {
       name: 'cms-ui-prefs',
-      partialize: (s) => ({ colorScheme: s.colorScheme }),
+      partialize: (s) => ({
+        colorScheme: s.colorScheme,
+        modelPrefs: s.modelPrefs,
+        sidebarOpen: s.sidebarOpen,
+      }),
     },
   ),
 );

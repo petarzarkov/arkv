@@ -79,7 +79,7 @@ export async function login(
   email: string,
   password: string,
   tokenPath = 'access_token',
-): Promise<void> {
+): Promise<Record<string, unknown>> {
   const res = await fetch(loginEndpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -91,8 +91,9 @@ export async function login(
     throw new Error(text || `HTTP ${res.status}`);
   }
 
-  const data = (await res.json()) as unknown;
+  const data = (await res.json()) as Record<string, unknown>;
   const token = getNestedValue(data, tokenPath);
   if (!token) throw new Error('Could not extract token from login response');
   setToken(token);
+  return data;
 }

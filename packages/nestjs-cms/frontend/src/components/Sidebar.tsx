@@ -1,5 +1,5 @@
 import { NavLink, ScrollArea, Text } from '@mantine/core';
-import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import type { CmsBlueprint } from '../types.js';
 
 interface Props {
@@ -9,6 +9,8 @@ interface Props {
 }
 
 export function Sidebar({ blueprint, activeModel, onSelect }: Props) {
+  const navigate = useNavigate();
+
   return (
     <ScrollArea flex={1} px="xs" pt="xs" pb="md">
       <Text
@@ -21,25 +23,32 @@ export function Sidebar({ blueprint, activeModel, onSelect }: Props) {
       >
         Models
       </Text>
-      {Object.keys(blueprint.models).map((name, i) => (
-        <motion.div
-          key={name}
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.04, duration: 0.2 }}
-        >
-          <NavLink
-            label={name}
-            active={activeModel === name}
-            onClick={() => onSelect(name)}
-            mb={2}
+      {Object.keys(blueprint.models)
+        .sort()
+        .map((name, i) => (
+          <div
+            key={name}
             style={{
-              borderRadius: 6,
-              fontWeight: activeModel === name ? 600 : 400,
+              animation: 'fadeSlideIn 0.2s ease forwards',
+              animationDelay: `${i * 0.04}s`,
+              opacity: 0,
             }}
-          />
-        </motion.div>
-      ))}
+          >
+            <NavLink
+              label={name}
+              active={activeModel === name}
+              onClick={() => {
+                void navigate(`/${name}`);
+                onSelect(name);
+              }}
+              mb={2}
+              style={{
+                borderRadius: 6,
+                fontWeight: activeModel === name ? 600 : 400,
+              }}
+            />
+          </div>
+        ))}
     </ScrollArea>
   );
 }

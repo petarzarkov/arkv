@@ -8,7 +8,6 @@ import {
   Alert,
   Paper,
 } from '@mantine/core';
-import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client.js';
 import { toStr } from '../utils.js';
@@ -27,9 +26,11 @@ export function DynamicForm({ model, initial, mode, scheme, onBack }: Props) {
   const client = createApiClient(scheme);
   const qc = useQueryClient();
 
-  // create mode uses createSchema (POST body fields); edit mode uses schema (response fields)
+  // create mode uses createSchema (POST body fields); edit mode uses updateSchema (PATCH/PUT body fields)
   const activeSchema: Record<string, CmsField> =
-    mode === 'create' ? (model.createSchema ?? model.schema) : model.schema;
+    mode === 'create'
+      ? (model.createSchema ?? model.schema)
+      : (model.updateSchema ?? model.schema);
 
   const writableFields: [string, CmsField][] = Object.entries(
     activeSchema,
@@ -87,11 +88,7 @@ export function DynamicForm({ model, initial, mode, scheme, onBack }: Props) {
   });
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
-    >
+    <div style={{ animation: 'fadeSlideIn 0.25s ease' }}>
       <Group mb="md">
         <Button variant="subtle" size="sm" onClick={onBack}>
           ← Back
@@ -151,7 +148,7 @@ export function DynamicForm({ model, initial, mode, scheme, onBack }: Props) {
           </Stack>
         </form>
       </Paper>
-    </motion.div>
+    </div>
   );
 }
 
