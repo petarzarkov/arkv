@@ -5,7 +5,6 @@ import {
   Group,
   Text,
   Loader,
-  Center,
   Pagination,
   ActionIcon,
   Badge,
@@ -19,7 +18,12 @@ import {
   Checkbox,
   TextInput,
 } from '@mantine/core';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { JsonView, darkStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
@@ -139,7 +143,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -226,7 +230,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
     return `${listEndpoint.path}?${params.toString()}`;
   }
 
-  const { data, isLoading, isError, error } = useQuery<unknown>({
+  const { data, isLoading, isFetching, isError, error } = useQuery<unknown>({
     queryKey: [
       'list',
       model.name,
@@ -242,6 +246,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
       return client.get(buildUrl());
     },
     enabled: Boolean(listEndpoint),
+    placeholderData: keepPreviousData,
   });
 
   const deleteMutation = useMutation({
@@ -378,14 +383,6 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
           return sortDir === 'asc' ? cmp : -cmp;
         });
 
-  if (isLoading) {
-    return (
-      <Center h={300}>
-        <Loader size="md" />
-      </Center>
-    );
-  }
-
   if (isError) {
     return (
       <Alert color="red" mt="md" radius="md">
@@ -464,6 +461,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
           justify="space-between"
           style={{ borderBottom: '1px solid var(--mantine-color-dark-5)' }}
         >
+          <Group gap="xs">
           <TextInput
             placeholder="Search..."
             size="xs"
@@ -495,6 +493,8 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
               ) : undefined
             }
           />
+          {isFetching && <Loader size="xs" />}
+          </Group>
           <Group gap="xs">
             {booleanFilters.map(([name]) => (
               <Button
@@ -606,12 +606,18 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                       colSpan={visibleFields.length + lookupColumns.length + 1}
                     >
                       <Stack align="center" py="xl" gap="xs">
+                        {isLoading ? (
+                          <Loader size="sm" />
+                        ) : (
+                          <>
                         <Text c="dimmed" style={{ opacity: 0.4 }}>
                           <InboxIcon />
                         </Text>
                         <Text c="dimmed" size="sm">
                           No records found
                         </Text>
+                         </>
+                        )}
                       </Stack>
                     </Table.Td>
                   </Table.Tr>
