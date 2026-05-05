@@ -1,6 +1,6 @@
 {
   "name": "@arkv/nestjs-cms",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Pluggable NestJS admin CMS — auto-generates a dashboard from your OpenAPI/Swagger spec",
   "keywords": [
     "admin",

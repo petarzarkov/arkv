@@ -1,6 +1,6 @@
 {
   "name": "@arkv/nestjs-context-logger",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "NestJS module for structured async-context logging powered by @arkv/logger",
   "keywords": [
     "async-context",
