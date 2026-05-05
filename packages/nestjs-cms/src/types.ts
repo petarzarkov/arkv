@@ -56,6 +56,14 @@ export interface CmsOptions {
    * and don't produce useful Swagger metadata.
    */
   blueprint?: CmsBlueprint;
+  /**
+   * Absolute path to the directory containing `index.html` and `assets/`.
+   * When unset, the package resolves its own bundled `dist/public/`
+   * relative to the compiled module file. Set this when the module is
+   * loaded from a single-file bundle (e.g. `bun build --compile`) where
+   * `__dirname` no longer points at the package on disk.
+   */
+  publicDir?: string;
 }
 
 export interface CmsModuleAsyncOptions {

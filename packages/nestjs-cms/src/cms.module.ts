@@ -41,9 +41,11 @@ export class NestJsCmsModule {
     options: CmsOptions = {},
   ): Promise<void> {
     const cmsPath = (options.path ?? '/cms').replace(/\/$/, '');
+    // Override via options.publicDir for bundled single-file consumers
+    // (e.g. `bun build --compile`) where __dirname is the build host's path.
     // CJS: dist/cjs/cms.module.js → join(.., 'public') = dist/public/
     // ESM: dist/esm/cms.module.js → join(.., 'public') = dist/public/
-    const publicDir = join(__dirname, '..', 'public');
+    const publicDir = options.publicDir ?? join(__dirname, '..', 'public');
     const indexPath = join(publicDir, 'index.html');
 
     if (!existsSync(indexPath)) {
