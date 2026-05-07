@@ -623,7 +623,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                   </Table.Tr>
                 ) : (
                   sortedRows.map((row, i) => (
-                    <tr
+                    <Table.Tr
                       key={toStr(row['id'] ?? i)}
                       style={{
                         borderBottom: '1px solid var(--mantine-color-dark-5)',
@@ -692,7 +692,7 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                           </Group>
                         </Table.Td>
                       )}
-                    </tr>
+                    </Table.Tr>
                   ))
                 )}
               </>
