@@ -5,14 +5,20 @@ import { semver } from 'bun';
 
 const isDryRun = process.env.DRY_RUN === 'true';
 
+const parseScopes = (raw: string): string[] =>
+  raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
 const getForcePublishTarget = (): {
   force: boolean;
-  package: string | null;
+  packages: string[] | null;
 } => {
   const envForce = process.env.FORCE_PUBLISH;
-  if (envForce === 'true') return { force: true, package: null };
+  if (envForce === 'true') return { force: true, packages: null };
   if (envForce && envForce !== 'false')
-    return { force: true, package: envForce };
+    return { force: true, packages: parseScopes(envForce) };
 
   try {
     const commitMessage = execSync('git log -1 --pretty=format:"%s%n%b"', {
@@ -22,13 +28,14 @@ const getForcePublishTarget = (): {
       .trim();
 
     const scopedMatch = commitMessage.match(/\[force-publish:([^\]]+)\]/);
-    if (scopedMatch) return { force: true, package: scopedMatch[1] };
+    if (scopedMatch)
+      return { force: true, packages: parseScopes(scopedMatch[1]) };
     if (commitMessage.includes('[force-publish]'))
-      return { force: true, package: null };
+      return { force: true, packages: null };
 
-    return { force: false, package: null };
+    return { force: false, packages: null };
   } catch {
-    return { force: false, package: null };
+    return { force: false, packages: null };
   }
 };
 
@@ -228,14 +235,26 @@ const pushVersionCommit = (bumpedFiles: string[]): void => {
 };
 
 const publishPackage = (pkgDir: string): void => {
-  execSync('bun publish --access public --no-git-checks', {
-    cwd: pkgDir,
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      XDG_CONFIG_HOME: process.env.HOME,
-    },
-  });
+  try {
+    execSync('bun publish --access public --no-git-checks', {
+      cwd: pkgDir,
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        XDG_CONFIG_HOME: process.env.HOME,
+      },
+    });
+  } catch (error) {
+    // On a PUT to an existing package, npm returns 404 (not 401/403) when the
+    // auth token is missing/expired/invalid. The usual fix is regenerating the
+    // NPM_TOKEN repo secret, not a code change.
+    console.error(
+      `\nPublish failed for ${basename(pkgDir)}. A "404 Not Found" here almost ` +
+        `always means the NPM_TOKEN secret is expired or invalid — regenerate it ` +
+        `in the repo settings and re-run.\n`,
+    );
+    throw error;
+  }
 };
 
 interface PublishablePackage {
@@ -263,18 +282,19 @@ const isVersionPublished = (name: string, version: string): boolean => {
 
 const runForcePublish = (
   packages: PublishablePackage[],
-  targetPackage: string | null,
+  targetPackages: string[] | null,
 ): void => {
-  const filtered = targetPackage
+  const filtered = targetPackages
     ? packages.filter(
         (pkg) =>
-          basename(pkg.dir) === targetPackage || pkg.name === targetPackage,
+          targetPackages.includes(basename(pkg.dir)) ||
+          targetPackages.includes(pkg.name),
       )
     : packages;
 
-  if (targetPackage) {
+  if (targetPackages) {
     console.log(
-      `\n--- FORCE PUBLISH MODE: publishing ${targetPackage} at current version ---\n`,
+      `\n--- FORCE PUBLISH MODE: publishing ${targetPackages.join(', ')} at current version ---\n`,
     );
   } else {
     console.log(
@@ -284,8 +304,8 @@ const runForcePublish = (
 
   if (filtered.length === 0) {
     console.log(
-      targetPackage
-        ? `Package "${targetPackage}" not found.`
+      targetPackages
+        ? `Package(s) "${targetPackages.join(', ')}" not found.`
         : 'No publishable packages found.',
     );
     process.exit(0);
@@ -360,14 +380,24 @@ const runVersionBump = (allPackages: PublishablePackage[]): void => {
 
   if (isDryRun || bumpedPackages.length === 0) return;
 
-  console.log('Committing version changes...');
-  pushVersionCommit(bumpedPackages.map((p) => p.packageJsonPath));
-
+  // Publish BEFORE committing/pushing the bump. If publish fails, main is left
+  // untouched so the next run retries the same bump cleanly — a committed-but-
+  // unpublished version would otherwise be orphaned ([skip ci] + diff-based
+  // change detection means it never gets republished). The isVersionPublished
+  // guard makes reruns idempotent and lets a failed-push-after-publish recover.
   console.log('Publishing bumped packages...');
-  for (const { dir } of bumpedPackages) {
+  for (const { dir, packageJsonPath } of bumpedPackages) {
+    const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    if (isVersionPublished(pkg.name, pkg.version)) {
+      console.log(`${pkg.name}@${pkg.version} already published, skipping`);
+      continue;
+    }
     console.log(`Publishing ${basename(dir)}...`);
     publishPackage(dir);
   }
+
+  console.log('Committing version changes...');
+  pushVersionCommit(bumpedPackages.map((p) => p.packageJsonPath));
 };
 
 void (async () => {
@@ -379,7 +409,7 @@ void (async () => {
 
   try {
     if (forcePublish.force) {
-      runForcePublish(allPublishablePackages, forcePublish.package);
+      runForcePublish(allPublishablePackages, forcePublish.packages);
     } else {
       runVersionBump(allPublishablePackages);
     }
