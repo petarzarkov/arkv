@@ -462,38 +462,38 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
           style={{ borderBottom: '1px solid var(--mantine-color-dark-5)' }}
         >
           <Group gap="xs">
-          <TextInput
-            placeholder="Search..."
-            size="xs"
-            radius="md"
-            value={search}
-            onChange={(e) => setSearch(e.currentTarget.value)}
-            style={{ width: 220 }}
-            rightSection={
-              search ? (
-                <ActionIcon
-                  size="xs"
-                  variant="subtle"
-                  onClick={() => setSearch('')}
-                >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+            <TextInput
+              placeholder="Search..."
+              size="xs"
+              radius="md"
+              value={search}
+              onChange={(e) => setSearch(e.currentTarget.value)}
+              style={{ width: 220 }}
+              rightSection={
+                search ? (
+                  <ActionIcon
+                    size="xs"
+                    variant="subtle"
+                    onClick={() => setSearch('')}
                   >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </ActionIcon>
-              ) : undefined
-            }
-          />
-          {isFetching && <Loader size="xs" />}
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </ActionIcon>
+                ) : undefined
+              }
+            />
+            {isFetching && <Loader size="xs" />}
           </Group>
           <Group gap="xs">
             {booleanFilters.map(([name]) => (
@@ -610,13 +610,13 @@ export function DataTable({ model, scheme, onEdit, onCreate }: Props) {
                           <Loader size="sm" />
                         ) : (
                           <>
-                        <Text c="dimmed" style={{ opacity: 0.4 }}>
-                          <InboxIcon />
-                        </Text>
-                        <Text c="dimmed" size="sm">
-                          No records found
-                        </Text>
-                         </>
+                            <Text c="dimmed" style={{ opacity: 0.4 }}>
+                              <InboxIcon />
+                            </Text>
+                            <Text c="dimmed" size="sm">
+                              No records found
+                            </Text>
+                          </>
                         )}
                       </Stack>
                     </Table.Td>

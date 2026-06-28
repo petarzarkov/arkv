@@ -141,7 +141,17 @@ export class Logger {
       ? formatColoredJson(sanitizedLogEntry, level)
       : safeStringify(sanitizedLogEntry);
 
-    console.log(output);
+    // Route warn/error/fatal to stderr so they are separable from regular
+    // stdout output (log shippers, `2>` redirection, CI annotations, etc.).
+    if (
+      level === LogLevel.WARN ||
+      level === LogLevel.ERROR ||
+      level === LogLevel.FATAL
+    ) {
+      console.error(output);
+    } else {
+      console.log(output);
+    }
   }
 
   #prepareMessage(message: unknown): {

@@ -8,6 +8,7 @@ describe('Logger', () => {
   let logger: Logger;
   let contextStore: ContextStore;
   let consoleLogSpy: ReturnType<typeof spyOn>;
+  let consoleErrorSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
     contextStore = new ContextStore();
@@ -19,10 +20,16 @@ describe('Logger', () => {
     logger = new Logger(defaultTestConfig, contextStore);
     // eslint-disable-next-line no-empty-function
     consoleLogSpy = spyOn(console, 'log').mockImplementation(() => {});
+    // warn/error/fatal write to stderr; forward to the same spy so existing
+    // assertions on console.log capture all output regardless of channel.
+    consoleErrorSpy = spyOn(console, 'error').mockImplementation(
+      (...args: unknown[]) => consoleLogSpy(...args),
+    );
   });
 
   afterEach(() => {
     consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   describe('basic logging', () => {
