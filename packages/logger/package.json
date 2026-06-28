@@ -1,6 +1,6 @@
 {
   "name": "@arkv/logger",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Framework-agnostic structured logger with async context, sanitization, and colored output",
   "keywords": [
     "async-context",
