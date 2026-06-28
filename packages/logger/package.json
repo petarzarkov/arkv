@@ -51,7 +51,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@arkv/colors": "workspace:*",
-    "@arkv/shared": "workspace:*"
+    "@arkv/colors": "workspace:^",
+    "@arkv/shared": "workspace:^"
   }
 }

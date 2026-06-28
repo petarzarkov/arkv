@@ -51,7 +51,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@arkv/logger": "workspace:*"
+    "@arkv/logger": "workspace:^"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

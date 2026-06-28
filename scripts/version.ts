@@ -1,9 +1,18 @@
 import { execSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { semver } from 'bun';
 
 const isDryRun = process.env.DRY_RUN === 'true';
+
+const ROOT_DIR = resolve(import.meta.dir, '..');
+const LOCKFILE_PATH = join(ROOT_DIR, 'bun.lock');
 
 const parseScopes = (raw: string): string[] =>
   raw
@@ -234,6 +243,22 @@ const pushVersionCommit = (bumpedFiles: string[]): void => {
   console.log(`Successfully pushed version ${pkg.version}`);
 };
 
+/**
+ * Regenerate the lockfile from scratch so `bun publish` freezes `workspace:^`
+ * deps against the just-bumped versions.
+ *
+ * bun caches each workspace package's version in the lockfile and does NOT
+ * refresh it on `bun install` (even with `--force` / `--lockfile-only`); only a
+ * from-scratch resolution re-reads every package.json. Without this, a publish
+ * after a version bump would freeze a stale range (e.g. `^0.7.0` instead of
+ * `^0.7.3`).
+ */
+const regenerateLockfile = (): void => {
+  console.log('Regenerating lockfile to capture current workspace versions...');
+  rmSync(LOCKFILE_PATH, { force: true });
+  execSync('bun install', { cwd: ROOT_DIR, stdio: 'inherit' });
+};
+
 const publishPackage = (pkgDir: string): void => {
   try {
     execSync('bun publish --access public --no-git-checks', {
@@ -313,7 +338,10 @@ const runForcePublish = (
 
   const bumpType = determineBumpType();
   const bumpedFiles: string[] = [];
+  const toPublish: { name: string; dir: string; version: string }[] = [];
 
+  // Bump pass: write all version bumps first so the lockfile can be regenerated
+  // once before any publish (a package may depend on another being bumped here).
   for (const { name, dir, packageJsonPath } of filtered) {
     const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
     let { version } = pkg;
@@ -332,18 +360,31 @@ const runForcePublish = (
       }
     }
 
-    if (isDryRun) {
-      console.log(`[DRY RUN] Would publish ${name}@${version}`);
-      continue;
-    }
+    toPublish.push({ name, dir, version });
+  }
 
+  if (isDryRun) {
+    for (const { name, version } of toPublish) {
+      console.log(`[DRY RUN] Would publish ${name}@${version}`);
+    }
+    return;
+  }
+
+  // Refresh the lockfile so publishes freeze workspace:^ deps against the
+  // versions just bumped above.
+  if (bumpedFiles.length > 0) {
+    regenerateLockfile();
+  }
+
+  // Publish pass.
+  for (const { name, dir, version } of toPublish) {
     console.log(`Publishing ${name}@${version}...`);
     publishPackage(dir);
   }
 
-  if (!isDryRun && bumpedFiles.length > 0) {
+  if (bumpedFiles.length > 0) {
     console.log('Committing version changes...');
-    pushVersionCommit(bumpedFiles);
+    pushVersionCommit([...bumpedFiles, LOCKFILE_PATH]);
   }
 };
 
@@ -380,6 +421,10 @@ const runVersionBump = (allPackages: PublishablePackage[]): void => {
 
   if (isDryRun || bumpedPackages.length === 0) return;
 
+  // Refresh the lockfile so the publish below freezes workspace:^ deps against
+  // the versions we just bumped.
+  regenerateLockfile();
+
   // Publish BEFORE committing/pushing the bump. If publish fails, main is left
   // untouched so the next run retries the same bump cleanly — a committed-but-
   // unpublished version would otherwise be orphaned ([skip ci] + diff-based
@@ -397,7 +442,10 @@ const runVersionBump = (allPackages: PublishablePackage[]): void => {
   }
 
   console.log('Committing version changes...');
-  pushVersionCommit(bumpedPackages.map((p) => p.packageJsonPath));
+  pushVersionCommit([
+    ...bumpedPackages.map((p) => p.packageJsonPath),
+    LOCKFILE_PATH,
+  ]);
 };
 
 void (async () => {
