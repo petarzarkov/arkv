@@ -2,7 +2,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import prand from 'pure-rand';
+import { congruential32 } from 'pure-rand/generator/congruential32';
+import { mersenne } from 'pure-rand/generator/mersenne';
+import { xoroshiro128plus } from 'pure-rand/generator/xoroshiro128plus';
+import { xorshift128plus } from 'pure-rand/generator/xorshift128plus';
+import { uniformInt } from 'pure-rand/distribution/uniformInt';
+import type { RandomGenerator } from 'pure-rand/types/RandomGenerator';
 import { MersenneTwister19937, Random } from 'random-js';
 import seedrandom from 'seedrandom';
 import { Rng } from './src/index.js';
@@ -74,23 +79,20 @@ function bench(fn: () => void): number {
 }
 
 /** 64-bit float in [0, 1) from a pure-rand generator (53-bit precision, mutates in-place). */
-function prandFloat64(rng: prand.RandomGenerator): number {
-  const g1 = prand.unsafeUniformIntDistribution(0, (1 << 26) - 1, rng);
-  const g2 = prand.unsafeUniformIntDistribution(0, (1 << 27) - 1, rng);
+function prandFloat64(rng: RandomGenerator): number {
+  const g1 = uniformInt(rng, 0, (1 << 26) - 1);
+  const g2 = uniformInt(rng, 0, (1 << 27) - 1);
   return (g1 * 2 ** 27 + g2) * 2 ** -53;
 }
 
 // ── pure-rand bench helpers (factory ensures fresh state per bench call) ───────
 
-type PrandFactory = () => prand.RandomGenerator;
+type PrandFactory = () => RandomGenerator;
 
 function prandIntBench(mk: PrandFactory, min: number, max: number): number {
   return bench(() => {
-    let s = mk();
-    for (let i = 0; i < N; i++) {
-      const [, n] = prand.uniformIntDistribution(min, max, s);
-      s = n;
-    }
+    const s = mk();
+    for (let i = 0; i < N; i++) uniformInt(s, min, max);
   });
 }
 
@@ -104,10 +106,9 @@ function prandFloatBench(mk: PrandFactory): number {
 function prandShuffleBench(mk: PrandFactory, src: number[]): number {
   return bench(() => {
     const arr = [...src];
-    let s = mk();
+    const s = mk();
     for (let i = N - 1; i > 0; i--) {
-      const [j, n] = prand.uniformIntDistribution(0, i, s);
-      s = n;
+      const j = uniformInt(s, 0, i);
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
   });
@@ -154,10 +155,10 @@ function main() {
     ['xorshift7', srXorshift7],
   ];
   const prandFactories: [string, PrandFactory][] = [
-    ['xoroshiro128+', () => prand.xoroshiro128plus(SEED)],
-    ['xorshift128+', () => prand.xorshift128plus(SEED)],
-    ['mersenne', () => prand.mersenne(SEED)],
-    ['congruential32', () => prand.congruential32(SEED)],
+    ['xoroshiro128+', () => xoroshiro128plus(SEED)],
+    ['xorshift128+', () => xorshift128plus(SEED)],
+    ['mersenne', () => mersenne(SEED)],
+    ['congruential32', () => congruential32(SEED)],
   ];
 
   // ── 1. Sequential u32 integer ──────────────────────────────────────────────
@@ -197,12 +198,8 @@ function main() {
       label: `pure-rand  · ${name}  loop`,
       ms: bench(() => {
         const a = new Uint32Array(N);
-        let s = mk();
-        for (let i = 0; i < N; i++) {
-          const [v, n] = prand.uniformIntDistribution(0, 4294967295, s);
-          a[i] = v;
-          s = n;
-        }
+        const s = mk();
+        for (let i = 0; i < N; i++) a[i] = uniformInt(s, 0, 4294967295);
       }),
     })),
     {

@@ -1,0 +1,66 @@
+{
+  "name": "@arkv/module-cost",
+  "version": "0.0.0",
+  "description": "Visualize what your node_modules actually cost on disk — interactive treemap of per-package and per-scope size, right from npx",
+  "keywords": [
+    "cli",
+    "dependencies",
+    "disk-usage",
+    "node-modules",
+    "package-size",
+    "treemap",
+    "typescript"
+  ],
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/module-cost#readme",
+  "license": "MIT",
+  "author": {
+    "name": "Petar Zarkov",
+    "email": "pzarko1@gmail.com",
+    "url": "https://github.com/petarzarkov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petarzarkov/arkv",
+    "directory": "packages/module-cost"
+  },
+  "bin": {
+    "module-cost": "dist/cli.js"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build:ui": "cd frontend && bunx vite build",
+    "build:ts": "tsc -p tsconfig.build.json",
+    "build": "bun run build:ui && bun run build:ts",
+    "postbuild": "chmod +x dist/cli.js",
+    "dev": "cd frontend && bunx vite",
+    "start": "bun src/cli.ts",
+    "test": "bun test --bail",
+    "test:cov": "bun test --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@mantine/core": "9.4.2",
+    "@mantine/hooks": "9.4.2",
+    "@types/d3-hierarchy": "3.1.7",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.4",
+    "d3-hierarchy": "3.1.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "vite": "8.1.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

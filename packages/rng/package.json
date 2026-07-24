@@ -64,7 +64,7 @@
   "dependencies": {},
   "devDependencies": {
     "@types/seedrandom": "^3.0.8",
-    "pure-rand": "^7.0.1",
+    "pure-rand": "^8.4.2",
     "random-js": "^2.1.0",
     "seedrandom": "^3.0.5"
   }
