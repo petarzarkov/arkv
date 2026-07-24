@@ -1,6 +1,6 @@
 {
   "name": "@arkv/rng",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG.",
   "keywords": [
     "browser",

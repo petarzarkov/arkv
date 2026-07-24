@@ -1,6 +1,6 @@
 {
   "name": "@arkv/module-cost",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Visualize what your node_modules actually cost on disk — interactive treemap of per-package and per-scope size, right from npx",
   "keywords": [
     "cli",
