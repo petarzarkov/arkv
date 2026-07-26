@@ -1,7 +1,5 @@
 # @arkv/nestjs-context-logger
 
-[![coverage](https://petarzarkov.github.io/arkv/coverage-nestjs-context-logger.svg)](https://petarzarkov.github.io/arkv)
-
 NestJS module for structured, async-context-aware logging powered by [`@arkv/logger`](../logger).
 
 Provides drop-in replacements for the NestJS built-in logger with:

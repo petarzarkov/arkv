@@ -1,7 +1,4 @@
 # @arkv/rng
-
-[![coverage](https://petarzarkov.github.io/arkv/coverage-rng.svg)](https://petarzarkov.github.io/arkv#rng)
-
 Cryptographically correct uniform distributions!
 
 Fastest, seedable, zero dependency, isomorphic pseudo-random number generator powered by **Rust + WebAssembly**. Works identically in Node.js, Bun, and the browser — no native compilation required.

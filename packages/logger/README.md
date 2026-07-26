@@ -1,7 +1,5 @@
 # @arkv/logger
 
-[![coverage](https://petarzarkov.github.io/arkv/coverage-logger.svg)](https://petarzarkov.github.io/arkv#logger)
-
 Framework-agnostic structured logger with async context, sanitization, and colored output.
 
 ## Install

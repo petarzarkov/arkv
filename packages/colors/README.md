@@ -1,7 +1,5 @@
 # @arkv/colors
 
-[![coverage](https://petarzarkov.github.io/arkv/coverage-colors.svg)](https://petarzarkov.github.io/arkv#colors)
-
 Lightweight, zero-dependency ANSI color and style utilities for terminals.
 
 ## Install

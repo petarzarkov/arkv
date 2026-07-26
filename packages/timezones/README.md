@@ -1,6 +1,5 @@
 # @arkv/timezones
 
-[![coverage](https://petarzarkov.github.io/arkv/coverage-timezones.svg)](https://petarzarkov.github.io/arkv#timezones)
 [![npm](https://img.shields.io/npm/v/%40arkv%2Ftimezones)](https://www.npmjs.com/package/%40arkv%2Ftimezones)
 [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Ftimezones?label=size)](https://www.npmjs.com/package/%40arkv%2Ftimezones)
 [![license](https://img.shields.io/badge/License-MIT-yellow.svg)](../../LICENSE)

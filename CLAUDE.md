@@ -80,9 +80,14 @@ bun run build:types   # tsc -p tsconfig.build.types.json
   `coverage/index.html` (per-package breakdown, uncovered line ranges, packages with no
   tests), `coverage/coverage.svg`, and a `coverage-<package>.svg` per package. Zero deps
   — bun emits no branch records, so the report covers lines and functions only.
-- Every package README carries its own badge linking to `#<package>` on that page. A
-  package with no test files gets a grey `no tests` badge rather than a misleading 0%.
-  Adding a new package means its badge appears automatically on the next run.
+- The per-package badges live in the root README's generated `Packages` table (the
+  `Coverage` column added by `scripts/update-readme.ts`), not in the individual package
+  READMEs. A package with no test files gets a grey `no tests` badge rather than a
+  misleading 0%. New packages pick up a badge automatically on the next `gen:cov` +
+  `gen:readme`.
+- Pages must be set to the **GitHub Actions** source in repo settings. On the default
+  "Deploy from a branch" source, GitHub serves a Jekyll render of the README instead and
+  every badge URL 404s.
 - `ci.yml` publishes `coverage/` to GitHub Pages from a separate `pages` job on main:
   <https://petarzarkov.github.io/arkv>
 - `bunfig.toml` ignores `**/dist/**` for coverage: a package importing a sibling resolves

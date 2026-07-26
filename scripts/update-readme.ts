@@ -49,6 +49,8 @@ function discoverPackages(): PackageEntry[] {
     });
 }
 
+const COVERAGE_PAGE = 'https://petarzarkov.github.io/arkv';
+
 function npmBadges(name: string): string {
   const encoded = encodeURIComponent(name);
   const npmUrl = `https://www.npmjs.com/package/${encoded}`;
@@ -58,17 +60,23 @@ function npmBadges(name: string): string {
   return `${version} ${downloads} ${size}`;
 }
 
+/** Badge svgs are generated per package by `bun run gen:cov` and served from Pages. */
+function coverageBadge(folder: string): string {
+  return `[![cov](${COVERAGE_PAGE}/coverage-${folder}.svg)](${COVERAGE_PAGE}#${folder})`;
+}
+
 function buildPackagesTable(entries: PackageEntry[]): string {
-  const header = '| Package | Npm | Description |';
-  const divider = '|---------|---------|-------------|';
+  const header = '| Package | Npm | Coverage | Description |';
+  const divider = '|---------|---------|----------|-------------|';
 
   const rows = entries
     .filter((e) => !e.pkg.private)
     .map(({ folder, pkg }) => {
       const link = `[\`${pkg.name}\`](./packages/${folder})`;
       const badges = npmBadges(pkg.name);
+      const cov = coverageBadge(folder);
       const desc = pkg.description ?? '';
-      return `| ${link} | ${badges} | ${desc} |`;
+      return `| ${link} | ${badges} | ${cov} | ${desc} |`;
     });
 
   return [header, divider, ...rows].join('\n');
