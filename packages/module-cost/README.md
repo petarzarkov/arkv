@@ -1,5 +1,7 @@
 # @arkv/module-cost
 
+[![coverage](https://petarzarkov.github.io/arkv/coverage-module-cost.svg)](https://petarzarkov.github.io/arkv#module-cost)
+
 Visualize what your `node_modules` actually cost on disk — an interactive treemap of
 per-package and per-scope size, served straight from `npx`.
 

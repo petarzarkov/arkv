@@ -73,8 +73,20 @@ bun run build:types   # tsc -p tsconfig.build.types.json
 ## Testing
 
 - Runner: `bun test`
-- `bun run test` — run tests with bail on first failure
-- `bun run test:cov` — run with coverage
+- `bun run test` — run tests with bail on first failure (per package, via `--filter '*'`)
+- `bun run test:cov` — runs `bun test --coverage` **once from the root** so every package
+  lands in a single `coverage/lcov.info`, then `bun run gen:cov`
+- `bun run gen:cov` — `scripts/coverage-report.ts` turns that lcov into
+  `coverage/index.html` (per-package breakdown, uncovered line ranges, packages with no
+  tests), `coverage/coverage.svg`, and a `coverage-<package>.svg` per package. Zero deps
+  — bun emits no branch records, so the report covers lines and functions only.
+- Every package README carries its own badge linking to `#<package>` on that page. A
+  package with no test files gets a grey `no tests` badge rather than a misleading 0%.
+  Adding a new package means its badge appears automatically on the next run.
+- `ci.yml` publishes `coverage/` to GitHub Pages from a separate `pages` job on main:
+  <https://petarzarkov.github.io/arkv>
+- `bunfig.toml` ignores `**/dist/**` for coverage: a package importing a sibling resolves
+  to that sibling's `dist/`, which would otherwise be counted alongside its `src/`.
 
 ## Typecheck
 

@@ -1,5 +1,7 @@
 # @arkv/shared
 
+[![coverage](https://petarzarkov.github.io/arkv/coverage-shared.svg)](https://petarzarkov.github.io/arkv#shared)
+
 Zero-dependency shared utilities and types for `@arkv` packages.
 
 ## Install

@@ -1,5 +1,7 @@
 # @arkv/nestjs-cms
 
+[![coverage](https://petarzarkov.github.io/arkv/coverage-nestjs-cms.svg)](https://petarzarkov.github.io/arkv)
+
 Pluggable admin CMS for NestJS, auto-generated from your OpenAPI/Swagger spec.
 
 ## How it works

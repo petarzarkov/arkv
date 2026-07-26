@@ -5,6 +5,7 @@
 A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 
 [![CI](https://github.com/petarzarkov/arkv/actions/workflows/ci.yml/badge.svg)](https://github.com/petarzarkov/arkv/actions/workflows/ci.yml)
+[![coverage](https://petarzarkov.github.io/arkv/coverage.svg)](https://petarzarkov.github.io/arkv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-black.svg)](https://bun.sh)
