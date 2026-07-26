@@ -1,6 +1,6 @@
 {
   "name": "@arkv/colors",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Lightweight, zero-dependency ANSI color and style utilities for terminals",
   "keywords": [
     "ansi",

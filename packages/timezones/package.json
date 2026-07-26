@@ -1,6 +1,6 @@
 {
   "name": "@arkv/timezones",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Auto-generated IANA timezone data with rich metadata, no dependencies, full TypeScript support, and Node/browser compatibility.",
   "keywords": [
     "date",
