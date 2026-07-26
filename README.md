@@ -24,7 +24,7 @@ A modern TypeScript monorepo powered by [Bun](https://bun.sh).
 | [`@arkv/nestjs-context-logger`](./packages/nestjs-context-logger) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fnestjs-context-logger)](https://www.npmjs.com/package/%40arkv%2Fnestjs-context-logger) [![dls](https://img.shields.io/npm/dt/%40arkv%2Fnestjs-context-logger?label=dls)](https://www.npmjs.com/package/%40arkv%2Fnestjs-context-logger) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Fnestjs-context-logger?label=size)](https://www.npmjs.com/package/%40arkv%2Fnestjs-context-logger) | NestJS module for structured async-context logging powered by @arkv/logger |
 | [`@arkv/rng`](./packages/rng) | [![npm](https://img.shields.io/npm/v/%40arkv%2Frng)](https://www.npmjs.com/package/%40arkv%2Frng) [![dls](https://img.shields.io/npm/dt/%40arkv%2Frng?label=dls)](https://www.npmjs.com/package/%40arkv%2Frng) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Frng?label=size)](https://www.npmjs.com/package/%40arkv%2Frng) | Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG. |
 | [`@arkv/shared`](./packages/shared) | [![npm](https://img.shields.io/npm/v/%40arkv%2Fshared)](https://www.npmjs.com/package/%40arkv%2Fshared) [![dls](https://img.shields.io/npm/dt/%40arkv%2Fshared?label=dls)](https://www.npmjs.com/package/%40arkv%2Fshared) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Fshared?label=size)](https://www.npmjs.com/package/%40arkv%2Fshared) | Shared utilities for @arkv packages |
-| [`@arkv/temporal`](./packages/temporal) | [![npm](https://img.shields.io/npm/v/%40arkv%2Ftemporal)](https://www.npmjs.com/package/%40arkv%2Ftemporal) [![dls](https://img.shields.io/npm/dt/%40arkv%2Ftemporal?label=dls)](https://www.npmjs.com/package/%40arkv%2Ftemporal) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Ftemporal?label=size)](https://www.npmjs.com/package/%40arkv%2Ftemporal) | Drop-in Day.js-compatible API powered by the native Temporal API. Same chainable interface, zero timezone bugs. |
+| [`@arkv/timezones`](./packages/timezones) | [![npm](https://img.shields.io/npm/v/%40arkv%2Ftimezones)](https://www.npmjs.com/package/%40arkv%2Ftimezones) [![dls](https://img.shields.io/npm/dt/%40arkv%2Ftimezones?label=dls)](https://www.npmjs.com/package/%40arkv%2Ftimezones) [![size](https://img.shields.io/npm/unpacked-size/%40arkv%2Ftimezones?label=size)](https://www.npmjs.com/package/%40arkv%2Ftimezones) | Auto-generated IANA timezone data with rich metadata, no dependencies, full TypeScript support, and Node/browser compatibility. |
 
 ## Project Structure
 
@@ -38,7 +38,7 @@ arkv/
 │   ├── nestjs-context-logger  # NestJS module for structured async-context logging powered by @arkv/logger
 │   ├── rng                    # Fastest, zero-dependency, pseudo-RNG in node and browser environments, with support for cryptographic randomness and seedable PRNG.
 │   ├── shared                 # Shared utilities for @arkv packages
-│   └── temporal               # Drop-in Day.js-compatible API powered by the native Temporal API
+│   └── timezones              # Auto-generated IANA timezone data with rich metadata, no dependencies, full TypeScript support, and Node/browser compatibility.
 ├── scripts/                   # Monorepo-level scripts
 ├── .github/workflows/         # CI/CD pipeline
 └── .husky/                    # Git hooks

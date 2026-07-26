@@ -1,18 +1,23 @@
 import { execSync } from 'node:child_process';
-import {
-  existsSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { semver } from 'bun';
 
 const isDryRun = process.env.DRY_RUN === 'true';
 
 const ROOT_DIR = resolve(import.meta.dir, '..');
-const LOCKFILE_PATH = join(ROOT_DIR, 'bun.lock');
+const PACKAGES_DIR = join(ROOT_DIR, 'packages');
+
+// Trusted publishing needs npm >= 11.5.1, and GitHub's ubuntu-latest image still
+// ships npm 10.x. `bunx` fetches this exact version and runs it on bun's own
+// runtime, so no Node install is needed anywhere in CI.
+const NPM = 'bunx npm@11.10.1';
+const WORKSPACE_PROTOCOL = 'workspace:';
+const DEPENDENCY_FIELDS = [
+  'dependencies',
+  'peerDependencies',
+  'optionalDependencies',
+] as const;
 
 const parseScopes = (raw: string): string[] =>
   raw
@@ -141,8 +146,7 @@ const findPublishablePackages = (): {
   dir: string;
   packageJsonPath: string;
 }[] => {
-  const packagesDir = resolve(process.cwd(), 'packages');
-  const entries = readdirSync(packagesDir, {
+  const entries = readdirSync(PACKAGES_DIR, {
     withFileTypes: true,
   });
   const packages: {
@@ -153,13 +157,13 @@ const findPublishablePackages = (): {
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    const pkgJsonPath = join(packagesDir, entry.name, 'package.json');
+    const pkgJsonPath = join(PACKAGES_DIR, entry.name, 'package.json');
     if (!existsSync(pkgJsonPath)) continue;
     const pkg = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
     if (pkg.private) continue;
     packages.push({
       name: pkg.name,
-      dir: join(packagesDir, entry.name),
+      dir: join(PACKAGES_DIR, entry.name),
       packageJsonPath: pkgJsonPath,
     });
   }
@@ -214,6 +218,69 @@ const applyVersionBumps = (
   return bumped;
 };
 
+const readWorkspaceVersions = (): Map<string, string> => {
+  const versions = new Map<string, string>();
+
+  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const pkgJsonPath = join(PACKAGES_DIR, entry.name, 'package.json');
+    if (!existsSync(pkgJsonPath)) continue;
+    const pkg = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
+    if (pkg.name && pkg.version) versions.set(pkg.name, pkg.version);
+  }
+
+  return versions;
+};
+
+/**
+ * `npm publish` leaves `workspace:` ranges untouched in the packed tarball (unlike
+ * `bun publish`), so swap them for concrete ranges, publish, then put the source
+ * package.json back exactly as it was — version bump included.
+ */
+const withResolvedWorkspaceDeps = (pkgDir: string, publish: () => void) => {
+  const pkgJsonPath = join(pkgDir, 'package.json');
+  const original = readFileSync(pkgJsonPath, 'utf-8');
+  const pkg = JSON.parse(original);
+  const versions = readWorkspaceVersions();
+  let resolvedAny = false;
+
+  for (const field of DEPENDENCY_FIELDS) {
+    const deps: Record<string, string> | undefined = pkg[field];
+    if (!deps) continue;
+
+    for (const [name, range] of Object.entries(deps)) {
+      if (!range.startsWith(WORKSPACE_PROTOCOL)) continue;
+
+      const version = versions.get(name);
+      if (!version) {
+        throw new Error(
+          `${pkg.name} depends on ${name} via "${range}" but no workspace package named ${name} was found`,
+        );
+      }
+
+      const specifier = range.slice(WORKSPACE_PROTOCOL.length);
+      deps[name] =
+        specifier === '*' || specifier === ''
+          ? version
+          : `${specifier}${version}`;
+      resolvedAny = true;
+      console.log(`  ${name}: ${range} -> ${deps[name]}`);
+    }
+  }
+
+  if (!resolvedAny) {
+    publish();
+    return;
+  }
+
+  writeFileSync(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
+  try {
+    publish();
+  } finally {
+    writeFileSync(pkgJsonPath, original);
+  }
+};
+
 const pushVersionCommit = (bumpedFiles: string[]): void => {
   execSync(`git add ${bumpedFiles.join(' ')}`);
 
@@ -244,42 +311,35 @@ const pushVersionCommit = (bumpedFiles: string[]): void => {
 };
 
 /**
- * Regenerate the lockfile from scratch so `bun publish` freezes `workspace:^`
- * deps against the just-bumped versions.
+ * Publishes with npm rather than bun: authentication happens through npm's OIDC
+ * trusted publishing, which `bun publish` does not implement (oven-sh/bun#15601).
  *
- * bun caches each workspace package's version in the lockfile and does NOT
- * refresh it on `bun install` (even with `--force` / `--lockfile-only`); only a
- * from-scratch resolution re-reads every package.json. Without this, a publish
- * after a version bump would freeze a stale range (e.g. `^0.7.0` instead of
- * `^0.7.3`).
+ * `--provenance` only works on a supported CI, so it is left off local runs.
  */
-const regenerateLockfile = (): void => {
-  console.log('Regenerating lockfile to capture current workspace versions...');
-  rmSync(LOCKFILE_PATH, { force: true });
-  execSync('bun install', { cwd: ROOT_DIR, stdio: 'inherit' });
-};
-
 const publishPackage = (pkgDir: string): void => {
-  try {
-    execSync('bun publish --access public --no-git-checks', {
-      cwd: pkgDir,
-      stdio: 'inherit',
-      env: {
-        ...process.env,
-        XDG_CONFIG_HOME: process.env.HOME,
-      },
-    });
-  } catch (error) {
-    // On a PUT to an existing package, npm returns 404 (not 401/403) when the
-    // auth token is missing/expired/invalid. The usual fix is regenerating the
-    // NPM_TOKEN repo secret, not a code change.
-    console.error(
-      `\nPublish failed for ${basename(pkgDir)}. A "404 Not Found" here almost ` +
-        `always means the NPM_TOKEN secret is expired or invalid — regenerate it ` +
-        `in the repo settings and re-run.\n`,
-    );
-    throw error;
-  }
+  const provenance = process.env.GITHUB_ACTIONS ? ' --provenance' : '';
+
+  withResolvedWorkspaceDeps(pkgDir, () => {
+    try {
+      execSync(`${NPM} publish --access public${provenance}`, {
+        cwd: pkgDir,
+        stdio: 'inherit',
+      });
+    } catch (error) {
+      // Trusted publishing needs the package to have a trusted publisher pointing
+      // at this repo + workflow, and the job needs `id-token: write`. npm answers
+      // a PUT it won't authorize with 404 rather than 401/403, so an unhelpful
+      // "404 Not Found" here is almost always missing/mismatched config.
+      console.error(
+        `\nPublish failed for ${basename(pkgDir)}. If this is a 404/E404, check the ` +
+          `npm trusted publisher for this package: it must point at ` +
+          `${process.env.GITHUB_REPOSITORY ?? 'petarzarkov/arkv'} and the workflow ` +
+          `file that runs this script. A package that has never been published ` +
+          `needs one manual publish before a trusted publisher can be attached.\n`,
+      );
+      throw error;
+    }
+  });
 };
 
 interface PublishablePackage {
@@ -290,7 +350,7 @@ interface PublishablePackage {
 
 const isVersionPublished = (name: string, version: string): boolean => {
   try {
-    const out = execSync(`bunx npm view ${name} versions --json`, {
+    const out = execSync(`${NPM} view ${name} versions --json`, {
       stdio: 'pipe',
     })
       .toString()
@@ -340,8 +400,8 @@ const runForcePublish = (
   const bumpedFiles: string[] = [];
   const toPublish: { name: string; dir: string; version: string }[] = [];
 
-  // Bump pass: write all version bumps first so the lockfile can be regenerated
-  // once before any publish (a package may depend on another being bumped here).
+  // Bump pass: write every version bump before publishing anything, so a package
+  // that depends on another bumped here resolves the new version, not the old one.
   for (const { name, dir, packageJsonPath } of filtered) {
     const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
     let { version } = pkg;
@@ -370,13 +430,6 @@ const runForcePublish = (
     return;
   }
 
-  // Refresh the lockfile so publishes freeze workspace:^ deps against the
-  // versions just bumped above.
-  if (bumpedFiles.length > 0) {
-    regenerateLockfile();
-  }
-
-  // Publish pass.
   for (const { name, dir, version } of toPublish) {
     console.log(`Publishing ${name}@${version}...`);
     publishPackage(dir);
@@ -384,7 +437,7 @@ const runForcePublish = (
 
   if (bumpedFiles.length > 0) {
     console.log('Committing version changes...');
-    pushVersionCommit([...bumpedFiles, LOCKFILE_PATH]);
+    pushVersionCommit(bumpedFiles);
   }
 };
 
@@ -421,10 +474,6 @@ const runVersionBump = (allPackages: PublishablePackage[]): void => {
 
   if (isDryRun || bumpedPackages.length === 0) return;
 
-  // Refresh the lockfile so the publish below freezes workspace:^ deps against
-  // the versions we just bumped.
-  regenerateLockfile();
-
   // Publish BEFORE committing/pushing the bump. If publish fails, main is left
   // untouched so the next run retries the same bump cleanly — a committed-but-
   // unpublished version would otherwise be orphaned ([skip ci] + diff-based
@@ -442,10 +491,7 @@ const runVersionBump = (allPackages: PublishablePackage[]): void => {
   }
 
   console.log('Committing version changes...');
-  pushVersionCommit([
-    ...bumpedPackages.map((p) => p.packageJsonPath),
-    LOCKFILE_PATH,
-  ]);
+  pushVersionCommit(bumpedPackages.map((p) => p.packageJsonPath));
 };
 
 void (async () => {

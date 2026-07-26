@@ -1,19 +1,28 @@
 {
-  "name": "@arkv/temporal",
-  "version": "0.4.0",
-  "description": "Drop-in Day.js-compatible API powered by the native Temporal API. Same chainable interface, zero timezone bugs.",
+  "name": "@arkv/timezones",
+  "version": "0.0.0",
+  "description": "Auto-generated IANA timezone data with rich metadata, no dependencies, full TypeScript support, and Node/browser compatibility.",
   "keywords": [
-    "browser",
     "date",
-    "dayjs",
-    "javascript",
-    "node",
-    "temporal",
+    "datetime",
+    "db",
+    "gmt",
+    "iana",
+    "json",
+    "list",
+    "no deps",
+    "offset",
+    "static data",
     "time",
     "timezone",
-    "typescript"
+    "timezone offset",
+    "timezones",
+    "typescript",
+    "tz",
+    "tzdb",
+    "utc"
   ],
-  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/temporal#readme",
+  "homepage": "https://github.com/petarzarkov/arkv/tree/main/packages/timezones#readme",
   "license": "MIT",
   "author": {
     "name": "Petar Zarkov",
@@ -23,7 +32,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/petarzarkov/arkv",
-    "directory": "packages/temporal"
+    "directory": "packages/timezones"
   },
   "files": [
     "LICENSE",
@@ -50,11 +59,15 @@
     "build:types": "tsc -p tsconfig.build.types.json",
     "build": "bun run --parallel build:esm build:cjs build:types",
     "postbuild": "echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json && echo '{\"type\":\"module\"}' > dist/esm/package.json",
+    "generate": "bun ./scripts/generate.ts",
     "test": "bun test --bail",
     "test:cov": "bun test --coverage",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "temporal-polyfill": "0.3.2"
+  "dependencies": {},
+  "devDependencies": {
+    "@types/tar-stream": "3.1.4",
+    "csv-parse": "6.2.1",
+    "tar-stream": "3.2.0"
   }
 }

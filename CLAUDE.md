@@ -91,6 +91,24 @@ Within a package: `tsc --noEmit`
 - CI publishes to npm on push to `main` (if version changed)
 - Dry-run: `bun run version:dry-run`
 - Force publish all: include `[force-publish]` in commit message
+- Publishing uses **npm trusted publishing (OIDC)** — no `NPM_TOKEN`. `ci.yml` is the
+  only workflow allowed to publish, because each package's trusted publisher on
+  npmjs.com is pinned to that one workflow filename. Renaming `ci.yml` breaks publishing.
+- The npm CLI is the single sanctioned non-bun tool here, and only in
+  `scripts/version.ts`: `bun publish` cannot authenticate via OIDC
+  (oven-sh/bun#15601). It runs as `bunx npm@<pinned>` (the `NPM` constant) — bun
+  executes npm on its own runtime, so CI needs no `setup-node`. Bump that pin to
+  upgrade npm; it must stay >= 11.5.1, and `ubuntu-latest` still ships npm 10.x, so
+  the pin is doing real work.
+- `npm publish` does not expand `workspace:` ranges, so `version.ts` rewrites them to
+  concrete versions around the publish and restores `package.json` afterwards.
+- `--provenance` is passed only when `GITHUB_ACTIONS` is set — it errors out anywhere
+  else, which would break a local/manual publish.
+- Commands other than `npm publish` (`dist-tag`, `deprecate`, …) cannot use the OIDC
+  credential and have to be run locally with a personal npm login.
+- A package with no versions on npm has no trusted-publisher settings page yet, so its
+  **first** publish must be done manually (`npm login && npm publish`) before CI can take
+  over.
 
 ## Packages Overview
 
@@ -100,7 +118,7 @@ Within a package: `tsc --noEmit`
 | `@arkv/shared`                | Array, async, number, object, string, url utilities |
 | `@arkv/logger`                | Structured logger (depends on colors + shared)      |
 | `@arkv/rng`                   | RNG with Rust/WASM (`bun run build:wasm` step)      |
-| `@arkv/temporal`              | Day.js-compatible API over `Temporal` (polyfilled)  |
+| `@arkv/timezones`             | Generated IANA tzdb data + lookup helpers           |
 | `@arkv/nestjs-context-logger` | NestJS DI wrapper around `@arkv/logger`             |
 
 ### @arkv/rng notes
@@ -109,14 +127,17 @@ Within a package: `tsc --noEmit`
 - Build order: `build:wasm` (Rust→WASM) runs first, then TS compilation (`build:ts`)
 - `bun run build` at package level handles this sequence automatically
 
-### @arkv/temporal notes
+### @arkv/timezones notes
 
-- Polyfill at top of `src/index.ts`: `import 'temporal-polyfill/global'`
-- Internal state: `Temporal.ZonedDateTime | null` (null = invalid)
-- `.month()` is 0-indexed (dayjs compat); `Temporal.month` is 1-indexed
-- `.day()` returns 0=Sun; `Temporal.dayOfWeek` is 1=Mon..7=Sun
-- `diff(a, b)` returns `a - b`; internally calls `diffHelper(from=b, to=a)` which computes `from.until(to)`
-- `Temporal.ZonedDateTimeLike.day` is required — use a local `WithPartial` type + include `day: this.$zdt.day` when calling `.with({})`
+- `src/timezones.ts` is **generated** — never hand-edit. It is excluded from oxlint and
+  oxfmt (`timezones.ts` in both ignore lists) because it is one ~150KB line.
+- Regenerate with `bun run --filter '@arkv/timezones' generate`; `FORCE_REVALIDATE=true`
+  skips the `If-Modified-Since` check against `previous.json`.
+- `scripts/` holds the generator (build-time only, excluded from the tsc build outputs);
+  `src/` holds only what ships. Generator-only types live in `scripts/types.ts`.
+- `.github/workflows/tzdb.yml` refreshes the data weekly, commits it, then dispatches
+  `ci.yml` — a `GITHUB_TOKEN` push cannot trigger a workflow on its own.
+- Zone `utc`/`label` are snapshots from generation time, not live offsets.
 
 ### @arkv/nestjs-context-logger notes
 
@@ -131,10 +152,13 @@ Within a package: `tsc --noEmit`
 
 ## Do Not
 
-- Do not use `npx`, `npm`, `yarn`, or `pnpm` — use `bun`/`bunx`
+- Do not use `npx`, `npm`, `yarn`, or `pnpm` — use `bun`/`bunx`. The one exception is the
+  publish path in `scripts/version.ts`, which needs the npm CLI for OIDC trusted
+  publishing — and even there it goes through `bunx npm@<pinned>`
+- Do not exceed 500 lines per source file — except the generated
+  `packages/timezones/src/timezones.ts`
 - Do not add Biome or ESLint
 - Do not use `any` — TypeScript strict mode is enforced
-- Do not exceed 500 lines per source file
 - Do not create files unless necessary — prefer editing existing ones
 - Do not add docstrings/comments unless logic is non-obvious
 - Do not add error handling for impossible scenarios
