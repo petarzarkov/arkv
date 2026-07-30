@@ -1,110 +1,131 @@
-import { isPlainObject } from '@arkv/shared';
+import { safeEntries } from '@arkv/shared';
 import type { LogEntry } from './types.js';
 
-interface SanitizeOptions {
+export interface SanitizeOptions {
   maskFields: string[];
   maxArrayLength: number;
+  maxDepth: number;
 }
 
-export function sanitizeLogEntry(
-  obj: LogEntry,
+const MASKED = '[MASKED]';
+
+export const DEFAULT_MAX_DEPTH = 32;
+
+function shouldMask(key: string, maskFields: string[]): boolean {
+  const lower = key.toLowerCase();
+  return maskFields.some((field) => lower.includes(field.toLowerCase()));
+}
+
+interface FileLike {
+  name: string;
+  size: number;
+  type: string;
+}
+
+/**
+ * Duck-typed rather than `instanceof File`, so a runtime's own file handle is
+ * described the same way. Checked before `Blob`, which `File` extends.
+ *
+ * The property *types* are checked, not merely their presence: some runtimes
+ * answer `'name' in blob` with `true` for a plain `Blob` — the key exists holding
+ * `undefined` — so a presence check describes every Blob as `[File: undefined …]`.
+ */
+function isFileLike(value: object): value is FileLike {
+  return (
+    typeof (value as { name?: unknown }).name === 'string' &&
+    typeof (value as { size?: unknown }).size === 'number' &&
+    typeof (value as { type?: unknown }).type === 'string' &&
+    typeof (value as { arrayBuffer?: unknown }).arrayBuffer === 'function'
+  );
+}
+
+function describeFile(file: FileLike): string {
+  return `[File: ${file.name} (${file.size} bytes, ${file.type})]`;
+}
+
+function sanitizeFormData(form: FormData): LogEntry | string {
+  const entries: LogEntry = {};
+  try {
+    for (const [key, value] of form.entries()) {
+      entries[key] = typeof value === 'string' ? value : describeFile(value);
+    }
+    return { '[FormData]': entries };
+  } catch {
+    return '[FormData: unable to read entries]';
+  }
+}
+
+/**
+ * `JSON.stringify(new Map([['a', 1]]))` is `{}` — the entries are invisible to it,
+ * so a Map logged as-is loses everything silently. Kept as `[key, value]` pairs
+ * because a Map's keys need not be strings, and masked by key so
+ * `new Map([['password', x]])` is no more of a leak than `{ password: x }`.
+ */
+function sanitizeMap(
+  map: ReadonlyMap<unknown, unknown>,
   options: SanitizeOptions,
-  visited = new WeakSet(),
+  visited: WeakSet<object>,
+  depth: number,
 ): LogEntry {
-  if (visited.has(obj)) {
-    return {
-      '[Circular]': 'circular reference detected',
-    };
-  }
-  visited.add(obj);
-
-  const cleaned: LogEntry = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (value === undefined || value === null) {
-      continue;
+  const pairs: unknown[] = [];
+  for (const [key, value] of map) {
+    if (pairs.length >= options.maxArrayLength) {
+      pairs.push(
+        `[TRUNCATED: ${map.size - options.maxArrayLength} more entries]`,
+      );
+      break;
     }
-
-    const shouldMask = options.maskFields.some((field) =>
-      key.toLowerCase().includes(field.toLowerCase()),
-    );
-
-    if (shouldMask) {
-      cleaned[key] = '[MASKED]';
-    } else {
-      const safeValue = makeSafeForJson(value, options);
-      if (safeValue !== undefined) {
-        if (Array.isArray(safeValue)) {
-          cleaned[key] = sanitizeArray(safeValue, options, visited);
-        } else if (isPlainObject(safeValue)) {
-          cleaned[key] = sanitizeLogEntry(safeValue, options, visited);
-        } else {
-          cleaned[key] = safeValue;
-        }
-      }
-    }
+    pairs.push([
+      makeSafeForJson(key, options, visited, depth + 1),
+      typeof key === 'string' && shouldMask(key, options.maskFields)
+        ? MASKED
+        : makeSafeForJson(value, options, visited, depth + 1),
+    ]);
   }
-  return cleaned;
+  return { '[Map]': pairs };
 }
 
 function sanitizeArray(
   array: unknown[],
   options: SanitizeOptions,
   visited: WeakSet<object>,
+  depth: number,
 ): unknown[] {
-  return array.map((item) => {
-    if (isPlainObject(item)) {
-      return sanitizeLogEntry(item, options, visited);
-    }
-    if (Array.isArray(item)) {
-      return sanitizeArray(item, options, visited);
-    }
-    return makeSafeForJson(item, options);
-  });
+  const kept = Math.min(array.length, options.maxArrayLength);
+  const cleaned: unknown[] = [];
+  for (let index = 0; index < kept; index += 1) {
+    cleaned.push(makeSafeForJson(array[index], options, visited, depth + 1));
+  }
+  if (array.length > kept) {
+    cleaned.push(`[TRUNCATED: ${array.length - kept} more items]`);
+  }
+  return cleaned;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: recursive error search
-export function findNestedError(
+function sanitizeObject(
   obj: Record<string, unknown>,
-  visited = new WeakSet(),
-): Error | null {
-  if (!obj || typeof obj !== 'object') {
-    return null;
-  }
-
-  if (visited.has(obj)) {
-    return null;
-  }
-  visited.add(obj);
-
-  for (const value of Object.values(obj)) {
-    if (value instanceof Error) {
-      return value;
+  options: SanitizeOptions,
+  visited: WeakSet<object>,
+  depth: number,
+): LogEntry {
+  const cleaned: LogEntry = {};
+  for (const [key, value] of safeEntries(obj)) {
+    if (value === undefined || value === null) {
+      continue;
     }
-    if (isPlainObject(value)) {
-      const nestedError = findNestedError(value, visited);
-      if (nestedError) {
-        return nestedError;
-      }
-    }
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (item instanceof Error) {
-          return item;
-        }
-        if (isPlainObject(item)) {
-          const nestedError = findNestedError(item, visited);
-          if (nestedError) {
-            return nestedError;
-          }
-        }
-      }
-    }
+    cleaned[key] = shouldMask(key, options.maskFields)
+      ? MASKED
+      : makeSafeForJson(value, options, visited, depth + 1);
   }
-  return null;
+  return cleaned;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: handles many type serialization cases
-function makeSafeForJson(value: unknown, options: SanitizeOptions): unknown {
+function makeSafeForJson(
+  value: unknown,
+  options: SanitizeOptions,
+  visited: WeakSet<object>,
+  depth: number,
+): unknown {
   if (value === null || value === undefined) {
     return value;
   }
@@ -127,104 +148,150 @@ function makeSafeForJson(value: unknown, options: SanitizeOptions): unknown {
     return value;
   }
 
-  if (value instanceof Date) {
-    return value.toISOString();
+  const obj = value as object;
+
+  if (obj instanceof Date) {
+    // `new Date('nope').toISOString()` throws a RangeError. A log call must not.
+    return Number.isNaN(obj.getTime())
+      ? '[Date: Invalid Date]'
+      : obj.toISOString();
   }
 
-  if (value instanceof RegExp) {
-    return `[RegExp: ${value.toString()}]`;
+  if (obj instanceof RegExp) {
+    return `[RegExp: ${obj.toString()}]`;
   }
 
-  if (value instanceof Error) {
+  if (obj instanceof Error) {
     return {
-      name: value.name,
-      message: value.message,
-      stack: value.stack?.replace(/\n(\s+)?/g, ','),
+      name: obj.name,
+      message: obj.message,
+      stack: obj.stack?.replace(/\n(\s+)?/g, ','),
     };
   }
 
-  if (typeof FormData !== 'undefined' && value instanceof FormData) {
-    const entries: Record<string, unknown> = {};
-    try {
-      for (const [key, val] of value.entries()) {
-        if (
-          val &&
-          typeof val === 'object' &&
-          'name' in val &&
-          'size' in val &&
-          'type' in val
-        ) {
-          const file = val as {
-            name: string;
-            size: number;
-            type: string;
-          };
-          entries[key] =
-            `[File: ${file.name} (${file.size} bytes, ${file.type})]`;
-        } else {
-          entries[key] = val;
-        }
-      }
-      return { '[FormData]': entries };
-    } catch {
-      return '[FormData: unable to read entries]';
-    }
+  if (typeof FormData !== 'undefined' && obj instanceof FormData) {
+    return sanitizeFormData(obj);
   }
 
-  if (
-    value &&
-    typeof value === 'object' &&
-    'name' in value &&
-    'size' in value &&
-    'type' in value &&
-    typeof (value as { arrayBuffer?: unknown }).arrayBuffer === 'function'
-  ) {
-    const file = value as {
-      name: string;
-      size: number;
-      type: string;
-    };
-    return `[File: ${file.name} (${file.size} bytes, ${file.type})]`;
+  if (isFileLike(obj)) {
+    return describeFile(obj);
   }
 
-  if (typeof Blob !== 'undefined' && value instanceof Blob) {
-    return `[Blob: ${value.size} bytes, ${value.type}]`;
+  if (typeof Blob !== 'undefined' && obj instanceof Blob) {
+    return `[Blob: ${obj.size} bytes, ${obj.type}]`;
   }
 
-  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
-    return `[ArrayBuffer: ${value.byteLength} bytes]`;
+  if (obj instanceof ArrayBuffer) {
+    return `[ArrayBuffer: ${obj.byteLength} bytes]`;
   }
 
-  if (Array.isArray(value)) {
-    return sliceArray(value, options);
+  // A typed array is JSON-serializable as {"0":1,"1":2,…}, which turns a
+  // megabyte buffer into a megabyte of log. Its byte length is the useful part.
+  if (ArrayBuffer.isView(obj)) {
+    return `[${obj.constructor.name}: ${obj.byteLength} bytes]`;
   }
 
-  if (isPlainObject(value)) {
-    return value;
+  if (visited.has(obj)) {
+    return { '[Circular]': 'circular reference detected' };
   }
 
+  if (depth > options.maxDepth) {
+    return `[TRUNCATED: max depth ${options.maxDepth}]`;
+  }
+
+  // Added for the descent and removed after it, so `visited` holds the current
+  // path rather than every object ever seen: a value reachable through two
+  // different keys is shared, not circular, and has to serialize both times.
+  visited.add(obj);
   try {
-    JSON.stringify(value);
-    return value;
-  } catch {
-    if ((value as { constructor?: { name?: string } }).constructor?.name) {
-      return `[${(value as { constructor: { name: string } }).constructor.name}: object not serializable]`;
+    if (Array.isArray(obj)) {
+      return sanitizeArray(obj, options, visited, depth);
     }
-    return '[Object: not serializable]';
+    if (obj instanceof Map) {
+      return sanitizeMap(obj, options, visited, depth);
+    }
+    if (obj instanceof Set) {
+      return {
+        '[Set]': sanitizeArray(
+          Array.from(obj as ReadonlySet<unknown>),
+          options,
+          visited,
+          depth,
+        ),
+      };
+    }
+    return sanitizeObject(
+      obj as Record<string, unknown>,
+      options,
+      visited,
+      depth,
+    );
+  } finally {
+    visited.delete(obj);
   }
 }
 
-function sliceArray<T>(array: T[], options: SanitizeOptions): unknown[] {
-  if (array.length <= options.maxArrayLength) {
-    return array.map((item) => makeSafeForJson(item, options));
+export function sanitizeLogEntry(
+  obj: LogEntry,
+  options: SanitizeOptions,
+): LogEntry {
+  return sanitizeObject(obj, options, new WeakSet<object>([obj]), 0);
+}
+
+function searchForError(
+  value: unknown,
+  maxDepth: number,
+  visited: WeakSet<object>,
+  depth: number,
+): Error | null {
+  if (value instanceof Error) {
+    return value;
   }
 
-  const slicedArray = array
-    .slice(0, options.maxArrayLength)
-    .map((item) => makeSafeForJson(item, options));
+  if (typeof value !== 'object' || value === null || depth > maxDepth) {
+    return null;
+  }
 
-  return [
-    ...slicedArray,
-    `[TRUNCATED: ${array.length - options.maxArrayLength} more items]`,
-  ];
+  if (visited.has(value)) {
+    return null;
+  }
+  visited.add(value);
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = searchForError(item, maxDepth, visited, depth + 1);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  for (const [, entry] of safeEntries(value as Record<string, unknown>)) {
+    const found = searchForError(entry, maxDepth, visited, depth + 1);
+    if (found) {
+      return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * The first `Error` anywhere in the value, so `log({ result: { cause: err } })`
+ * still reports a stack instead of an opaque object. Arrays and objects are
+ * walked alike at every depth.
+ *
+ * Bounded by the same `maxDepth` as the sanitizer, and for the same reason: this
+ * runs on the caller's object before sanitization, so an unbounded walk exhausts
+ * the stack from inside the log call. An error deeper than `maxDepth` would sit
+ * behind a truncation marker in the output anyway.
+ *
+ * `visited` is never cleared, unlike in the sanitizer: this is a search, and a
+ * subtree already searched cannot start containing an error.
+ */
+export function findNestedError(
+  value: unknown,
+  maxDepth = DEFAULT_MAX_DEPTH,
+): Error | null {
+  return searchForError(value, maxDepth, new WeakSet<object>(), 0);
 }

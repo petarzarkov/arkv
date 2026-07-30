@@ -1,7 +1,11 @@
 import { isPlainObject, safeStringify } from '@arkv/shared';
 import type { ContextStore } from './context.js';
 import { formatColoredJson } from './format.js';
-import { findNestedError, sanitizeLogEntry } from './sanitize.js';
+import {
+  DEFAULT_MAX_DEPTH,
+  findNestedError,
+  sanitizeLogEntry,
+} from './sanitize.js';
 import {
   DEFAULT_MASK_FIELDS,
   LOG_LEVELS,
@@ -15,6 +19,7 @@ export class Logger {
   readonly #isDevelopment: boolean;
   readonly #maskFields: string[];
   readonly #maxArrayLength: number;
+  readonly #maxDepth: number;
   readonly #filterEvents: string[];
   readonly #context?: ContextStore;
   readonly #appName?: string;
@@ -31,6 +36,7 @@ export class Logger {
         ? Array.from(new Set([...DEFAULT_MASK_FIELDS, ...cfg.maskFields]))
         : [...DEFAULT_MASK_FIELDS];
     this.#maxArrayLength = cfg.maxArrayLength ?? 100;
+    this.#maxDepth = cfg.maxDepth ?? DEFAULT_MAX_DEPTH;
     this.#filterEvents = cfg.filterEvents ?? [];
     this.#context = context;
     this.#appName = cfg.name;
@@ -135,6 +141,7 @@ export class Logger {
     const sanitizedLogEntry = sanitizeLogEntry(logEntry, {
       maskFields: this.#maskFields,
       maxArrayLength: this.#maxArrayLength,
+      maxDepth: this.#maxDepth,
     });
 
     const output = this.#isDevelopment
@@ -172,7 +179,7 @@ export class Logger {
     }
 
     if (isPlainObject(message)) {
-      const foundError = findNestedError(message);
+      const foundError = findNestedError(message, this.#maxDepth);
       if (foundError) {
         return {
           preparedMessage: foundError.message,
@@ -196,7 +203,13 @@ export class Logger {
       invalidMessageWarning: 'Logger called with non-string message parameter',
       invalidMessageCallstack: stack,
       originalMessageType: typeof message,
-      originalMessage: safeStringify(message as LogEntry),
+      // Objects reach here — a Map, a Set, a Date, a class instance — so the
+      // value is handed over raw for the sanitizer to render. Pre-stringifying
+      // it would report `new Map([['a', 1]])` as `{}`.
+      originalMessage:
+        typeof message === 'object' && message !== null
+          ? message
+          : safeStringify(message as LogEntry),
     };
 
     return {
@@ -215,6 +228,7 @@ export class Logger {
   } {
     let error: Error | null = null;
     const extra: LogEntry = {};
+    const unmergeable: unknown[] = [];
 
     for (const param of params) {
       if (param instanceof Error) {
@@ -252,14 +266,30 @@ export class Logger {
           const { error: _, ...rest } = param;
           Object.assign(extra, rest);
         } else {
-          const foundError = findNestedError(param);
+          const foundError = findNestedError(param, this.#maxDepth);
           if (foundError) {
             error = foundError;
           }
           Object.assign(extra, param);
         }
+      } else if (typeof param === 'object' && param !== null) {
+        // An array, Map, Set, Date, typed array or class instance cannot be
+        // merged into a flat record — `Object.assign` copies none of a Map's
+        // entries, and a class instance's fields would collide with reserved
+        // entry keys. Collected under `params` instead, where the sanitizer
+        // knows how to render every one of those shapes.
+        const foundError = findNestedError(param, this.#maxDepth);
+        if (foundError) {
+          error = foundError;
+        }
+        unmergeable.push(param);
       }
     }
+
+    if (unmergeable.length > 0) {
+      extra.params = unmergeable;
+    }
+
     return { error, extra };
   }
 

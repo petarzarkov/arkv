@@ -1,11 +1,19 @@
-export enum LogLevel {
-  VERBOSE = 'verbose',
-  DEBUG = 'debug',
-  LOG = 'log',
-  WARN = 'warn',
-  ERROR = 'error',
-  FATAL = 'fatal',
-}
+/**
+ * Frozen object rather than a TS `enum`: the values are what land in a log
+ * entry's `level` field and are the only thing consumers may rely on. The
+ * companion type below makes `LogLevel` usable in both value and type position,
+ * so `LogLevel.ERROR` and `level: LogLevel` both keep working.
+ */
+export const LogLevel = Object.freeze({
+  VERBOSE: 'verbose',
+  DEBUG: 'debug',
+  LOG: 'log',
+  WARN: 'warn',
+  ERROR: 'error',
+  FATAL: 'fatal',
+} as const);
+
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 export const LOG_LEVELS: LogLevel[] = [
   LogLevel.VERBOSE,
@@ -40,6 +48,11 @@ export interface LoggerConfig {
   filterEvents?: string[];
   /** Truncate arrays beyond this length */
   maxArrayLength?: number;
+  /**
+   * Stop descending past this nesting depth. A cycle is caught by reference, but
+   * a long acyclic chain would still exhaust the stack inside a log call.
+   */
+  maxDepth?: number;
 }
 
 export type LogEntry = Record<string, unknown> & {

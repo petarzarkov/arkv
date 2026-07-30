@@ -32,16 +32,26 @@ chunk([1, 2, 3, 4, 5], 2); // [[1, 2], [3, 4], [5]]
 ### Object
 
 ```typescript
-import { pick, omit, deepClone, isPlainObject } from '@arkv/shared';
+import { pick, omit, deepClone, isPlainObject, safeEntries } from '@arkv/shared';
 
 pick({ a: 1, b: 2, c: 3 }, ['a', 'c']); // { a: 1, c: 3 }
 omit({ a: 1, b: 2, c: 3 }, ['b']);       // { a: 1, c: 3 }
 
 const cloned = deepClone({ nested: { value: 1 } });
 
-isPlainObject({});          // true
-isPlainObject([]);           // false
-isPlainObject(new Error()); // false
+// Prototype-based: only object literals, `JSON.parse` output and
+// `Object.create(null)` qualify.
+isPlainObject({});                 // true
+isPlainObject(Object.create(null)); // true
+isPlainObject([]);                 // false
+isPlainObject(new Error());        // false
+isPlainObject(new Map());          // false
+isPlainObject(new Date());         // false
+isPlainObject(new MyClass());      // false
+
+// `Object.entries` that cannot be taken down by a throwing getter.
+safeEntries({ ok: 1, get boom() { throw new Error('x'); } });
+// [['ok', 1], ['boom', '[Getter: threw]']]
 ```
 
 ### Number
@@ -134,7 +144,8 @@ import type {
 | `pick` | `(obj: T, keys: K[]) => Pick<T, K>` | Picks specified keys from object |
 | `omit` | `(obj: T, keys: K[]) => Omit<T, K>` | Omits specified keys from object |
 | `deepClone` | `(value: T) => T` | Deep clones via `structuredClone` |
-| `isPlainObject` | `(obj: unknown) => obj is Record<string, unknown>` | Checks if value is a plain object |
+| `isPlainObject` | `(obj: unknown) => obj is Record<string, unknown>` | True only for an object whose own prototype is `Object.prototype` or `null` |
+| `safeEntries` | `(obj: Record<string, unknown>) => [string, unknown][]` | `Object.entries` where a throwing getter yields `'[Getter: threw]'` |
 
 ### Number utilities
 

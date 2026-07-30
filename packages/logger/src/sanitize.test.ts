@@ -336,4 +336,140 @@ describe('Logger - sanitization', () => {
       expect(logData.array[2]).toBe('item3');
     });
   });
+
+  describe('structural safety', () => {
+    it('should log a value reachable through two keys twice, not as circular', () => {
+      const shared = { id: 1 };
+
+      logger.log('Shared reference', { left: shared, right: shared });
+
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
+      const logData = parseLogOutput(logCall);
+
+      expect(logData.left).toEqual({ id: 1 });
+      expect(logData.right).toEqual({ id: 1 });
+    });
+
+    it('should not overflow the stack on a self-referencing array', () => {
+      const testLogger = new Logger(
+        {
+          ...defaultTestConfig,
+          maxArrayLength: 5,
+        },
+        contextStore,
+      );
+
+      const list: unknown[] = ['a'];
+      list.push(list);
+
+      expect(() => testLogger.log('Cyclic array', { list })).not.toThrow();
+
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
+      const logData = parseLogOutput(logCall);
+
+      expect(logData.list[0]).toBe('a');
+      expect(logData.list[1]).toEqual({
+        '[Circular]': 'circular reference detected',
+      });
+    });
+
+    it('should not let a throwing getter kill the log call', () => {
+      const value = {
+        ok: 1,
+        get boom(): string {
+          throw new Error('reading this throws');
+        },
+      };
+
+      expect(() => logger.log('Throwing getter', { value })).not.toThrow();
+
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
+      const logData = parseLogOutput(logCall);
+
+      expect(logData.value).toEqual({ ok: 1, boom: '[Getter: threw]' });
+    });
+
+    it('should describe an invalid Date instead of throwing', () => {
+      expect(() =>
+        logger.log('Invalid date', { when: new Date('nope') }),
+      ).not.toThrow();
+
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
+      const logData = parseLogOutput(logCall);
+
+      expect(logData.when).toBe('[Date: Invalid Date]');
+    });
+
+    it('should reduce binary payloads to their size', () => {
+      logger.log('Binary payloads', {
+        bytes: new Uint8Array([1, 2, 3]),
+        buffer: new ArrayBuffer(8),
+        blob: new Blob(['abcd'], { type: 'application/octet-stream' }),
+        file: new File(['abc'], 'a.png', { type: 'image/png' }),
+      });
+
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
+      const logData = parseLogOutput(logCall);
+
+      expect(logData.bytes).toBe('[Uint8Array: 3 bytes]');
+      expect(logData.buffer).toBe('[ArrayBuffer: 8 bytes]');
+      expect(logData.blob).toBe('[Blob: 4 bytes, application/octet-stream]');
+      expect(logData.file).toBe('[File: a.png (3 bytes, image/png)]');
+    });
+
+    it('should keep Map and Set entries', () => {
+      const testLogger = new Logger(
+        {
+          ...defaultTestConfig,
+          maxArrayLength: 5,
+        },
+        contextStore,
+      );
+
+      testLogger.log('Collections', {
+        map: new Map<unknown, unknown>([
+          ['id', 7],
+          ['password', 'hunter2'],
+        ]),
+        tags: new Set(['a', 'b']),
+      });
+
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
+      const logData = parseLogOutput(logCall);
+
+      expect(logData.map).toEqual({
+        '[Map]': [
+          ['id', 7],
+          ['password', '[MASKED]'],
+        ],
+      });
+      expect(logData.tags).toEqual({ '[Set]': ['a', 'b'] });
+    });
+
+    // Both walks of a log call recurse over the caller's object — the error scan
+    // before sanitization and the sanitizer after it. Either one unbounded
+    // exhausts the stack, and Node's stack is smaller than the test runner's.
+    it('should not overflow the stack on a deeply nested acyclic object', () => {
+      let node: Record<string, unknown> = { leaf: true };
+      for (let index = 0; index < 50_000; index += 1) {
+        node = { next: node };
+      }
+
+      expect(() => logger.log('Deeply nested', { node })).not.toThrow();
+
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
+
+      expect(logCall).toContain('[TRUNCATED: max depth 32]');
+    });
+
+    it('should surface an Error nested inside nested arrays', () => {
+      logger.log('Wrapped failure', { results: [[new Error('deep failure')]] });
+
+      const logCall = consoleLogSpy.mock.calls[0][0] as string;
+      const logData = parseLogOutput(logCall);
+
+      expect(logData.error).toBeDefined();
+      expect(logData.error.message).toBe('deep failure');
+    });
+  });
 });

@@ -53,6 +53,14 @@ logger.fatal('logged');
 | `LogLevel.ERROR` | `'error'` |
 | `LogLevel.FATAL` | `'fatal'` |
 
+`LogLevel` is a frozen object plus a union of its values, so it works in both
+value and type position and the bare strings are accepted too:
+
+```typescript
+const a: LogLevel = LogLevel.WARN;
+const b: LogLevel = 'warn';       // also valid
+```
+
 ### Async Context
 
 Track request-scoped data across async boundaries using `ContextStore` (backed by `AsyncLocalStorage`):
@@ -170,6 +178,20 @@ new Logger(config?: LoggerConfig, context?: ContextStore)
 
 Each method accepts `string`, `Record<string, unknown>`, or `Error` as the message, plus optional extra params.
 
+A **plain object** param is merged into the entry as extra fields. Anything else
+object-shaped — an array, `Map`, `Set`, `Date`, typed array or class instance —
+cannot be merged without losing its contents, so it is collected under a `params`
+array instead and rendered by the sanitizer:
+
+```typescript
+logger.log('Cache state', { hits: 1 });        // → { hits: 1 }
+logger.log('Cache state', new Map([['a', 1]])); // → { params: [{ '[Map]': [['a', 1]] }] }
+```
+
+A message that is not a `string`, an `Error` or a plain object is reported with
+an `invalidMessageWarning`, and the value itself is kept under
+`originalMessage`.
+
 ### `LoggerConfig`
 
 | Field | Type | Default | Description |
@@ -182,6 +204,7 @@ Each method accepts `string`, `Record<string, unknown>`, or `Error` as the messa
 | `maskFields` | `string[]` | `[]` | Additional fields to mask (merged with defaults) |
 | `filterEvents` | `string[]` | `[]` | Context events to suppress |
 | `maxArrayLength` | `number` | `100` | Max array items before truncation |
+| `maxDepth` | `number` | `32` | Max nesting depth before truncation |
 
 ### `ContextStore`
 

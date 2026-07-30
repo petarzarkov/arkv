@@ -30,10 +30,34 @@ export const omit = <T extends Record<string, unknown>, K extends keyof T>(
 };
 
 /**
- * Checks if a value is a plain object (not an array, Error, or null).
+ * Checks if a value is a plain object: an object literal, the result of
+ * `JSON.parse`, or `Object.create(null)`.
+ *
+ * The prototype is what is tested, so an array, `Error`, `Map`, `Set`, `Date`,
+ * typed array or class instance is not a plain object. Those are exactly the
+ * values that lose their contents when spread or `Object.assign`ed into a
+ * record, which is what callers of this predicate go on to do.
  */
-export const isPlainObject = (obj: unknown): obj is Record<string, unknown> =>
-  typeof obj === 'object' &&
-  obj !== null &&
-  !Array.isArray(obj) &&
-  !(obj instanceof Error);
+export const isPlainObject = (obj: unknown): obj is Record<string, unknown> => {
+  if (typeof obj !== 'object' || obj === null) {
+    return false;
+  }
+  const proto: unknown = Object.getPrototypeOf(obj);
+  return proto === null || proto === Object.prototype;
+};
+
+/**
+ * `Object.entries`, except a getter that throws yields a marker instead of
+ * taking the caller down with it. Reading a property is the one step of walking
+ * an unknown object that runs arbitrary user code.
+ */
+export const safeEntries = (
+  obj: Record<string, unknown>,
+): [string, unknown][] =>
+  Object.keys(obj).map((key): [string, unknown] => {
+    try {
+      return [key, obj[key]];
+    } catch {
+      return [key, '[Getter: threw]'];
+    }
+  });

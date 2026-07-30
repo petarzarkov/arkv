@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'bun:test';
-import { deepClone, omit, pick } from './object.utils.js';
+import {
+  deepClone,
+  isPlainObject,
+  omit,
+  pick,
+  safeEntries,
+} from './object.utils.js';
 
 describe('deepClone', () => {
   it('clones primitive values', () => {
@@ -59,5 +65,109 @@ describe('omit', () => {
     const obj = { a: 1, b: 2 };
     omit(obj, ['a']);
     expect(obj).toEqual({ a: 1, b: 2 });
+  });
+});
+
+describe('isPlainObject', () => {
+  it('accepts object literals and null-prototype objects', () => {
+    expect(isPlainObject({})).toBe(true);
+    expect(isPlainObject({ a: 1 })).toBe(true);
+    expect(isPlainObject(Object.create(null))).toBe(true);
+    expect(isPlainObject(JSON.parse('{"a":1}'))).toBe(true);
+  });
+
+  it('rejects primitives and null', () => {
+    expect(isPlainObject(null)).toBe(false);
+    expect(isPlainObject(undefined)).toBe(false);
+    expect(isPlainObject(42)).toBe(false);
+    expect(isPlainObject('str')).toBe(false);
+    expect(isPlainObject(true)).toBe(false);
+    expect(isPlainObject(Symbol('s'))).toBe(false);
+    expect(isPlainObject(isPlainObject)).toBe(false);
+  });
+
+  it('rejects arrays and errors', () => {
+    expect(isPlainObject([])).toBe(false);
+    expect(isPlainObject([1, 2])).toBe(false);
+    expect(isPlainObject(new Error('boom'))).toBe(false);
+    expect(isPlainObject(new TypeError('boom'))).toBe(false);
+  });
+
+  // Every case below returned `true` before: the predicate only excluded
+  // arrays, errors and null, so anything else object-shaped passed. Spreading
+  // one of these into a record copies nothing, which is how Maps handed to the
+  // logger lost every entry.
+  it('rejects built-in containers whose contents do not survive a spread', () => {
+    expect(isPlainObject(new Map([['a', 1]]))).toBe(false);
+    expect(isPlainObject(new Set([1]))).toBe(false);
+    expect(isPlainObject(new WeakMap())).toBe(false);
+    expect(isPlainObject(new Date())).toBe(false);
+    expect(isPlainObject(/re/)).toBe(false);
+    expect(isPlainObject(new Uint8Array(4))).toBe(false);
+    expect(isPlainObject(new ArrayBuffer(4))).toBe(false);
+    expect(isPlainObject(Promise.resolve())).toBe(false);
+  });
+
+  it('rejects class instances', () => {
+    class Payload {
+      id = 1;
+    }
+    expect(isPlainObject(new Payload())).toBe(false);
+
+    class Empty {}
+    expect(isPlainObject(new Empty())).toBe(false);
+    expect(isPlainObject(Object.create({ inherited: true }))).toBe(false);
+  });
+
+  it('narrows to a record', () => {
+    const value: unknown = { a: 1 };
+    if (isPlainObject(value)) {
+      expect(value.a).toBe(1);
+    } else {
+      throw new Error('expected a plain object');
+    }
+  });
+});
+
+describe('safeEntries', () => {
+  it('matches Object.entries for a plain object', () => {
+    const obj = { a: 1, b: 'two', c: null };
+    expect(safeEntries(obj)).toEqual(Object.entries(obj));
+  });
+
+  it('returns an empty list for an empty object', () => {
+    expect(safeEntries({})).toEqual([]);
+  });
+
+  it('swallows a throwing getter instead of letting it escape', () => {
+    const obj = {
+      ok: 1,
+      get boom(): never {
+        throw new Error('getter exploded');
+      },
+      after: 2,
+    };
+
+    expect(() => Object.entries(obj)).toThrow('getter exploded');
+    expect(safeEntries(obj)).toEqual([
+      ['ok', 1],
+      ['boom', '[Getter: threw]'],
+      ['after', 2],
+    ]);
+  });
+
+  it('skips non-enumerable and symbol keys, like Object.entries', () => {
+    const sym = Symbol('s');
+    const obj: Record<string, unknown> = { visible: 1, [sym]: 2 };
+    Object.defineProperty(obj, 'hidden', { value: 3, enumerable: false });
+
+    expect(safeEntries(obj)).toEqual([['visible', 1]]);
+  });
+
+  it('reads inherited enumerable keys the way Object.keys sees them', () => {
+    const obj = Object.create({ inherited: true }) as Record<string, unknown>;
+    obj.own = 1;
+
+    expect(safeEntries(obj)).toEqual([['own', 1]]);
   });
 });

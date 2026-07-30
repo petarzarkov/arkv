@@ -249,6 +249,178 @@ describe('Logger', () => {
     });
   });
 
+  // `isPlainObject` used to return true for anything object-shaped that was not
+  // an array or an Error. A Map, a Set or a class instance therefore took the
+  // structured-object path and was spread into the entry, which copies none of
+  // a Map's entries: the value disappeared from the log without a warning.
+  describe('non-plain objects as the message', () => {
+    it('should keep a plain object on the structured path', () => {
+      logger.log({ action: 'login', success: true });
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.message).toBe('Object logged');
+      expect(logData.action).toBe('login');
+      expect(logData.success).toBe(true);
+      expect(logData.invalidMessageWarning).toBeUndefined();
+    });
+
+    it('should keep a null-prototype object on the structured path', () => {
+      const bare = Object.create(null) as Record<string, unknown>;
+      bare.action = 'login';
+
+      logger.log(bare);
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.message).toBe('Object logged');
+      expect(logData.action).toBe('login');
+      expect(logData.invalidMessageWarning).toBeUndefined();
+    });
+
+    it('should report a Map message instead of losing its entries', () => {
+      // @ts-expect-error - a Map is not a Record; asserting the runtime path
+      logger.log(new Map([['cacheKey', 'cacheValue']]));
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.invalidMessageWarning).toBe(
+        'Logger called with non-string message parameter',
+      );
+      expect(logData.originalMessageType).toBe('object');
+      expect(logData.originalMessage).toEqual({
+        '[Map]': [['cacheKey', 'cacheValue']],
+      });
+    });
+
+    it('should report a Set message instead of losing its members', () => {
+      // @ts-expect-error - a Set is not a Record; asserting the runtime path
+      logger.log(new Set(['only']));
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.invalidMessageWarning).toBe(
+        'Logger called with non-string message parameter',
+      );
+      expect(logData.originalMessage).toEqual({ '[Set]': ['only'] });
+    });
+
+    it('should not merge a class instance message over reserved fields', () => {
+      class Payload {
+        userId = 'hijacked';
+        action = 'login';
+      }
+
+      // @ts-expect-error - a class instance is not a Record
+      logger.log(new Payload());
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.invalidMessageWarning).toBe(
+        'Logger called with non-string message parameter',
+      );
+      expect(logData.originalMessage).toEqual({
+        userId: 'hijacked',
+        action: 'login',
+      });
+      expect(logData.userId).toBe('test-user-id');
+    });
+
+    it('should still stringify a non-object message', () => {
+      // @ts-expect-error - a number is not a valid message
+      logger.error(42);
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.message).toBe('[OBJECT]: 42');
+      expect(logData.originalMessageType).toBe('number');
+      expect(logData.originalMessage).toBe('42');
+    });
+  });
+
+  describe('non-plain objects as optional params', () => {
+    it('should still merge a plain object param as extra fields', () => {
+      logger.log('Test', { orderId: 'o-1' });
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.orderId).toBe('o-1');
+      expect(logData.params).toBeUndefined();
+    });
+
+    it('should keep a Map param instead of dropping it', () => {
+      logger.log('Cache state', new Map([['hits', 1]]));
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.message).toBe('Cache state');
+      expect(logData.params).toEqual([{ '[Map]': [['hits', 1]] }]);
+    });
+
+    it('should nest a class instance param rather than merging it', () => {
+      class Entity {
+        userId = 'hijacked';
+        id = 7;
+      }
+
+      logger.log('Created', new Entity());
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.params).toEqual([{ userId: 'hijacked', id: 7 }]);
+      expect(logData.userId).toBe('test-user-id');
+    });
+
+    it('should keep a Date param as an ISO string', () => {
+      logger.log('At', new Date('2024-01-02T03:04:05.000Z'));
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.params).toEqual(['2024-01-02T03:04:05.000Z']);
+    });
+
+    it('should keep an array param instead of dropping it', () => {
+      logger.log('Items', ['first']);
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.params).toEqual([['first']]);
+    });
+
+    it('should still find an error nested in a non-plain param', () => {
+      class Result {
+        cause = new Error('deep failure');
+      }
+
+      logger.error('Request failed', new Result());
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.error.message).toBe('deep failure');
+      expect(logData.params).toBeDefined();
+    });
+
+    it('should collect several non-plain params in order', () => {
+      const bigLogger = new Logger(
+        { ...defaultTestConfig, maxArrayLength: 10 },
+        contextStore,
+      );
+
+      bigLogger.log(
+        'Two',
+        new Set(['a']),
+        new Date('2024-01-02T00:00:00.000Z'),
+      );
+
+      const logData = parseLogOutput(consoleLogSpy.mock.calls[0][0] as string);
+
+      expect(logData.params).toEqual([
+        { '[Set]': ['a'] },
+        '2024-01-02T00:00:00.000Z',
+      ]);
+    });
+  });
+
   describe('development vs production formatting', () => {
     it('should use colored JSON in development', () => {
       const devLogger = new Logger(
