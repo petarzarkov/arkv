@@ -1,22 +1,29 @@
 import { isPlainObject, safeStringify } from '@arkv/shared';
 import type { ContextStore } from './context.js';
-import { formatColoredJson } from './format.js';
+import { createLogEntry } from './entry.js';
+import { jsonFormat, prettyFormat } from './format.js';
 import {
   DEFAULT_MAX_DEPTH,
   findNestedError,
   sanitizeLogEntry,
 } from './sanitize.js';
+import { ConsoleTransport } from './transport.js';
 import {
   DEFAULT_MASK_FIELDS,
   LOG_LEVELS,
   type LogEntry,
   type LoggerConfig,
   LogLevel,
+  type Transport,
 } from './types.js';
+
+function levelIndex(level: LogLevel): number {
+  return LOG_LEVELS.indexOf(level);
+}
 
 export class Logger {
   public readonly logLevel: LogLevel;
-  readonly #isDevelopment: boolean;
+  readonly #config: LoggerConfig;
   readonly #maskFields: string[];
   readonly #maxArrayLength: number;
   readonly #maxDepth: number;
@@ -25,11 +32,17 @@ export class Logger {
   readonly #appName?: string;
   readonly #appVersion?: string;
   readonly #appEnv?: string;
+  readonly #bindings?: Record<string, unknown>;
+  readonly #transports: Transport[];
+  readonly #minLevelIdx: number;
+  readonly #onTransportError?: (error: Error, transport: Transport) => void;
+  #reportedTransportFailure = false;
 
   constructor(config?: LoggerConfig, context?: ContextStore) {
     const cfg = config ?? {};
+    this.#config = cfg;
     this.logLevel = cfg.level ?? LogLevel.DEBUG;
-    this.#isDevelopment =
+    const isDevelopment =
       cfg.isDevelopment ?? process.env.NODE_ENV !== 'production';
     this.#maskFields =
       cfg.maskFields && cfg.maskFields.length > 0
@@ -42,6 +55,23 @@ export class Logger {
     this.#appName = cfg.name;
     this.#appVersion = cfg.version;
     this.#appEnv = cfg.env;
+    this.#bindings = cfg.bindings;
+    this.#onTransportError = cfg.onTransportError;
+    this.#transports = cfg.transports ?? [
+      new ConsoleTransport({
+        format: isDevelopment ? prettyFormat : jsonFormat,
+      }),
+    ];
+    // A transport with its own level is independent of the logger's; one
+    // without inherits it. The cheapest gate is the lowest of them all.
+    this.#minLevelIdx =
+      this.#transports.length === 0
+        ? Number.POSITIVE_INFINITY
+        : Math.min(
+            ...this.#transports.map((t) =>
+              levelIndex(t.level ?? this.logLevel),
+            ),
+          );
   }
 
   get appId(): string | undefined {
@@ -51,19 +81,82 @@ export class Logger {
     return undefined;
   }
 
+  get transports(): readonly Transport[] {
+    return this.#transports;
+  }
+
+  /**
+   * A logger sharing this one's transports and context store, with `bindings`
+   * merged into every entry it writes. Per-call fields and async context both
+   * take precedence over bindings.
+   *
+   * The transports are shared, so `close()` on a child closes them for the
+   * parent too — close the root logger, not a child.
+   */
+  child(bindings: Record<string, unknown>): Logger {
+    return new Logger(
+      {
+        ...this.#config,
+        bindings: { ...this.#bindings, ...bindings },
+        transports: this.#transports,
+      },
+      this.#context,
+    );
+  }
+
+  /** Push every transport's buffer to its destination. Synchronous. */
+  flush(): void {
+    for (const transport of this.#transports) {
+      try {
+        transport.flush?.();
+      } catch (error) {
+        this.#reportTransportError(error, transport);
+      }
+    }
+  }
+
+  /** Flush, then release every transport's resources. Synchronous. */
+  close(): void {
+    for (const transport of this.#transports) {
+      try {
+        transport.flush?.();
+        transport.close?.();
+      } catch (error) {
+        this.#reportTransportError(error, transport);
+      }
+    }
+  }
+
+  info(message: string, ...optionalParams: unknown[]): void;
+  info(message: Record<string, unknown>, ...optionalParams: unknown[]): void;
+  info(message: Error, ...optionalParams: unknown[]): void;
+  info(
+    message: string | Record<string, unknown> | Error,
+    ...optionalParams: unknown[]
+  ): void {
+    this.#writeLog(LogLevel.INFO, message, optionalParams);
+  }
+
+  /**
+   * @deprecated Use {@link Logger.info}. Kept because NestJS's `LoggerService`
+   * mandates a `log` method and because removing it would break every existing
+   * call site. It is only a name: the emitted `level` is `'info'` either way.
+   */
   log(message: string, ...optionalParams: unknown[]): void;
-  log(message: Record<string, unknown>): void;
-  log(message: Error): void;
+  /** @deprecated Use {@link Logger.info}. */
+  log(message: Record<string, unknown>, ...optionalParams: unknown[]): void;
+  /** @deprecated Use {@link Logger.info}. */
+  log(message: Error, ...optionalParams: unknown[]): void;
   log(
     message: string | Record<string, unknown> | Error,
     ...optionalParams: unknown[]
   ): void {
-    this.#writeLog(LogLevel.LOG, message, optionalParams);
+    this.info(message as string, ...optionalParams);
   }
 
   error(message: string, ...optionalParams: unknown[]): void;
-  error(message: Record<string, unknown>): void;
-  error(message: Error): void;
+  error(message: Record<string, unknown>, ...optionalParams: unknown[]): void;
+  error(message: Error, ...optionalParams: unknown[]): void;
   error(
     message: string | Record<string, unknown> | Error,
     ...optionalParams: unknown[]
@@ -72,8 +165,8 @@ export class Logger {
   }
 
   warn(message: string, ...optionalParams: unknown[]): void;
-  warn(message: Record<string, unknown>): void;
-  warn(message: Error): void;
+  warn(message: Record<string, unknown>, ...optionalParams: unknown[]): void;
+  warn(message: Error, ...optionalParams: unknown[]): void;
   warn(
     message: string | Record<string, unknown> | Error,
     ...optionalParams: unknown[]
@@ -82,8 +175,8 @@ export class Logger {
   }
 
   debug(message: string, ...optionalParams: unknown[]): void;
-  debug(message: Record<string, unknown>): void;
-  debug(message: Error): void;
+  debug(message: Record<string, unknown>, ...optionalParams: unknown[]): void;
+  debug(message: Error, ...optionalParams: unknown[]): void;
   debug(
     message: string | Record<string, unknown> | Error,
     ...optionalParams: unknown[]
@@ -92,8 +185,8 @@ export class Logger {
   }
 
   verbose(message: string, ...optionalParams: unknown[]): void;
-  verbose(message: Record<string, unknown>): void;
-  verbose(message: Error): void;
+  verbose(message: Record<string, unknown>, ...optionalParams: unknown[]): void;
+  verbose(message: Error, ...optionalParams: unknown[]): void;
   verbose(
     message: string | Record<string, unknown> | Error,
     ...optionalParams: unknown[]
@@ -102,8 +195,8 @@ export class Logger {
   }
 
   fatal(message: string, ...optionalParams: unknown[]): void;
-  fatal(message: Record<string, unknown>): void;
-  fatal(message: Error): void;
+  fatal(message: Record<string, unknown>, ...optionalParams: unknown[]): void;
+  fatal(message: Error, ...optionalParams: unknown[]): void;
   fatal(
     message: string | Record<string, unknown> | Error,
     ...optionalParams: unknown[]
@@ -130,13 +223,16 @@ export class Logger {
       ...extra,
     };
 
-    const logEntry = this.#createLogEntry(
+    const logEntry = createLogEntry({
       level,
-      preparedMessage,
-      finalExtra,
-      finalError,
+      message: preparedMessage,
+      bindings: this.#bindings,
+      context: this.#context ? this.#context.getContext() : {},
+      extra: finalExtra,
       invalidMessageInfo,
-    );
+      error: finalError,
+      appId: this.appId,
+    });
 
     const sanitizedLogEntry = sanitizeLogEntry(logEntry, {
       maskFields: this.#maskFields,
@@ -144,21 +240,41 @@ export class Logger {
       maxDepth: this.#maxDepth,
     });
 
-    const output = this.#isDevelopment
-      ? formatColoredJson(sanitizedLogEntry, level)
-      : safeStringify(sanitizedLogEntry);
-
-    // Route warn/error/fatal to stderr so they are separable from regular
-    // stdout output (log shippers, `2>` redirection, CI annotations, etc.).
-    if (
-      level === LogLevel.WARN ||
-      level === LogLevel.ERROR ||
-      level === LogLevel.FATAL
-    ) {
-      console.error(output);
-    } else {
-      console.log(output);
+    const idx = levelIndex(level);
+    for (const transport of this.#transports) {
+      if (idx < levelIndex(transport.level ?? this.logLevel)) {
+        continue;
+      }
+      try {
+        transport.write(sanitizedLogEntry, level);
+      } catch (error_) {
+        this.#reportTransportError(error_, transport);
+      }
     }
+  }
+
+  /**
+   * A transport that throws is isolated here: a full disk must not surface as an
+   * exception in the request path that happened to log a line.
+   */
+  #reportTransportError(error: unknown, transport: Transport): void {
+    const err = error instanceof Error ? error : new Error(String(error));
+    if (this.#onTransportError) {
+      try {
+        this.#onTransportError(err, transport);
+      } catch {
+        // A failing error handler is the end of the line; there is nowhere
+        // left to report to.
+      }
+      return;
+    }
+    if (this.#reportedTransportFailure) {
+      return;
+    }
+    this.#reportedTransportFailure = true;
+    console.error(
+      `[@arkv/logger] transport ${transport.constructor.name} failed and was ignored: ${err.message}. Further failures from this logger are suppressed.`,
+    );
   }
 
   #prepareMessage(message: unknown): {
@@ -293,41 +409,8 @@ export class Logger {
     return { error, extra };
   }
 
-  #createLogEntry(
-    level: LogLevel,
-    message: string,
-    extra: LogEntry,
-    error?: Error | null,
-    invalidMessageInfo?: LogEntry,
-  ): LogEntry {
-    const ctx = this.#context ? this.#context.getContext() : {};
-
-    const logEntry: LogEntry = {
-      level,
-      timestamp: new Date().toISOString(),
-      pid: process.pid,
-      message,
-      ...(this.appId ? { appId: this.appId } : {}),
-      ...ctx,
-      ...extra,
-      ...invalidMessageInfo,
-    };
-
-    if (error) {
-      logEntry.error = {
-        name: error.name,
-        message: error.message,
-        stack: error.stack?.replace(/\n(\s+)?/g, ','),
-      };
-    }
-
-    return logEntry;
-  }
-
   #shouldLog(level: LogLevel): boolean {
-    const configuredIdx = LOG_LEVELS.indexOf(this.logLevel);
-    const messageIdx = LOG_LEVELS.indexOf(level);
-    if (messageIdx < configuredIdx) {
+    if (levelIndex(level) < this.#minLevelIdx) {
       return false;
     }
 

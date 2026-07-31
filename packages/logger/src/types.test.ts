@@ -3,17 +3,22 @@ import { LOG_LEVELS, type LoggerConfig, LogLevel } from './types.js';
 
 describe('LogLevel', () => {
   // These strings are the wire format: they are written to the `level` field of
-  // every log entry and may be persisted or matched on downstream. Replacing
-  // the enum with a frozen object must not move any of them.
-  it('keeps the exact values the enum had', () => {
+  // every log entry. `INFO`/`'info'` replaced NestJS's `LOG`/`'log'` so the
+  // level name matches the `info()` method that emits it; nothing else moved.
+  it('exposes exactly the six levels', () => {
     expect({ ...LogLevel }).toEqual({
       VERBOSE: 'verbose',
       DEBUG: 'debug',
-      LOG: 'log',
+      INFO: 'info',
       WARN: 'warn',
       ERROR: 'error',
       FATAL: 'fatal',
     });
+  });
+
+  it('has no LOG member left', () => {
+    expect(LogLevel).not.toHaveProperty('LOG');
+    expect(LOG_LEVELS).not.toContain('log');
   });
 
   it('is frozen', () => {
@@ -28,7 +33,7 @@ describe('LogLevel', () => {
     expect(LOG_LEVELS).toEqual([
       'verbose',
       'debug',
-      'log',
+      'info',
       'warn',
       'error',
       'fatal',

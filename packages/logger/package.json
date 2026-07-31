@@ -1,11 +1,12 @@
 {
   "name": "@arkv/logger",
   "version": "0.7.6",
-  "description": "Framework-agnostic structured logger with async context, sanitization, and colored output",
+  "description": "Node.js structured logger with async context, sanitization, and console + rotating file transports",
   "keywords": [
     "async-context",
     "logger",
     "logging",
+    "nodejs",
     "structured",
     "typescript"
   ],
@@ -34,6 +35,11 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./testing": {
+      "types": "./dist/types/testing.d.ts",
+      "import": "./dist/esm/testing.js",
+      "require": "./dist/cjs/testing.js"
     }
   },
   "publishConfig": {
@@ -53,5 +59,8 @@
   "dependencies": {
     "@arkv/colors": "workspace:^",
     "@arkv/shared": "workspace:^"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

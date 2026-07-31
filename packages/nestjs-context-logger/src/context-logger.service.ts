@@ -1,5 +1,9 @@
 import { Logger, type LogLevel } from '@arkv/logger';
-import type { LoggerService } from '@nestjs/common';
+import type {
+  LoggerService,
+  LogLevel as NestLogLevel,
+  OnApplicationShutdown,
+} from '@nestjs/common';
 import { Inject, Injectable } from '@nestjs/common';
 import { ContextService } from './context.service.js';
 import { LOGGER_MODULE_OPTIONS, type LoggerModuleConfig } from './types.js';
@@ -12,7 +16,7 @@ import { LOGGER_MODULE_OPTIONS, type LoggerModuleConfig } from './types.js';
  * drop-in replacement for the built-in NestJS logger.
  *
  * Features (all inherited from @arkv/logger):
- * - 6 log levels: verbose, debug, log, warn, error, fatal
+ * - 6 log levels: verbose, debug, info, warn, error, fatal
  * - Async context propagation via ContextService
  * - Sensitive field masking (password, token, etc.)
  * - Recursive sanitization with 15+ type handlers
@@ -31,8 +35,8 @@ import { LOGGER_MODULE_OPTIONS, type LoggerModuleConfig } from './types.js';
  *   ) {}
  *
  *   doWork() {
- *     this.logger.log('Starting work');
- *     this.logger.log({ action: 'work', items: 3 });
+ *     this.logger.info('Starting work');
+ *     this.logger.info({ action: 'work', items: 3 });
  *     this.logger.error(new Error('Oops'));
  *     this.logger.warn('Slow query', { duration: 1200 });
  *   }
@@ -48,7 +52,7 @@ import { LOGGER_MODULE_OPTIONS, type LoggerModuleConfig } from './types.js';
  * ```
  */
 @Injectable()
-export class ContextLogger implements LoggerService {
+export class ContextLogger implements LoggerService, OnApplicationShutdown {
   readonly #logger: Logger;
 
   constructor(
@@ -84,24 +88,47 @@ export class ContextLogger implements LoggerService {
    * No-op for NestJS LoggerService interface compat.
    * Log level is configured at module registration time
    * via LoggerModuleConfig.level.
+   *
+   * Typed with NestJS's own level union, not `@arkv/logger`'s: NestJS calls
+   * this with its own names, which include `'log'` where this package uses
+   * `'info'`. Since the method does nothing, the mismatch never has to be
+   * translated.
    */
-  setLogLevels(_levels: LogLevel[]): void {
+  setLogLevels(_levels: NestLogLevel[]): void {
     // level is set at construction time via config
   }
 
+  info(message: string, ...params: unknown[]): void;
+  info(message: Record<string, unknown>, ...params: unknown[]): void;
+  info(message: Error, ...params: unknown[]): void;
+  info(
+    message: string | Record<string, unknown> | Error,
+    ...params: unknown[]
+  ): void {
+    this.#logger.info(message as string, ...params);
+  }
+
+  /**
+   * @deprecated Use {@link ContextLogger.info}. This method cannot be removed —
+   * NestJS's `LoggerService` interface mandates it and the framework calls it
+   * directly — but application code should prefer `info`. Both emit
+   * `level: 'info'`; the NestJS `'log'` level name is not used.
+   */
   log(message: string, ...params: unknown[]): void;
-  log(message: Record<string, unknown>): void;
-  log(message: Error): void;
+  /** @deprecated Use {@link ContextLogger.info}. */
+  log(message: Record<string, unknown>, ...params: unknown[]): void;
+  /** @deprecated Use {@link ContextLogger.info}. */
+  log(message: Error, ...params: unknown[]): void;
   log(
     message: string | Record<string, unknown> | Error,
     ...params: unknown[]
   ): void {
-    this.#logger.log(message as string, ...params);
+    this.info(message as string, ...params);
   }
 
   error(message: string, ...params: unknown[]): void;
-  error(message: Record<string, unknown>): void;
-  error(message: Error): void;
+  error(message: Record<string, unknown>, ...params: unknown[]): void;
+  error(message: Error, ...params: unknown[]): void;
   error(
     message: string | Record<string, unknown> | Error,
     ...params: unknown[]
@@ -110,8 +137,8 @@ export class ContextLogger implements LoggerService {
   }
 
   warn(message: string, ...params: unknown[]): void;
-  warn(message: Record<string, unknown>): void;
-  warn(message: Error): void;
+  warn(message: Record<string, unknown>, ...params: unknown[]): void;
+  warn(message: Error, ...params: unknown[]): void;
   warn(
     message: string | Record<string, unknown> | Error,
     ...params: unknown[]
@@ -120,8 +147,8 @@ export class ContextLogger implements LoggerService {
   }
 
   debug(message: string, ...params: unknown[]): void;
-  debug(message: Record<string, unknown>): void;
-  debug(message: Error): void;
+  debug(message: Record<string, unknown>, ...params: unknown[]): void;
+  debug(message: Error, ...params: unknown[]): void;
   debug(
     message: string | Record<string, unknown> | Error,
     ...params: unknown[]
@@ -130,8 +157,8 @@ export class ContextLogger implements LoggerService {
   }
 
   verbose(message: string, ...params: unknown[]): void;
-  verbose(message: Record<string, unknown>): void;
-  verbose(message: Error): void;
+  verbose(message: Record<string, unknown>, ...params: unknown[]): void;
+  verbose(message: Error, ...params: unknown[]): void;
   verbose(
     message: string | Record<string, unknown> | Error,
     ...params: unknown[]
@@ -140,12 +167,31 @@ export class ContextLogger implements LoggerService {
   }
 
   fatal(message: string, ...params: unknown[]): void;
-  fatal(message: Record<string, unknown>): void;
-  fatal(message: Error): void;
+  fatal(message: Record<string, unknown>, ...params: unknown[]): void;
+  fatal(message: Error, ...params: unknown[]): void;
   fatal(
     message: string | Record<string, unknown> | Error,
     ...params: unknown[]
   ): void {
     this.#logger.fatal(message as string, ...params);
+  }
+
+  /** Push every transport's buffer to its destination. */
+  flush(): void {
+    this.#logger.flush();
+  }
+
+  /** Flush, then release every transport's resources. */
+  close(): void {
+    this.#logger.close();
+  }
+
+  /**
+   * Flushes rather than closes: NestJS keeps logging after the shutdown hooks
+   * run, and a closed transport would drop those last lines. The file
+   * transport's own `process.on('exit')` hook takes the final flush.
+   */
+  onApplicationShutdown(): void {
+    this.#logger.flush();
   }
 }

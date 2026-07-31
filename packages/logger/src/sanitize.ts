@@ -110,7 +110,15 @@ function sanitizeObject(
 ): LogEntry {
   const cleaned: LogEntry = {};
   for (const [key, value] of safeEntries(obj)) {
-    if (value === undefined || value === null) {
+    // `undefined` has no JSON representation — `JSON.stringify` erases the key
+    // anyway, so keeping it would make the colored and plain renderings
+    // disagree. `null` does have one, and it is the difference between "this
+    // field was empty" and "this field was never logged", so it is preserved.
+    if (value === undefined) {
+      continue;
+    }
+    if (value === null) {
+      cleaned[key] = null;
       continue;
     }
     cleaned[key] = shouldMask(key, options.maskFields)

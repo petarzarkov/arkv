@@ -3,11 +3,15 @@
  * entry's `level` field and are the only thing consumers may rely on. The
  * companion type below makes `LogLevel` usable in both value and type position,
  * so `LogLevel.ERROR` and `level: LogLevel` both keep working.
+ *
+ * `INFO` is `'info'`, not NestJS's `'log'`. The method that emits it is
+ * `Logger#info`; `Logger#log` survives only as a deprecated alias because
+ * NestJS's `LoggerService` interface mandates the method name.
  */
 export const LogLevel = Object.freeze({
   VERBOSE: 'verbose',
   DEBUG: 'debug',
-  LOG: 'log',
+  INFO: 'info',
   WARN: 'warn',
   ERROR: 'error',
   FATAL: 'fatal',
@@ -18,7 +22,7 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 export const LOG_LEVELS: LogLevel[] = [
   LogLevel.VERBOSE,
   LogLevel.DEBUG,
-  LogLevel.LOG,
+  LogLevel.INFO,
   LogLevel.WARN,
   LogLevel.ERROR,
   LogLevel.FATAL,
@@ -53,11 +57,65 @@ export interface LoggerConfig {
    * a long acyclic chain would still exhaust the stack inside a log call.
    */
   maxDepth?: number;
+  /**
+   * Where entries go. Defaults to a single `ConsoleTransport`.
+   *
+   * Supplying this **replaces** the default, so
+   * `transports: [new FileTransport({ path })]` is how stdout/stderr output is
+   * turned off. Include a `ConsoleTransport` explicitly to keep both.
+   */
+  transports?: Transport[];
+  /** Static fields merged into every entry. See `Logger#child`. */
+  bindings?: Record<string, unknown>;
+  /**
+   * Called when a transport's `write`/`flush`/`close` throws. A throwing
+   * transport never propagates into the caller's code path; without this hook
+   * the first failure per logger is reported on `console.error` and the rest
+   * are suppressed.
+   */
+  onTransportError?: (error: Error, transport: Transport) => void;
 }
 
 export type LogEntry = Record<string, unknown> & {
   error?: Error;
 };
+
+export type LogFormatter = (entry: LogEntry, level: LogLevel) => string;
+
+/**
+ * A sink for sanitized log entries.
+ *
+ * Every method is synchronous on purpose. `process.on('exit')` cannot await, so
+ * a transport whose flush is async cannot guarantee its buffer reaches the disk
+ * when the process ends — which is the one guarantee a file transport exists to
+ * provide. See `FileTransport`.
+ */
+export interface Transport {
+  /**
+   * Minimum level this transport writes. Falls back to the logger's own level,
+   * so `new Logger({ level: DEBUG, transports: [console, file] })` can send
+   * debug to the console and only warnings to disk.
+   */
+  readonly level?: LogLevel;
+  write(entry: LogEntry, level: LogLevel): void;
+  flush?(): void;
+  close?(): void;
+}
+
+/**
+ * Keys the logger writes itself. A caller-supplied field of the same name is
+ * moved aside rather than allowed to replace one — see `RESERVED_CONFLICTS_KEY`.
+ */
+export const RESERVED_ENTRY_KEYS = Object.freeze([
+  'level',
+  'timestamp',
+  'pid',
+  'message',
+  'appId',
+  'error',
+] as const);
+
+export const RESERVED_CONFLICTS_KEY = 'reservedFieldConflicts';
 
 export const DEFAULT_MASK_FIELDS = [
   'password',

@@ -4,7 +4,7 @@ NestJS module for structured, async-context-aware logging powered by [`@arkv/log
 
 Provides drop-in replacements for the NestJS built-in logger with:
 
-- **6 log levels**: `verbose`, `debug`, `log`, `warn`, `error`, `fatal`
+- **6 log levels**: `verbose`, `debug`, `info`, `warn`, `error`, `fatal`
 - **Async request context** — `requestId`, `userId`, `flow`, and custom fields automatically appear in every log entry within an async scope
 - **Sensitive field masking** — passwords, tokens, API keys redacted by default
 - **Recursive sanitization** — handles `Error`, `Date`, `BigInt`, `Symbol`, `FormData`, `File`, `Blob`, `ArrayBuffer`, circular references, and more
@@ -80,6 +80,8 @@ All options are optional. Pass any subset to `forRoot()`.
 | `isDevelopment` | `boolean` | `NODE_ENV !== 'production'` | Colored JSON output when `true`, plain JSON when `false`. |
 | `maskFields` | `string[]` | `[]` | Additional field names to mask. Merged with the built-in defaults. |
 | `filterEvents` | `string[]` | `[]` | Context `event` values to suppress (e.g. `['/health']`). |
+| `transports` | `Transport[]` | one console transport | Replaces the default; see File output above |
+| `bindings` | `Record<string, unknown>` | — | Static fields merged into every entry |
 | `maxArrayLength` | `number` | `100` | Arrays longer than this are truncated with a `[TRUNCATED: N more items]` entry. |
 | `isGlobal` | `boolean` | `true` | Register as a NestJS global module. |
 
@@ -260,7 +262,7 @@ export class UserService {
 
   async findUser(id: string) {
     // String message
-    this.logger.log('Finding user');
+    this.logger.info('Finding user');
 
     // Object — logged as structured data
     this.logger.debug({ action: 'db.query', table: 'users', id });
@@ -268,7 +270,7 @@ export class UserService {
     try {
       const user = await db.findById(id);
 
-      this.logger.log('User found', { userId: user.id });
+      this.logger.info('User found', { userId: user.id });
 
       return user;
     } catch (err) {
@@ -281,27 +283,79 @@ export class UserService {
 }
 ```
 
+### `info` and the deprecated `log`
+
+The primary method is **`info`**. `log` remains as a deprecated alias that
+delegates to it — it cannot be removed, because NestJS's `LoggerService`
+interface mandates a `log` method and the framework calls it directly when this
+logger is installed via `app.useLogger()`. Existing `logger.log(...)` call sites
+keep working unchanged.
+
+Both emit **`level: 'info'`**. `@arkv/logger` does not use NestJS's `'log'`
+level name at all: the constant is `LogLevel.INFO` and there is no
+`LogLevel.LOG`. `log()` is only a method name kept for interface compatibility.
+
+```ts
+this.logger.info('Finding user');   // preferred
+this.logger.log('Finding user');    // still works, marked @deprecated
+```
+
 ### All method signatures
 
-Every log method accepts three call patterns:
+Every log method accepts three call patterns, each with optional extra params:
 
 ```ts
 // 1. String message (with optional extra params)
-logger.log('message');
-logger.log('message', { extra: 'data' });
-logger.log('message', new Error('reason'));
-logger.log('message', { err: new Error('reason'), extra: 1 });
+logger.info('message');
+logger.info('message', { extra: 'data' });
+logger.info('message', new Error('reason'));
+logger.info('message', { err: new Error('reason'), extra: 1 });
 
 // 2. Plain object (logged with key 'Object logged')
-logger.log({ action: 'create', resource: 'user' });
+logger.info({ action: 'create', resource: 'user' });
+logger.info({ action: 'create' }, { durationMs: 12 });
 
-// 3. Error instance
+// 3. Error instance — extra fields are allowed alongside it
 logger.error(new Error('Something failed'));
+logger.warn(new Error('Retrying'), { attempt: 3 });
 
 // Same patterns apply to:
 // logger.verbose(), logger.debug(), logger.warn(),
 // logger.error(), logger.fatal()
 ```
+
+### Flushing and shutdown
+
+`ContextLogger` implements `OnApplicationShutdown` and flushes its transports
+there. It flushes rather than closes, because NestJS keeps logging after the
+shutdown hooks run and a closed transport would drop those last lines; the file
+transport's own `process.on('exit')` hook takes the final flush.
+
+`flush()` and `close()` are also available directly. Both are synchronous.
+
+### File output
+
+`@arkv/logger`'s transports are configured straight through the module options:
+
+```ts
+import { FileTransport } from '@arkv/logger';
+
+NestJsContextLoggerModule.forRoot({
+  name: 'my-api',
+  transports: [
+    new FileTransport({
+      path: '/var/log/my-api/app.log',
+      maxSize: 10 * 1024 * 1024,
+      maxFiles: 5,
+    }),
+  ],
+});
+```
+
+Supplying `transports` replaces the default console transport, so the example
+above writes to the file only. See the
+[`@arkv/logger` README](../logger/README.md#transports) for rotation, buffering,
+flush-on-exit and backpressure.
 
 ### Error handling patterns
 
@@ -366,7 +420,7 @@ Levels are ordered from lowest to highest severity. Only messages at or above th
 |---|---|---|
 | `verbose` | lowest | Fine-grained diagnostic traces |
 | `debug` | | Development debugging |
-| `log` | | General operational events |
+| `info` | | General operational events. NestJS calls this level `log` |
 | `warn` | | Unexpected but recoverable situations |
 | `error` | | Failures that need attention |
 | `fatal` | highest | Application cannot continue |
@@ -428,14 +482,14 @@ Requests to these paths will produce no log output regardless of log level.
 ### Development (colored JSON)
 
 ```
-{"level": "log","timestamp": "2026-03-08T10:00:00.000Z","pid": 12345,"message": "User found","appId": "my-api-1.0.0-local","requestId": "abc-123","userId": "u_456","event": "/api/users/u_456","method": "GET","flow": "http"}
+{"level": "info","timestamp": "2026-03-08T10:00:00.000Z","pid": 12345,"message": "User found","appId": "my-api-1.0.0-local","requestId": "abc-123","userId": "u_456","event": "/api/users/u_456","method": "GET","flow": "http"}
 ```
 Fields are colored by type: level in green-on-black, errors in red, timestamps in magenta, request IDs in bright green, etc.
 
 ### Production (plain JSON)
 
 ```json
-{"level":"log","timestamp":"2026-03-08T10:00:00.000Z","pid":12345,"message":"User found","appId":"my-api-1.0.0-production","requestId":"abc-123","userId":"u_456","event":"/api/users/u_456","method":"GET","flow":"http"}
+{"level":"info","timestamp":"2026-03-08T10:00:00.000Z","pid":12345,"message":"User found","appId":"my-api-1.0.0-production","requestId":"abc-123","userId":"u_456","event":"/api/users/u_456","method":"GET","flow":"http"}
 ```
 
 `isDevelopment` is automatically `false` when `NODE_ENV=production`. Override explicitly if needed:
@@ -468,7 +522,13 @@ Every log entry includes these core fields:
 | `context` | context | Module/class name (set via `setContext`) |
 | `error` | log call | Serialized error with `name`, `message`, `stack` |
 
-Additional fields from `extra` params are spread directly into the entry.
+Additional fields from `extra` params are spread directly into the entry, except
+that `level`, `timestamp`, `pid`, `message`, `appId` and `error` are reserved:
+the entry's own value wins and the caller's is preserved under
+`reservedFieldConflicts` rather than silently overwriting it.
+
+`null` values are kept (they mean "empty"); `undefined` values are dropped
+(JSON has no representation for them).
 
 ---
 
@@ -514,13 +574,17 @@ Implements NestJS `LoggerService`.
 |---|---|---|
 | `logLevel` | `LogLevel` (getter) | Current configured log level |
 | `setContext(name)` | `void` | Write `context` to async store |
-| `setLogLevels(levels)` | `void` | No-op (compat shim) |
-| `log(...)` | `void` | Log at `log` level |
+| `setLogLevels(levels)` | `void` | No-op (compat shim; takes NestJS's own level names) |
+| `info(...)` | `void` | Log at `info` level |
+| `log(...)` | `void` | **Deprecated** alias for `info`; required by `LoggerService` |
 | `debug(...)` | `void` | Log at `debug` level |
 | `verbose(...)` | `void` | Log at `verbose` level |
 | `warn(...)` | `void` | Log at `warn` level |
 | `error(...)` | `void` | Log at `error` level |
 | `fatal(...)` | `void` | Log at `fatal` level |
+| `flush()` | `void` | Push every transport's buffer |
+| `close()` | `void` | Flush, then release transport resources |
+| `onApplicationShutdown()` | `void` | NestJS hook; flushes |
 
 ### `ContextService`
 
@@ -530,7 +594,15 @@ Extends `ContextStore` from `@arkv/logger`.
 |---|---|
 | `getContext()` | Return a copy of the current async context |
 | `updateContext(partial)` | Merge fields into the current async context |
-| `runWithContext(ctx, fn)` | Run `fn` within a new async context scope |
+| `runWithContext(ctx, fn, opts?)` | Run `fn` within a new async context scope |
+
+Nested `runWithContext` calls **merge**: an inner scope inherits the outer's
+fields and overrides only the keys it names, so a job started inside a request
+keeps that request's `requestId`. Pass `{ inherit: false }` for a detached scope.
+
+`ContextService` is a NestJS provider, so within one application there is one
+instance and one store. The underlying `ContextStore` is per-instance, not
+per-process — two NestJS applications in the same process each get their own.
 
 ### `LOGGER_MODULE_OPTIONS`
 

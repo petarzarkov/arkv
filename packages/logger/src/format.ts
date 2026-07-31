@@ -14,7 +14,14 @@ import {
   yellow,
 } from '@arkv/colors';
 import { safeStringify } from '@arkv/shared';
-import type { LogEntry, LogLevel } from './types.js';
+import type { LogEntry, LogFormatter, LogLevel } from './types.js';
+
+/** Plain JSON — one entry per line, what a log shipper wants. */
+export const jsonFormat: LogFormatter = (entry) => safeStringify(entry);
+
+/** ANSI-colored JSON, for a terminal. */
+export const prettyFormat: LogFormatter = (entry, level) =>
+  formatColoredJson(entry, level);
 
 export function formatColoredJson(obj: LogEntry, level: LogLevel): string {
   const jsonString = safeStringify(obj);

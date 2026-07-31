@@ -118,7 +118,7 @@ describe('Logger - cases', () => {
       const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
-      expect(logData.level).toBe('log');
+      expect(logData.level).toBe('info');
       expect(logData.message).toBe('Simple string message');
       expect(logData.error).toBeUndefined();
     });
@@ -135,7 +135,7 @@ describe('Logger - cases', () => {
       const logCall = consoleLogSpy.mock.calls[0][0] as string;
       const logData = parseLogOutput(logCall);
 
-      expect(logData.level).toBe('log');
+      expect(logData.level).toBe('info');
       expect(logData.message).toBe('Object logged');
       expect(logData.userId).toBe('123');
       expect(logData.action).toBe('login');
