@@ -84,6 +84,11 @@ jobs:
         run: bun run version
         env:
           FORCE_PUBLISH: ${{ contains(github.event.head_commit.message, '[force-publish]') }}
+          # Branch tip before this push. version.ts diffs HEAD against it to find the
+          # changed packages — a merge commit has an empty `git diff-tree`, so without
+          # the range a merge looks like "no idea what changed". Empty on
+          # workflow_dispatch, where the script falls back to a first-parent diff.
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
 
   # Separate job so the `github-pages` environment (and any branch protection on it)
   # never gates the CI job itself — PR runs must not need it.

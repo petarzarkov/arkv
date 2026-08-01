@@ -1,188 +1,53 @@
-import { execSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { basename, join, resolve } from 'node:path';
-import { semver } from 'bun';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { basename } from 'node:path';
+import {
+  determineBumpType,
+  getChangedSrcPackages,
+  getForcePublishTarget,
+  pushVersionCommit,
+} from './version/git';
+import {
+  findPublishablePackages,
+  type PublishablePackage,
+} from './version/packages';
+import {
+  getPublishedMaxVersion,
+  isVersionPublished,
+  publishPackage,
+} from './version/registry';
+import {
+  type BumpType,
+  bumpVersion,
+  isBehindRegistry,
+  resolveNextVersion,
+} from './version/semver';
 
 const isDryRun = process.env.DRY_RUN === 'true';
 
-const ROOT_DIR = resolve(import.meta.dir, '..');
-const PACKAGES_DIR = join(ROOT_DIR, 'packages');
-
-// Trusted publishing needs npm >= 11.5.1, and GitHub's ubuntu-latest image still
-// ships npm 10.x. `bunx` fetches this exact version and runs it on bun's own
-// runtime, so no Node install is needed anywhere in CI.
-const NPM = 'bunx npm@11.10.1';
-const WORKSPACE_PROTOCOL = 'workspace:';
-const DEPENDENCY_FIELDS = [
-  'dependencies',
-  'peerDependencies',
-  'optionalDependencies',
-] as const;
-
-const parseScopes = (raw: string): string[] =>
-  raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-const getForcePublishTarget = (): {
-  force: boolean;
-  packages: string[] | null;
-} => {
-  const envForce = process.env.FORCE_PUBLISH;
-  if (envForce === 'true') return { force: true, packages: null };
-  if (envForce && envForce !== 'false')
-    return { force: true, packages: parseScopes(envForce) };
-
-  try {
-    const commitMessage = execSync('git log -1 --pretty=format:"%s%n%b"', {
-      stdio: 'pipe',
-    })
-      .toString()
-      .trim();
-
-    const scopedMatch = commitMessage.match(/\[force-publish:([^\]]+)\]/);
-    if (scopedMatch)
-      return { force: true, packages: parseScopes(scopedMatch[1]) };
-    if (commitMessage.includes('[force-publish]'))
-      return { force: true, packages: null };
-
-    return { force: false, packages: null };
-  } catch {
-    return { force: false, packages: null };
-  }
-};
-
-const forcePublish = getForcePublishTarget();
-
-const bumpVersion = (
-  version: string,
-  type: 'major' | 'minor' | 'patch',
+const nextVersionFor = (
+  name: string,
+  current: string,
+  bumpType: BumpType,
 ): string => {
-  const [major, minor, patch] = version.split('.').map(Number);
+  const publishedMax = getPublishedMaxVersion(name);
+  const localBump = bumpVersion(current, bumpType);
+  const next = resolveNextVersion(current, bumpType, publishedMax);
 
-  switch (type) {
-    case 'major':
-      return `${major + 1}.0.0`;
-    case 'minor':
-      return `${major}.${minor + 1}.0`;
-    case 'patch':
-      return `${major}.${minor}.${patch + 1}`;
-    default:
-      throw new Error(`Invalid bump type: ${String(type)}`);
-  }
-};
-
-const extractCommitType = (message: string): string | null => {
-  // Handle squashed merge commits: "Merge pull request #123 from branch\n\nfeat: message"
-  // or "feat(scope): message (#123)"
-  const mergeMatch = message.match(
-    /(?:Merge.*?\n\n?)?(?:^|\n)(feat|fix|chore|docs|test|style|refactor|perf|build|ci|revert|security|sync)(?:\([^)]+\))?(!)?: /m,
-  );
-
-  if (mergeMatch) {
-    return mergeMatch[1];
-  }
-
-  return null;
-};
-
-const determineBumpType = (): 'major' | 'minor' | 'patch' => {
-  try {
-    const commitMessage = execSync('git log -1 --pretty=format:"%s%n%b"', {
-      stdio: 'pipe',
-    })
-      .toString()
-      .trim();
-
-    if (
-      commitMessage.includes('!:') ||
-      commitMessage.includes('BREAKING CHANGE')
-    ) {
-      return 'major';
-    }
-
-    const commitType = extractCommitType(commitMessage);
-
-    if (commitType === 'feat') {
-      return 'minor';
-    }
-
-    return 'patch';
-  } catch (error) {
+  if (next !== localBump) {
     console.warn(
-      'Could not determine bump type from commit message, defaulting to patch',
-      error,
+      `${name}: local package.json is at ${current} but ${publishedMax} is already ` +
+        `published — bumping to ${next} instead of ${localBump}.`,
     );
-    return 'patch';
-  }
-};
-
-const getChangedSrcPackages = (): Set<string> | null => {
-  try {
-    const out = execSync('git diff-tree --no-commit-id --name-only -r HEAD', {
-      stdio: 'pipe',
-    })
-      .toString()
-      .trim();
-
-    if (!out) return null;
-
-    const dirs = new Set<string>();
-    for (const file of out.split('\n')) {
-      const match = file.match(
-        /^packages\/([^/]+)\/(src\/|frontend\/src\/|package\.json|README\.md)/,
-      );
-      if (match) dirs.add(match[1]);
-    }
-    return dirs;
-  } catch {
-    return null;
-  }
-};
-
-const findPublishablePackages = (): {
-  name: string;
-  dir: string;
-  packageJsonPath: string;
-}[] => {
-  const entries = readdirSync(PACKAGES_DIR, {
-    withFileTypes: true,
-  });
-  const packages: {
-    name: string;
-    dir: string;
-    packageJsonPath: string;
-  }[] = [];
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    const pkgJsonPath = join(PACKAGES_DIR, entry.name, 'package.json');
-    if (!existsSync(pkgJsonPath)) continue;
-    const pkg = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
-    if (pkg.private) continue;
-    packages.push({
-      name: pkg.name,
-      dir: join(PACKAGES_DIR, entry.name),
-      packageJsonPath: pkgJsonPath,
-    });
   }
 
-  return packages;
+  return next;
 };
 
 const applyVersionBumps = (
-  packages: {
-    name: string;
-    dir: string;
-    packageJsonPath: string;
-  }[],
-  bumpType: 'major' | 'minor' | 'patch',
+  packages: PublishablePackage[],
+  bumpType: BumpType,
 ): { packageJsonPath: string; dir: string }[] => {
-  const bumped: {
-    packageJsonPath: string;
-    dir: string;
-  }[] = [];
+  const bumped: { packageJsonPath: string; dir: string }[] = [];
 
   for (const { name, dir, packageJsonPath } of packages) {
     const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
@@ -193,176 +58,22 @@ const applyVersionBumps = (
       continue;
     }
 
-    const newVersion = bumpVersion(oldVersion, bumpType);
+    const newVersion = nextVersionFor(name, oldVersion, bumpType);
+    pkg.version = newVersion;
 
-    if (semver.order(newVersion, oldVersion) !== 1) {
-      console.warn(
-        `Skipping ${name}: new version ${newVersion} is not greater than ${oldVersion}`,
+    if (isDryRun) {
+      console.log(
+        `[DRY RUN] Would bump ${name} from ${oldVersion} to ${newVersion}`,
       );
       continue;
     }
 
-    pkg.version = newVersion;
-
-    if (!isDryRun) {
-      writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
-      bumped.push({ packageJsonPath, dir });
-      console.log(`Bumped ${name} from ${oldVersion} to ${newVersion}`);
-    } else {
-      console.log(
-        `[DRY RUN] Would bump ${name} from ${oldVersion} to ${newVersion}`,
-      );
-    }
+    writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
+    bumped.push({ packageJsonPath, dir });
+    console.log(`Bumped ${name} from ${oldVersion} to ${newVersion}`);
   }
 
   return bumped;
-};
-
-const readWorkspaceVersions = (): Map<string, string> => {
-  const versions = new Map<string, string>();
-
-  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    const pkgJsonPath = join(PACKAGES_DIR, entry.name, 'package.json');
-    if (!existsSync(pkgJsonPath)) continue;
-    const pkg = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
-    if (pkg.name && pkg.version) versions.set(pkg.name, pkg.version);
-  }
-
-  return versions;
-};
-
-/**
- * `npm publish` leaves `workspace:` ranges untouched in the packed tarball (unlike
- * `bun publish`), so swap them for concrete ranges, publish, then put the source
- * package.json back exactly as it was — version bump included.
- */
-const withResolvedWorkspaceDeps = (pkgDir: string, publish: () => void) => {
-  const pkgJsonPath = join(pkgDir, 'package.json');
-  const original = readFileSync(pkgJsonPath, 'utf-8');
-  const pkg = JSON.parse(original);
-  const versions = readWorkspaceVersions();
-  let resolvedAny = false;
-
-  for (const field of DEPENDENCY_FIELDS) {
-    const deps: Record<string, string> | undefined = pkg[field];
-    if (!deps) continue;
-
-    for (const [name, range] of Object.entries(deps)) {
-      if (!range.startsWith(WORKSPACE_PROTOCOL)) continue;
-
-      const version = versions.get(name);
-      if (!version) {
-        throw new Error(
-          `${pkg.name} depends on ${name} via "${range}" but no workspace package named ${name} was found`,
-        );
-      }
-
-      const specifier = range.slice(WORKSPACE_PROTOCOL.length);
-      deps[name] =
-        specifier === '*' || specifier === ''
-          ? version
-          : `${specifier}${version}`;
-      resolvedAny = true;
-      console.log(`  ${name}: ${range} -> ${deps[name]}`);
-    }
-  }
-
-  if (!resolvedAny) {
-    publish();
-    return;
-  }
-
-  writeFileSync(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
-  try {
-    publish();
-  } finally {
-    writeFileSync(pkgJsonPath, original);
-  }
-};
-
-const pushVersionCommit = (bumpedFiles: string[]): void => {
-  execSync(`git add ${bumpedFiles.join(' ')}`);
-
-  const pkg = JSON.parse(readFileSync(bumpedFiles[0], 'utf-8'));
-  const commitMessage = `chore(release): bump version to ${pkg.version} [skip ci]`;
-  execSync(`git commit -m "${commitMessage}" --no-verify`);
-
-  const branch =
-    process.env.GITHUB_REF_NAME ??
-    execSync('git branch --show-current').toString().trim();
-
-  if (!branch) {
-    throw new Error('Unable to determine branch for pushing release commit.');
-  }
-
-  console.log(`Pushing to branch: ${branch}`);
-  const token = process.env.GITHUB_TOKEN;
-  if (token) {
-    const repo = process.env.GITHUB_REPOSITORY ?? 'petarzarkov/arkv';
-    execSync(
-      `git push https://x-access-token:${token}@github.com/${repo}.git HEAD:refs/heads/${branch}`,
-    );
-  } else {
-    execSync(`git push origin HEAD:refs/heads/${branch}`);
-  }
-
-  console.log(`Successfully pushed version ${pkg.version}`);
-};
-
-/**
- * Publishes with npm rather than bun: authentication happens through npm's OIDC
- * trusted publishing, which `bun publish` does not implement (oven-sh/bun#15601).
- *
- * `--provenance` only works on a supported CI, so it is left off local runs.
- */
-const publishPackage = (pkgDir: string): void => {
-  const provenance = process.env.GITHUB_ACTIONS ? ' --provenance' : '';
-
-  withResolvedWorkspaceDeps(pkgDir, () => {
-    try {
-      execSync(`${NPM} publish --access public${provenance}`, {
-        cwd: pkgDir,
-        stdio: 'inherit',
-      });
-    } catch (error) {
-      // Trusted publishing needs the package to have a trusted publisher pointing
-      // at this repo + workflow, and the job needs `id-token: write`. npm answers
-      // a PUT it won't authorize with 404 rather than 401/403, so an unhelpful
-      // "404 Not Found" here is almost always missing/mismatched config.
-      console.error(
-        `\nPublish failed for ${basename(pkgDir)}. If this is a 404/E404, check the ` +
-          `npm trusted publisher for this package: it must point at ` +
-          `${process.env.GITHUB_REPOSITORY ?? 'petarzarkov/arkv'} and the workflow ` +
-          `file that runs this script. A package that has never been published ` +
-          `needs one manual publish before a trusted publisher can be attached.\n`,
-      );
-      throw error;
-    }
-  });
-};
-
-interface PublishablePackage {
-  name: string;
-  dir: string;
-  packageJsonPath: string;
-}
-
-const isVersionPublished = (name: string, version: string): boolean => {
-  try {
-    const out = execSync(`${NPM} view ${name} versions --json`, {
-      stdio: 'pipe',
-    })
-      .toString()
-      .trim();
-    // npm returns a single quoted string when only one version exists,
-    // or a JSON array when multiple versions exist
-    const parsed: string | string[] = JSON.parse(out);
-    const versions = Array.isArray(parsed) ? parsed : [parsed];
-    return versions.includes(version);
-  } catch {
-    return false;
-  }
 };
 
 const runForcePublish = (
@@ -406,10 +117,17 @@ const runForcePublish = (
     const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
     let { version } = pkg;
 
-    if (isVersionPublished(name, version)) {
-      const newVersion = bumpVersion(version, bumpType);
+    // Not just "already published": npm also rejects anything below the registry's
+    // highest release, so a local version that fell behind needs a bump past it too.
+    const publishedMax = getPublishedMaxVersion(name);
+
+    if (
+      isVersionPublished(name, version) ||
+      isBehindRegistry(version, publishedMax)
+    ) {
+      const newVersion = resolveNextVersion(version, bumpType, publishedMax);
       console.log(
-        `${name}@${version} already published, bumping to ${newVersion}`,
+        `${name}@${version} cannot be published (registry is at ${publishedMax}), bumping to ${newVersion}`,
       );
       pkg.version = newVersion;
       version = newVersion;
@@ -444,26 +162,30 @@ const runForcePublish = (
 const runVersionBump = (allPackages: PublishablePackage[]): void => {
   const changedSrcPackages = getChangedSrcPackages();
 
-  if (changedSrcPackages !== null && changedSrcPackages.size === 0) {
+  // Bailing out is the safe answer when git cannot tell us what moved. Bumping and
+  // republishing every package instead — the old fallback — turned one unreadable
+  // merge commit into eight unwanted releases.
+  if (changedSrcPackages === null) {
+    console.log(
+      'Could not determine changed packages from git; skipping version bump. ' +
+        'Use [force-publish] or [force-publish:<pkg>] to publish anyway.',
+    );
+    process.exit(0);
+  }
+
+  if (changedSrcPackages.size === 0) {
     console.log('No src changes detected, skipping version bump.');
     process.exit(0);
   }
 
-  if (changedSrcPackages !== null) {
-    console.log(
-      `Detected src changes in: ${[...changedSrcPackages].join(', ')}`,
-    );
-  } else {
-    console.log('Could not determine changed packages, processing all.');
-  }
+  console.log(`Detected src changes in: ${[...changedSrcPackages].join(', ')}`);
 
   const bumpType = determineBumpType();
   console.log(`Determined version bump type: ${bumpType}`);
 
-  const publishablePackages =
-    changedSrcPackages === null
-      ? allPackages
-      : allPackages.filter((pkg) => changedSrcPackages.has(basename(pkg.dir)));
+  const publishablePackages = allPackages.filter((pkg) =>
+    changedSrcPackages.has(basename(pkg.dir)),
+  );
 
   if (publishablePackages.length === 0) {
     console.log('No publishable packages found.');
@@ -500,6 +222,7 @@ void (async () => {
   }
 
   const allPublishablePackages = findPublishablePackages();
+  const forcePublish = getForcePublishTarget();
 
   try {
     if (forcePublish.force) {

@@ -103,10 +103,21 @@ Within a package: `tsc --noEmit`
 
 ## Versioning & Publishing
 
-- Automated via `bun run version` (runs `scripts/version.ts`)
+- Automated via `bun run version` — `scripts/version.ts` orchestrates, `scripts/version/`
+  holds the pieces (`git.ts` change detection, `semver.ts` bump rules, `registry.ts` npm
+  queries + publish, `packages.ts` discovery + `workspace:` resolution)
 - Uses conventional commits: `feat:` → minor bump, `fix:` → patch, `BREAKING CHANGE` → major
 - CI publishes to npm on push to `main` (if version changed)
 - Dry-run: `bun run version:dry-run`
+- Which packages get bumped comes from `GITHUB_EVENT_BEFORE..HEAD` (ci.yml passes
+  `github.event.before`), falling back to a `-m --first-parent` diff-tree. Plain
+  `git diff-tree` on a **merge commit** prints nothing, which used to read as "cannot
+  tell" and bump every package.
+- If change detection genuinely fails, the script **skips** rather than releasing
+  everything. Use `[force-publish]` / `[force-publish:<pkg>]` to override.
+- The registry is a floor: a local `package.json` that fell behind npm (merge conflict
+  resolved toward the branch, revert, stale checkout) bumps from the published version,
+  never below it — npm rejects `latest` for anything under the highest release.
 - Force publish all: include `[force-publish]` in commit message
 - Publishing uses **npm trusted publishing (OIDC)** — no `NPM_TOKEN`. `ci.yml` is the
   only workflow allowed to publish, because each package's trusted publisher on
