@@ -9,6 +9,7 @@ import {
   getValueColor,
   gray,
   green,
+  isColorSupported,
   magenta,
   red,
   yellow,
@@ -19,9 +20,20 @@ import type { LogEntry, LogFormatter, LogLevel } from './types.js';
 /** Plain JSON — one entry per line, what a log shipper wants. */
 export const jsonFormat: LogFormatter = (entry) => safeStringify(entry);
 
-/** ANSI-colored JSON, for a terminal. */
+/**
+ * ANSI-colored JSON, for a terminal - and plain JSON when there is not one.
+ *
+ * Gated here rather than at the two places that choose between `prettyFormat` and
+ * `jsonFormat`, because `transport.ts` does `options.format ?? (pretty ? ...)` and
+ * `logger.ts` passes `format:` explicitly: gating those would mean editing both
+ * and would still miss a caller passing `prettyFormat` directly.
+ *
+ * Without this, a non-TTY stdout got escape sequences written into the JSON, which
+ * stopped it being parseable, and neither `NO_COLOR` nor `FORCE_COLOR=0`
+ * suppressed them because nothing on the path asked.
+ */
 export const prettyFormat: LogFormatter = (entry, level) =>
-  formatColoredJson(entry, level);
+  isColorSupported() ? formatColoredJson(entry, level) : safeStringify(entry);
 
 export function formatColoredJson(obj: LogEntry, level: LogLevel): string {
   const jsonString = safeStringify(obj);

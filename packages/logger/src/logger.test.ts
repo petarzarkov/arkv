@@ -422,20 +422,43 @@ describe('Logger', () => {
   });
 
   describe('development vs production formatting', () => {
+    const makeDevLogger = () =>
+      new Logger({ ...defaultTestConfig, isDevelopment: true }, contextStore);
+
     it('should use colored JSON in development', () => {
-      const devLogger = new Logger(
-        {
-          ...defaultTestConfig,
-          isDevelopment: true,
-        },
-        contextStore,
-      );
+      const devLogger = makeDevLogger();
 
-      devLogger.log('Development test');
+      // Colour is gated on isColorSupported(), so a non-TTY test process gets
+      // plain JSON. Forced on here because what this asserts is that development
+      // mode colours when colour is available, not that it colours regardless.
+      const previous = process.env['FORCE_COLOR'];
+      process.env['FORCE_COLOR'] = '1';
+      try {
+        devLogger.log('Development test');
 
-      const logCall = consoleLogSpy.mock.calls[0][0] as string;
-      // eslint-disable-next-line no-control-regex
-      expect(logCall).toMatch(/\u001b\[[0-9;]*m/);
+        const logCall = consoleLogSpy.mock.calls[0][0] as string;
+        // eslint-disable-next-line no-control-regex
+        expect(logCall).toMatch(/\u001b\[[0-9;]*m/);
+      } finally {
+        if (previous === undefined) delete process.env['FORCE_COLOR'];
+        else process.env['FORCE_COLOR'] = previous;
+      }
+    });
+
+    it('should not write escapes into the JSON when colour is unsupported', () => {
+      const devLogger = makeDevLogger();
+      const previous = process.env['NO_COLOR'];
+      process.env['NO_COLOR'] = '1';
+      try {
+        devLogger.log('Development test');
+        const logCall = consoleLogSpy.mock.calls[0][0] as string;
+        // eslint-disable-next-line no-control-regex
+        expect(logCall).not.toMatch(/\u001b\[[0-9;]*m/);
+        expect(JSON.parse(logCall).message).toBe('Development test');
+      } finally {
+        if (previous === undefined) delete process.env['NO_COLOR'];
+        else process.env['NO_COLOR'] = previous;
+      }
     });
 
     it('should use plain JSON in production', () => {

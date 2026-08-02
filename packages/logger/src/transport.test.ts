@@ -372,6 +372,10 @@ describe('parseLogEntry', () => {
       // silence
     });
     try {
+      // Forced on because colour is now gated on isColorSupported() and a test
+      // process is not a TTY. This is about parsing coloured output, so it needs
+      // some.
+      process.env['FORCE_COLOR'] = '1';
       new Logger({ isDevelopment: true }).info('colored', { a: 1 });
       const raw = logSpy.mock.calls[0]?.[0] as string;
 
@@ -380,6 +384,7 @@ describe('parseLogEntry', () => {
       expect(parseLogEntry(raw).message).toBe('colored');
       expect(parseLogEntry(raw).a).toBe(1);
     } finally {
+      delete process.env['FORCE_COLOR'];
       logSpy.mockRestore();
     }
   });
