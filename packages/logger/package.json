@@ -1,6 +1,6 @@
 {
   "name": "@arkv/logger",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Node.js structured logger with async context, sanitization, and console + rotating file transports",
   "keywords": [
     "async-context",
