@@ -21,6 +21,7 @@ import {
   dim,
   getLevelColorFn,
   getValueColor,
+  brightBlack,
   gray,
   green,
   hidden,
@@ -133,6 +134,17 @@ describe('bright foreground colors', () => {
 describe('gray alias', () => {
   it('uses dim styling', () => {
     expect(gray('t')).toBe('\x1b[2mt\x1b[22m');
+  });
+
+  /*
+   * The distinction that cost a bug report. `dim` modulates whatever foreground is
+   * already active rather than setting one, so grey-by-dim is only grey when nothing
+   * else has coloured the stream. Under an ambient red - Bun wraps `console.error`
+   * output in it - dim rendered as a muted maroon. ANSI 90 sets a real foreground.
+   */
+  it('is an intensity, not a hue - brightBlack is the hue', () => {
+    expect(gray('t')).not.toContain('[90m');
+    expect(brightBlack('t')).toBe('\x1b[90mt\x1b[39m');
   });
 });
 

@@ -29,6 +29,9 @@ export const ANSICodes = Object.freeze({
   bgWhite: '\x1b[47m',
 
   // Bright foreground colors
+  // 90 is the standard grey. It sets a real foreground, unlike `dim`, which only
+  // modulates whatever colour is already active - see `gray` in color.ts.
+  brightBlack: '\x1b[90m',
   brightRed: '\x1b[91m',
   brightGreen: '\x1b[92m',
   brightYellow: '\x1b[93m',
@@ -133,6 +136,10 @@ export const ANSIPairs = Object.freeze({
   },
 
   // Bright foreground
+  brightBlack: {
+    open: '\x1b[90m',
+    close: '\x1b[39m',
+  },
   brightRed: {
     open: '\x1b[91m',
     close: '\x1b[39m',

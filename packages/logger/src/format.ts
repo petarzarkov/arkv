@@ -1,4 +1,5 @@
 import {
+  brightBlack,
   brightBlue,
   brightCyan,
   brightGreen,
@@ -61,6 +62,13 @@ const keyColors: Record<string, ColorFn> = {
  * `\x1b[0m` after. Every token this colors overrides that wrapper; every character
  * it leaves bare keeps it. So an uncolored `{` came out red at the head of a
  * warning, looking like part of the message.
+ *
+ * {@link brightBlack} rather than {@link gray}, and that distinction is the whole
+ * fix rather than a preference: `gray` is `dim`, an **intensity modifier with no hue
+ * of its own**. It renders grey only when nothing else has set the foreground, and
+ * under Bun's red it dimmed *that* - so the brace went from bright red to a muted
+ * maroon that reads purple, which is the same defect one shade quieter. ANSI 90 sets
+ * a real foreground and is immune to whatever is ambient.
  */
 const PUNCTUATION = new Set(['{', '}', '[', ']', ',', ':']);
 
@@ -154,7 +162,7 @@ export function formatColoredJson(obj: LogEntry, level: LogLevel): string {
         keyStack.push(keyStack[keyStack.length - 1]);
       }
       if ((char === '}' || char === ']') && keyStack.length > 1) keyStack.pop();
-      out += gray(char);
+      out += brightBlack(char);
       index += 1;
       continue;
     }

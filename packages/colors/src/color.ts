@@ -45,6 +45,10 @@ export const cyan = createColor(ANSIPairs.cyan.open, ANSIPairs.cyan.close);
 export const white = createColor(ANSIPairs.white.open, ANSIPairs.white.close);
 
 // Bright foreground
+export const brightBlack = createColor(
+  ANSIPairs.brightBlack.open,
+  ANSIPairs.brightBlack.close,
+);
 export const brightRed = createColor(
   ANSIPairs.brightRed.open,
   ANSIPairs.brightRed.close,
@@ -142,5 +146,13 @@ export const bgGreenBlack = createComposedColor(
 );
 export const bgRedWhite = createComposedColor(ANSIPairs.bgRed, ANSIPairs.white);
 
-// Alias: gray uses dim styling
+/**
+ * Alias: `gray` is **dim**, an intensity modifier rather than a colour.
+ *
+ * It has no hue of its own, so it renders grey only when nothing else has set the
+ * foreground. Under an ambient colour it dims *that* - dim red reads as a muted
+ * maroon or purple, which is what it did to punctuation on stderr, where Bun wraps
+ * `console.error` output in red. Reach for {@link brightBlack} when the grey has to
+ * survive an ambient colour.
+ */
 export const gray = createColor(ANSIPairs.dim.open, ANSIPairs.dim.close);

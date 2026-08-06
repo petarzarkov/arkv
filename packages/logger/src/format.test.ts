@@ -106,6 +106,20 @@ describe('formatColoredJson, tokenized rather than pattern-matched', () => {
     expect(line).toContain(`${ESC}[36m"appId"${ESC}[39m`);
   });
 
+  /*
+   * `gray` is `dim` - an intensity modifier, not a colour. Punctuation coloured with
+   * it still had no hue of its own, so under Bun's red `console.error` wrapper the
+   * brace rendered as a muted maroon instead of grey. ANSI 90 sets a real foreground.
+   */
+  it('gives punctuation a real foreground, not just a dim intensity', () => {
+    const line = colored({ level: 'warn', a: 1 }, 'warn');
+    for (const char of ['{', ',', ':', '}']) {
+      expect(line).toContain(`${ESC}[90m${char}${ESC}[39m`);
+    }
+    // Not dim: dim modulates whatever colour is ambient rather than setting one.
+    expect(line).not.toContain(`${ESC}[2m{`);
+  });
+
   it('colors punctuation rather than leaving it to inherit the terminal', () => {
     const line = colored({ level: 'warn', a: 1 }, 'warn');
     // Every structural character is wrapped, the leading brace included: Bun wraps

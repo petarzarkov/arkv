@@ -27,6 +27,7 @@ export {
   brightCyan,
   brightGreen,
   brightMagenta,
+  brightBlack,
   brightRed,
   brightWhite,
   brightYellow,
