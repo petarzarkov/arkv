@@ -1,5 +1,10 @@
 import { isPlainObject, safeStringify } from '@arkv/shared';
-import type { ContextStore } from './context.js';
+import {
+  asReader,
+  readContextOnce,
+  type ContextReader,
+  type ContextSource,
+} from './context-contract.js';
 import { createLogEntry } from './entry.js';
 import { jsonFormat, prettyFormat } from './format.js';
 import {
@@ -28,7 +33,7 @@ export class Logger {
   readonly #maxArrayLength: number;
   readonly #maxDepth: number;
   readonly #filterEvents: string[];
-  readonly #context?: ContextStore;
+  readonly #context?: ContextReader;
   readonly #appName?: string;
   readonly #appVersion?: string;
   readonly #appEnv?: string;
@@ -38,7 +43,7 @@ export class Logger {
   readonly #onTransportError?: (error: Error, transport: Transport) => void;
   #reportedTransportFailure = false;
 
-  constructor(config?: LoggerConfig, context?: ContextStore) {
+  constructor(config?: LoggerConfig, context?: ContextSource) {
     const cfg = config ?? {};
     this.#config = cfg;
     this.logLevel = cfg.level ?? LogLevel.DEBUG;
@@ -51,7 +56,7 @@ export class Logger {
     this.#maxArrayLength = cfg.maxArrayLength ?? 100;
     this.#maxDepth = cfg.maxDepth ?? DEFAULT_MAX_DEPTH;
     this.#filterEvents = cfg.filterEvents ?? [];
-    this.#context = context;
+    this.#context = context === undefined ? undefined : asReader(context);
     this.#appName = cfg.name;
     this.#appVersion = cfg.version;
     this.#appEnv = cfg.env;
@@ -209,7 +214,16 @@ export class Logger {
     message: string | Record<string, unknown> | Error,
     optionalParams: unknown[],
   ): void {
-    if (!this.#shouldLog(level)) {
+    if (levelIndex(level) < this.#minLevelIdx) {
+      return;
+    }
+
+    // One read per entry, and no copy at all where the reader offers `peekContext`.
+    // This was two `getContext()` calls for every line - one here to check
+    // `filterEvents`, one below to build the entry - each allocating a shallow copy
+    // that was spread into the entry and thrown away.
+    const context = readContextOnce(this.#context);
+    if (context.event && this.#filterEvents.includes(context.event as string)) {
       return;
     }
 
@@ -227,7 +241,7 @@ export class Logger {
       level,
       message: preparedMessage,
       bindings: this.#bindings,
-      context: this.#context ? this.#context.getContext() : {},
+      context,
       extra: finalExtra,
       invalidMessageInfo,
       error: finalError,
@@ -407,20 +421,5 @@ export class Logger {
     }
 
     return { error, extra };
-  }
-
-  #shouldLog(level: LogLevel): boolean {
-    if (levelIndex(level) < this.#minLevelIdx) {
-      return false;
-    }
-
-    if (this.#context) {
-      const ctx = this.#context.getContext();
-      if (ctx.event && this.#filterEvents.includes(ctx.event as string)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 }

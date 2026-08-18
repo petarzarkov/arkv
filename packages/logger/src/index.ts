@@ -1,4 +1,14 @@
 export { ContextStore, type RunWithContextOptions } from './context.js';
+// The contract the logger reads its request fields through, so a consumer can
+// satisfy it without owning an `AsyncLocalStorage`. `asReader` and `readContextOnce`
+// stay internal: they are how `Logger` normalizes its second argument, not something
+// a consumer has a use for.
+export type {
+  ContextReader,
+  ContextScope,
+  ContextSource,
+} from './context-contract.js';
+export { RequestScopedContext } from './request-context.js';
 export {
   type CaptureGlobalErrorsOptions,
   captureGlobalErrors,
@@ -10,6 +20,7 @@ export {
 } from './file.js';
 export { jsonFormat, prettyFormat } from './format.js';
 export { Logger } from './logger.js';
+export { StreamTransport, type StreamTransportOptions } from './stream.js';
 export { ConsoleTransport, type ConsoleTransportOptions } from './transport.js';
 export {
   type AsyncContext,

@@ -119,6 +119,48 @@ context.runWithContext({ requestId: 'r-1' }, () => {
 });
 ```
 
+### The context is a contract, not a class
+
+`ContextStore` is the batteries-included implementation, not a requirement. The
+logger's second argument accepts anything that can answer "what are this request's
+fields":
+
+```typescript
+import { Logger, RequestScopedContext } from '@arkv/logger';
+
+// A ContextStore, backed by AsyncLocalStorage. What most services want.
+new Logger(config, new ContextStore());
+
+// A scope with no AsyncLocalStorage in it, for a logger built per request.
+new Logger(config, new RequestScopedContext({ requestId: 'r-1' }));
+
+// A plain object, read live, so fields added later still appear.
+const fields = {};
+new Logger(config, fields);
+
+// A function, for a host that already has its own per-request lookup.
+new Logger(config, () => myFramework.currentRequest()?.fields);
+```
+
+The contract is two interfaces, because the halves differ in what can implement
+them. `ContextReader` is the read side and the only half the logger depends on.
+`ContextScope` adds `updateContext` and `runWithContext`, which is what a request
+pipeline needs and what only `AsyncLocalStorage` can do across an `await`. A single
+interface would have obliged every consumer to implement async propagation it may
+not have.
+
+`RequestScopedContext.runWithContext` saves and restores rather than propagating.
+That is correct for a synchronous scope and for one instance per request. It is not
+correct for two overlapping async flows through one instance: the restore runs when
+the callback returns, and an `await` inside it hands control to another flow that
+then reads these fields. Use `ContextStore` for that.
+
+`ContextReader` has an optional `peekContext`, which returns the live fields without
+copying and which the logger prefers when present. `ContextStore` does not implement
+it on purpose: that class is public and subclassable, and a subclass overriding
+`getContext` to add or redact a field would be silently bypassed if the logger read
+an inherited `peekContext` instead.
+
 ### Sensitive Field Masking
 
 Fields matching known sensitive names are automatically replaced with `[MASKED]`:
@@ -246,6 +288,34 @@ interface Transport {
 
 Each transport formats for itself, so the console can be colored while the file
 stays plain JSON. `jsonFormat` and `prettyFormat` are exported.
+
+#### Writing to a stream
+
+`StreamTransport` takes any `Writable`: a socket, a pipe to a log collector, an
+open file handle, or `process.stdout`.
+
+```typescript
+import { Logger, StreamTransport } from '@arkv/logger';
+
+const logger = new Logger({
+  transports: [new StreamTransport(process.stdout, { bufferBytes: 65536 })],
+});
+```
+
+That is also the batched console: `process.stdout` is a `Writable`, so one write
+per 64 KiB instead of one per line. It takes the same `bufferBytes`,
+`flushIntervalMs` and `flushOnExit` options as `FileTransport`, with the same
+defaults, so the two cannot disagree about when they flush.
+
+**Batching buys syscalls, not throughput.** Measured on Bun 1.3.14 and Node
+v24.18.0: batching 100 entries per turn cuts `write(2)` from 1.000 per entry to
+0.010, worth 5.4x on the write path. End to end through `Logger` it is 1.00x, since
+the write is 4 to 9 percent of a log call and entry assembly plus sanitization is 73
+to 93 percent. Turn it on for the syscall economy and to bound what a full pipe
+does, not for faster logging.
+
+The stream belongs to the caller. `close()` flushes and drops the timer and exit
+hook; it does not end the stream, because `process.stdout` must not be ended.
 
 #### Flushing, exit, and durability
 
