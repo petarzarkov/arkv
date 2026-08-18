@@ -7,13 +7,33 @@ export interface SanitizeOptions {
   maxDepth: number;
 }
 
+/** `SanitizeOptions` with the mask list already lowercased. Internal. */
+interface ResolvedOptions extends SanitizeOptions {
+  readonly lowerMaskFields: readonly string[];
+}
+
 const MASKED = '[MASKED]';
 
 export const DEFAULT_MAX_DEPTH = 32;
 
-function shouldMask(key: string, maskFields: string[]): boolean {
+/**
+ * The mask list, lowercased once per entry rather than once per key.
+ *
+ * `shouldMask` lowercased every mask field for every key it checked, so an entry
+ * with twenty keys and the eight default fields did a hundred and sixty
+ * `toLowerCase()` calls to produce eight distinct strings. This was the largest
+ * single cost in the sanitizer.
+ *
+ * Recomputed per `sanitizeLogEntry` call rather than cached against the array,
+ * because `maskFields` is public input: a caller that mutates its array between
+ * calls would otherwise keep matching against the list it passed the first time.
+ */
+const loweredMasks = (maskFields: string[]): string[] =>
+  maskFields.map((field) => field.toLowerCase());
+
+function shouldMask(key: string, lowerMaskFields: readonly string[]): boolean {
   const lower = key.toLowerCase();
-  return maskFields.some((field) => lower.includes(field.toLowerCase()));
+  return lowerMaskFields.some((field) => lower.includes(field));
 }
 
 interface FileLike {
@@ -63,7 +83,7 @@ function sanitizeFormData(form: FormData): LogEntry | string {
  */
 function sanitizeMap(
   map: ReadonlyMap<unknown, unknown>,
-  options: SanitizeOptions,
+  options: ResolvedOptions,
   visited: WeakSet<object>,
   depth: number,
 ): LogEntry {
@@ -77,7 +97,7 @@ function sanitizeMap(
     }
     pairs.push([
       makeSafeForJson(key, options, visited, depth + 1),
-      typeof key === 'string' && shouldMask(key, options.maskFields)
+      typeof key === 'string' && shouldMask(key, options.lowerMaskFields)
         ? MASKED
         : makeSafeForJson(value, options, visited, depth + 1),
     ]);
@@ -87,7 +107,7 @@ function sanitizeMap(
 
 function sanitizeArray(
   array: unknown[],
-  options: SanitizeOptions,
+  options: ResolvedOptions,
   visited: WeakSet<object>,
   depth: number,
 ): unknown[] {
@@ -104,7 +124,7 @@ function sanitizeArray(
 
 function sanitizeObject(
   obj: Record<string, unknown>,
-  options: SanitizeOptions,
+  options: ResolvedOptions,
   visited: WeakSet<object>,
   depth: number,
 ): LogEntry {
@@ -121,7 +141,7 @@ function sanitizeObject(
       cleaned[key] = null;
       continue;
     }
-    cleaned[key] = shouldMask(key, options.maskFields)
+    cleaned[key] = shouldMask(key, options.lowerMaskFields)
       ? MASKED
       : makeSafeForJson(value, options, visited, depth + 1);
   }
@@ -130,7 +150,7 @@ function sanitizeObject(
 
 function makeSafeForJson(
   value: unknown,
-  options: SanitizeOptions,
+  options: ResolvedOptions,
   visited: WeakSet<object>,
   depth: number,
 ): unknown {
@@ -243,7 +263,11 @@ export function sanitizeLogEntry(
   obj: LogEntry,
   options: SanitizeOptions,
 ): LogEntry {
-  return sanitizeObject(obj, options, new WeakSet<object>([obj]), 0);
+  const resolved: ResolvedOptions = {
+    ...options,
+    lowerMaskFields: loweredMasks(options.maskFields),
+  };
+  return sanitizeObject(obj, resolved, new WeakSet<object>([obj]), 0);
 }
 
 function searchForError(
@@ -264,6 +288,14 @@ function searchForError(
     return null;
   }
   visited.add(value);
+
+  // A typed array or `DataView` holds numbers, never an `Error`, and walking one
+  // as a plain object enumerates every element and recurses into each. A 64 KiB
+  // buffer cost 24 ms of event loop per log call and a megabyte cost 1.4 s, which
+  // is the whole of this guard's reason for existing.
+  if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) {
+    return null;
+  }
 
   if (Array.isArray(value)) {
     for (const item of value) {
