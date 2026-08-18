@@ -289,6 +289,34 @@ interface Transport {
 Each transport formats for itself, so the console can be colored while the file
 stays plain JSON. `jsonFormat` and `prettyFormat` are exported.
 
+#### Writing to a stream
+
+`StreamTransport` takes any `Writable`: a socket, a pipe to a log collector, an
+open file handle, or `process.stdout`.
+
+```typescript
+import { Logger, StreamTransport } from '@arkv/logger';
+
+const logger = new Logger({
+  transports: [new StreamTransport(process.stdout, { bufferBytes: 65536 })],
+});
+```
+
+That is also the batched console: `process.stdout` is a `Writable`, so one write
+per 64 KiB instead of one per line. It takes the same `bufferBytes`,
+`flushIntervalMs` and `flushOnExit` options as `FileTransport`, with the same
+defaults, so the two cannot disagree about when they flush.
+
+**Batching buys syscalls, not throughput.** Measured on Bun 1.3.14 and Node
+v24.18.0: batching 100 entries per turn cuts `write(2)` from 1.000 per entry to
+0.010, worth 5.4x on the write path. End to end through `Logger` it is 1.00x, since
+the write is 4 to 9 percent of a log call and entry assembly plus sanitization is 73
+to 93 percent. Turn it on for the syscall economy and to bound what a full pipe
+does, not for faster logging.
+
+The stream belongs to the caller. `close()` flushes and drops the timer and exit
+hook; it does not end the stream, because `process.stdout` must not be ended.
+
 #### Flushing, exit, and durability
 
 Every transport method is **synchronous**, and `FileTransport` writes with

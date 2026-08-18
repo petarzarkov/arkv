@@ -12,13 +12,7 @@ const sink = () => {
       done();
     },
   });
-  return {
-    chunks,
-    stream,
-    get writes() {
-      return chunks.length;
-    },
-  };
+  return { chunks, stream };
 };
 
 const lines = (chunks: string[]): string[] =>
