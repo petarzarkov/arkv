@@ -20,6 +20,7 @@ export {
 } from './file.js';
 export { jsonFormat, prettyFormat } from './format.js';
 export { Logger } from './logger.js';
+export { StreamTransport, type StreamTransportOptions } from './stream.js';
 export { ConsoleTransport, type ConsoleTransportOptions } from './transport.js';
 export {
   type AsyncContext,
