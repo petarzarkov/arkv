@@ -68,6 +68,24 @@ export interface LoggerConfig {
   /** Static fields merged into every entry. See `Logger#child`. */
   bindings?: Record<string, unknown>;
   /**
+   * Rewrites one top-level field before the entry is sanitized, keyed by its name.
+   *
+   * `{ req: (value) => ({ method: value.method, url: value.url }) }` is how a
+   * request object becomes three fields instead of a walk of the whole thing.
+   * Cheaper and far more controllable than letting the generic sanitizer descend
+   * into it, and the only way to say "log this shape, not everything on it".
+   *
+   * A serializer that throws is caught: a logging call must not fail because a
+   * field was not the shape it expected.
+   */
+  serializers?: Record<string, (value: unknown) => unknown>;
+  /**
+   * `iso` (the default) writes `2026-08-29T06:50:27.000Z`. `epoch` writes
+   * milliseconds as a number, which some ingesters prefer and which costs no
+   * `Date` allocation per entry.
+   */
+  timestamp?: 'iso' | 'epoch';
+  /**
    * Called when a transport's `write`/`flush`/`close` throws. A throwing
    * transport never propagates into the caller's code path; without this hook
    * the first failure per logger is reported on `console.error` and the rest

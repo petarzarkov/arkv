@@ -27,6 +27,34 @@ export interface EntryParts {
   invalidMessageInfo?: LogEntry;
   error?: Error | null;
   appId?: string;
+  serializers?: Record<string, (value: unknown) => unknown>;
+  /** `iso` writes a string, `epoch` writes milliseconds as a number. */
+  timestamp?: 'iso' | 'epoch';
+}
+
+/**
+ * Applied to the merged fields before anything is sanitized, so a serializer sees
+ * what the caller passed and the sanitizer sees only what the serializer returned.
+ */
+function applySerializers(
+  merged: LogEntry,
+  serializers: Record<string, (value: unknown) => unknown>,
+): void {
+  for (const key of Object.keys(merged)) {
+    const serialize = serializers[key];
+    if (!serialize) {
+      continue;
+    }
+    try {
+      merged[key] = serialize(merged[key]);
+    } catch (error) {
+      // A logging call must not fail because a field was not the shape a
+      // serializer expected, and a silent drop would hide that it happened.
+      merged[key] = `[serializer threw: ${
+        error instanceof Error ? error.message : String(error)
+      }]`;
+    }
+  }
 }
 
 /**
@@ -47,6 +75,10 @@ export function createLogEntry(parts: EntryParts): LogEntry {
     ...parts.invalidMessageInfo,
   };
 
+  if (parts.serializers) {
+    applySerializers(merged, parts.serializers);
+  }
+
   const conflicts: LogEntry = {};
   for (const key of RESERVED) {
     // Neither is a reserved name when the entry is not going to write it.
@@ -66,7 +98,8 @@ export function createLogEntry(parts: EntryParts): LogEntry {
 
   const logEntry: LogEntry = {
     level,
-    timestamp: new Date().toISOString(),
+    timestamp:
+      parts.timestamp === 'epoch' ? Date.now() : new Date().toISOString(),
     pid: PID,
     message,
     ...(appId ? { appId } : {}),

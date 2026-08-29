@@ -76,6 +76,8 @@ export class Logger {
   readonly #appVersion?: string;
   readonly #appEnv?: string;
   readonly #bindings?: Record<string, unknown>;
+  readonly #serializers?: Record<string, (value: unknown) => unknown>;
+  readonly #timestamp?: 'iso' | 'epoch';
   readonly #transports: Transport[];
   readonly #sanitizeOptions: PreparedSanitizeOptions;
   #gate: LevelGate;
@@ -99,6 +101,8 @@ export class Logger {
     this.#appVersion = cfg.version;
     this.#appEnv = cfg.env;
     this.#bindings = cfg.bindings;
+    this.#serializers = cfg.serializers;
+    this.#timestamp = cfg.timestamp;
     this.#onTransportError = cfg.onTransportError;
     this.#transports = cfg.transports ?? [
       new ConsoleTransport({
@@ -387,6 +391,8 @@ export class Logger {
       invalidMessageInfo,
       error: finalError,
       appId: this.appId,
+      ...(this.#serializers ? { serializers: this.#serializers } : {}),
+      ...(this.#timestamp ? { timestamp: this.#timestamp } : {}),
     });
 
     const sanitizedLogEntry = sanitizePrepared(logEntry, this.#sanitizeOptions);
