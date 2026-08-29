@@ -40,6 +40,7 @@ export {
   serializeError,
 } from './serialize-error.js';
 export { StreamTransport, type StreamTransportOptions } from './stream.js';
+export { logfmtFormat, textFormat } from './text.js';
 export {
   type SyslogProtocol,
   SyslogTransport,

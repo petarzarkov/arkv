@@ -379,6 +379,48 @@ new Logger({
 });
 ```
 
+### Output formats
+
+Four formatters ship, and every transport takes one as `format`:
+
+| Formatter | Emits | ns/entry |
+| --- | --- | ---: |
+| `jsonFormat` | `{"level":"info","message":"order placed",…}` | 272 |
+| `prettyFormat` | the same JSON, ANSI-coloured for a terminal | 238 |
+| `textFormat` | `09:00:15.123 INFO  order placed  requestId=r-1` | 568 |
+| `logfmtFormat` | `level=info time=… msg="order placed" order.id=ord_1` | 815 |
+
+```typescript
+import { ConsoleTransport, Logger, textFormat, logfmtFormat } from '@arkv/logger';
+
+new Logger({
+  transports: [
+    new ConsoleTransport({
+      format: process.env.NODE_ENV === 'production' ? logfmtFormat : textFormat,
+    }),
+  ],
+});
+```
+
+`textFormat` is for a terminal. Reserved fields take their own positions, the rest
+trail as `key=value`, and an error follows on its own lines with its frames and its
+`Caused by:` chain, which is the shape a stack trace has everywhere else.
+
+`logfmtFormat` is for a reader: Heroku, Grafana Loki and Splunk all parse it without
+being told a schema. logfmt is flat, so a nested object becomes dotted keys,
+`order.id=ord_1` rather than an encoded blob, down to four levels. Values are quoted
+when they hold whitespace, a quote or an equals sign. It is never coloured.
+
+**`util.inspect` is not one of the options, and that is a measurement rather than a
+preference.** It renders objects beautifully and costs 7.4 microseconds against
+155 nanoseconds for `JSON.stringify` of the same entry, where a whole `Logger.info`
+call is roughly 1.5 microseconds. A formatter runs once per entry, so inspecting
+every one makes the formatter several times the cost of everything else. That trade
+is why `pino` pretty-prints in a **separate process** reading its JSON, and why
+`textFormat` renders nested values as JSON instead. If you want inspected output,
+pipe the JSON through something that inspects it; do not pay for it per entry in
+the process serving requests.
+
 ### Shipping logs somewhere else
 
 `ConsoleTransport`, `StreamTransport` and `FileTransport` write synchronously,
