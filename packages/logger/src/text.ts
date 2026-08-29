@@ -32,15 +32,24 @@ function clockTime(value: unknown): string {
     if (!Number.isFinite(value) || Math.abs(value) > MAX_EPOCH_MS) {
       return String(value);
     }
-    return new Date(value).toISOString().slice(11, 23);
+    return timeOf(new Date(value).toISOString());
   }
   if (typeof value === 'string') {
     // Sliced only when it is the shape the slice assumes; anything else would
     // come out as a meaningless window into the middle of the string.
-    return ISO_SHAPE.test(value) ? value.slice(11, 23) : value;
+    return ISO_SHAPE.test(value) ? timeOf(value) : value;
   }
   return '';
 }
+
+/**
+ * The time half, found rather than counted.
+ *
+ * A fixed `slice(11, 23)` assumes a four-digit year, and the widest instant a
+ * `Date` holds does not have one: `new Date(8.64e15).toISOString()` is
+ * `+275760-09-13T00:00:00.000Z`, which that slice rendered as `13T00:00:00.`.
+ */
+const timeOf = (iso: string): string => iso.slice(iso.indexOf('T') + 1, -1);
 
 /** A value as one token. An object becomes JSON, which is the cheap rendering. */
 function scalar(value: unknown): string {
@@ -99,7 +108,9 @@ export const textFormat: LogFormatter = (entry, level) => {
     if (HEADER_KEYS.has(key)) {
       continue;
     }
-    const rendered = `${key}=${oneLine(scalar(entry[key]))}`;
+    // The key is caller data too: `{ 'note\nlevel=error': 1 }` is a legal object
+    // and forges a record exactly as a value would.
+    const rendered = `${oneLine(key)}=${oneLine(scalar(entry[key]))}`;
     pairs.push(colored ? dim(rendered) : rendered);
   }
 
@@ -195,12 +206,14 @@ function flatten(
     const keys = Object.keys(value);
     if (keys.length > 0) {
       for (const nested of keys) {
-        flatten(into, `${key}.${nested}`, value[nested], depth + 1);
+        flatten(into, `${key}.${oneLine(nested)}`, value[nested], depth + 1);
       }
       return;
     }
   }
-  into.push(`${key}=${token(scalar(value))}`);
+  // `token` quotes and escapes the value; the key gets the same line-break
+  // treatment, since an object key can hold one just as freely.
+  into.push(`${token(oneLine(key))}=${token(scalar(value))}`);
 }
 
 /**

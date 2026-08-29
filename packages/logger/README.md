@@ -411,10 +411,15 @@ being told a schema. logfmt is flat, so a nested object becomes dotted keys,
 `order.id=ord_1` rather than an encoded blob, down to four levels. Values are quoted
 when they hold whitespace, a quote or an equals sign. It is never coloured.
 
-**One entry is always one line.** A newline inside a value is escaped rather than
-written, in both text and logfmt. A raw one ends the physical line, so a message of
-`ok\nlevel=error msg=forged` would produce a second record that parses as genuine,
-and any string a caller logs can carry one.
+**No caller data can start a new line.** Newlines and carriage returns are escaped
+in keys and values alike, in both formats. A raw one ends the physical line, so a
+message of `ok\nlevel=error msg=forged`, or a field *named* that, would produce a
+second record parsing as genuine, and any string a caller logs can carry one.
+
+`logfmtFormat` is therefore always exactly one line, which is what a parser needs.
+`textFormat` is one line **plus** the error block it renders deliberately: the
+frames and the `Caused by:` chain are its own structure, not caller data, and a
+stack on one line is not a thing anybody reads.
 
 **`util.inspect` is not one of the options, and that is a measurement rather than a
 preference.** It renders objects beautifully and costs 7.4 microseconds against

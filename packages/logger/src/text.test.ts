@@ -267,3 +267,41 @@ describe('a timestamp that is not what it claims', () => {
     expect(line).toContain('not-a-timestamp-but-long-enough');
   });
 });
+
+describe('a key is caller data too', () => {
+  const forged = { 'note\nlevel=error msg=forged': 'x' };
+
+  it('cannot forge a record through a text key', () => {
+    expect(text(entry(forged)).split('\n')).toHaveLength(1);
+  });
+
+  it('cannot forge a record through a logfmt key', () => {
+    const line = logfmtFormat(entry(forged), LogLevel.INFO);
+
+    expect(line.split('\n')).toHaveLength(1);
+    expect(line).toContain('\\n');
+  });
+
+  it('cannot forge one through a nested key either', () => {
+    const line = logfmtFormat(
+      entry({ meta: { 'a\rlevel=error': 1 } }),
+      LogLevel.INFO,
+    );
+
+    expect(line.split('\n')).toHaveLength(1);
+  });
+});
+
+describe('the widest instant a Date holds', () => {
+  it('reads its time even though the year is expanded', () => {
+    // `new Date(8.64e15).toISOString()` is `+275760-09-13T00:00:00.000Z`, which
+    // a fixed slice(11, 23) rendered as `13T00:00:00.`.
+    expect(text(entry({ timestamp: 8.64e15 })).startsWith('00:00:00.000')).toBe(
+      true,
+    );
+  });
+
+  it('still reads an ordinary one', () => {
+    expect(text(entry()).startsWith('09:00:15.123')).toBe(true);
+  });
+});
