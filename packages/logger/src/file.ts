@@ -313,24 +313,24 @@ export class FileTransport implements Transport {
       if (now !== this.#period) {
         this.#previousPeriod = this.#period;
         this.#period = now;
-        this.#rotate();
+        this.#rotate('interval');
         return;
       }
     }
     // Checked before the write, so a file overshoots `maxSize` by at most one
     // batch.
     if (this.#maxSize > 0 && this.#size >= this.#maxSize) {
-      this.#rotate();
+      this.#rotate('size');
     }
   }
 
-  #rotate(): void {
+  #rotate(reason: 'interval' | 'size'): void {
     if (this.#fd !== null) {
       closeSync(this.#fd);
       this.#fd = null;
     }
     if (this.#naming === 'date') {
-      this.#rotateByDate();
+      this.#rotateByDate(reason);
     } else {
       this.#rotateBySequence();
     }
@@ -358,11 +358,17 @@ export class FileTransport implements Transport {
    * That is the difference from the sequence scheme, where every rotation renames
    * every previous file and a shipper watching `app.log.1` sees new contents.
    */
-  #rotateByDate(): void {
-    // `#period` is the bucket now, and the file being closed holds the one before
-    // it; with no interval configured there is no such bucket, so the day is used.
+  #rotateByDate(reason: 'interval' | 'size'): void {
+    // Which bucket the file being closed actually holds. On an interval rollover
+    // `#period` has already advanced, so it is the one before; on a size rotation
+    // the file is still inside the current bucket. Reading `#previousPeriod` for
+    // both labelled a size-rotated file with the previous hour, or with a daily
+    // stamp under an hourly interval before the first rollover.
     const stamp =
-      this.#previousPeriod || periodKey('daily', this.#utc, this.#openedAt);
+      reason === 'interval'
+        ? this.#previousPeriod ||
+          periodKey(this.#interval ?? 'daily', this.#utc, this.#openedAt)
+        : this.#period || periodKey('daily', this.#utc, this.#openedAt);
     let target = `${this.#path}.${stamp}`;
     for (let at = 1; existsSync(target); at += 1) {
       // A second rotation inside one period, which `maxSize` can cause.
@@ -374,7 +380,7 @@ export class FileTransport implements Transport {
     this.#prune();
   }
 
-  /** Keeps the newest `maxFiles` rotated files, by name, and deletes the rest. */
+  /** Keeps the newest `maxFiles` rotated files and deletes the rest. */
   #prune(): void {
     const directory = dirname(this.#path);
     const prefix = `${basename(this.#path)}.`;
@@ -387,8 +393,32 @@ export class FileTransport implements Transport {
       // The directory went away underneath us; the next write reports it.
       return;
     }
-    // Lexical order is chronological for an ISO stamp, which is why it is one.
-    rotated.sort();
+    /**
+     * The stamp, and the repeat counter behind it.
+     *
+     * A plain lexical sort is chronological for the ISO stamp and wrong for the
+     * counter: `.2026-08-29.10` sorts before `.2026-08-29.2`, so past nine
+     * rotations in one period the newest files were the ones being deleted.
+     */
+    const rank = (name: string): [string, number] => {
+      const rest = name.slice(prefix.length);
+      const at = rest.lastIndexOf('.');
+      if (at === -1) {
+        return [rest, 0];
+      }
+      const repeat = Number(rest.slice(at + 1));
+      return Number.isInteger(repeat) ? [rest.slice(0, at), repeat] : [rest, 0];
+    };
+
+    rotated.sort((left, right) => {
+      const [leftStamp, leftRepeat] = rank(left);
+      const [rightStamp, rightRepeat] = rank(right);
+      if (leftStamp !== rightStamp) {
+        return leftStamp < rightStamp ? -1 : 1;
+      }
+      return leftRepeat - rightRepeat;
+    });
+
     for (const name of rotated.slice(
       0,
       Math.max(0, rotated.length - this.#maxFiles),

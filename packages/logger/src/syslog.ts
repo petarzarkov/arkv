@@ -26,6 +26,14 @@ export interface SyslogTransportOptions extends BatchTransportOptions {
   render?: (entry: LogEntry) => string;
   /** Reject a datagram or frame longer than this. Default `8192`, the safe UDP size. */
   maxMessageBytes?: number;
+  /**
+   * Give up on a TCP connect that has not answered. Default `5000`.
+   *
+   * A filtered route answers neither `connect` nor `error`, and the OS gives up
+   * after minutes. Without a deadline of its own the send stays pending for that
+   * long, so no retry starts and `closeAsync` cannot finish.
+   */
+  connectTimeoutMs?: number;
 }
 
 /**
@@ -43,6 +51,20 @@ const SEVERITY: Readonly<Record<LogLevel, number>> = Object.freeze({
 });
 
 const NIL = '-';
+
+/** RFC 5424 wants RFC 3339, which is what an ISO string already is. */
+function syslogTimestamp(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return new Date(value).toISOString();
+  }
+  return new Date().toISOString();
+}
+
+/** RFC 6587 octet counting: the byte length, a space, then the message. */
+const framed = (line: string): string => `${Buffer.byteLength(line)} ${line}`;
 
 /**
  * Ships entries to a syslog daemon, RFC 5424 framed.
@@ -66,6 +88,7 @@ export class SyslogTransport extends BatchTransport {
   readonly #facility: number;
   readonly #render: (entry: LogEntry) => string;
   readonly #maxMessageBytes: number;
+  readonly #connectTimeoutMs: number;
   #udp: UdpSocket | undefined;
   #tcp: TcpSocket | undefined;
   #closed = false;
@@ -80,15 +103,16 @@ export class SyslogTransport extends BatchTransport {
     this.#facility = options.facility ?? 16;
     this.#render = options.render ?? ((entry) => safeStringify(entry));
     this.#maxMessageBytes = Math.max(480, options.maxMessageBytes ?? 8192);
+    this.#connectTimeoutMs = Math.max(1, options.connectTimeoutMs ?? 5000);
   }
 
   /** One RFC 5424 line, header and all. */
   format(entry: LogEntry, level: LogLevel): string {
     const priority = this.#facility * 8 + (SEVERITY[level] ?? 6);
-    const timestamp =
-      typeof entry.timestamp === 'string'
-        ? entry.timestamp
-        : new Date().toISOString();
+    // A number is what `timestamp: 'epoch'` writes. Substituting the transport's
+    // own clock would relabel the entry with the time it was shipped rather than
+    // the time it happened, which for a batched sink is not the same thing.
+    const timestamp = syslogTimestamp(entry.timestamp);
     const procId = typeof entry.pid === 'number' ? String(entry.pid) : NIL;
     const header = `<${priority}>1 ${timestamp} ${this.#hostname} ${this.#appName} ${procId} ${NIL} ${NIL}`;
     return `${header} ${this.#render(entry)}`;
@@ -97,9 +121,17 @@ export class SyslogTransport extends BatchTransport {
   protected override async deliver(
     batch: readonly BatchedEntry[],
   ): Promise<void> {
-    const lines = batch
-      .map((each) => this.format(each.entry, each.level))
-      .filter((line) => Buffer.byteLength(line) <= this.#maxMessageBytes);
+    const rendered = batch.map((each) => this.format(each.entry, each.level));
+    // Measured as it will go on the wire. A TCP frame carries the octet count and
+    // a space in front of the line, so a line that just fits the limit does not.
+    const lines =
+      this.#protocol === 'udp'
+        ? rendered.filter(
+            (line) => Buffer.byteLength(line) <= this.#maxMessageBytes,
+          )
+        : rendered.filter(
+            (line) => Buffer.byteLength(framed(line)) <= this.#maxMessageBytes,
+          );
 
     if (lines.length === 0) {
       return;
@@ -154,12 +186,9 @@ export class SyslogTransport extends BatchTransport {
     );
   }
 
-  /** RFC 6587 octet counting: the byte length, a space, then the message. */
   async #sendFramed(lines: readonly string[]): Promise<void> {
     const socket = await this.#connected();
-    const payload = lines
-      .map((line) => `${Buffer.byteLength(line)} ${line}`)
-      .join('');
+    const payload = lines.map(framed).join('');
 
     await new Promise<void>((resolve, reject) => {
       socket.write(payload, (error) => {
@@ -181,13 +210,24 @@ export class SyslogTransport extends BatchTransport {
     return new Promise<TcpSocket>((resolve, reject) => {
       const socket = connect({ host: this.#host, port: this.#port });
       socket.unref();
+      const deadline = setTimeout(() => {
+        failed(
+          new Error(
+            `syslog connect to ${this.#host}:${this.#port} timed out after ${this.#connectTimeoutMs}ms`,
+          ),
+        );
+      }, this.#connectTimeoutMs);
+      (deadline as unknown as { unref?: () => void }).unref?.();
+
       const failed = (error: Error): void => {
+        clearTimeout(deadline);
         this.#tcp = undefined;
         socket.destroy();
         reject(error);
       };
       socket.once('error', failed);
       socket.once('connect', () => {
+        clearTimeout(deadline);
         socket.off('error', failed);
         // A daemon restart is routine; dropping the reference is what makes the
         // next send reconnect rather than write into a dead socket forever.

@@ -55,9 +55,14 @@ describe('HttpTransport', () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe('https://collector.example/logs');
     expect(calls[0]?.headers['content-type']).toBe('application/x-ndjson');
-    const lines = calls[0]?.body.split('\n') ?? [];
+    const body = calls[0]?.body ?? '';
+    // Terminated, not separated: the last record ends with a newline too, which
+    // is what NDJSON says and what Elasticsearch's `_bulk` requires.
+    expect(body.endsWith('\n')).toBe(true);
+    const lines = body.trimEnd().split('\n');
     expect(lines).toHaveLength(2);
     expect(JSON.parse(lines[0] as string).message).toBe('one');
+    expect(JSON.parse(lines[1] as string).message).toBe('two');
   });
 
   it('takes the vendor shape from encode, which is the whole seam', async () => {

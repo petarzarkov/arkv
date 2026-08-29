@@ -69,20 +69,23 @@ export function createLogEntry(parts: EntryParts): LogEntry {
   const { level, message, error, appId } = parts;
 
   /**
-   * `Object.assign` rather than a four-source spread. Spreading counts a source
-   * even when it is `undefined`, and three of these usually are: most loggers have
-   * no bindings and most calls produce no `invalidMessageInfo`. `Object.assign`
-   * skips a nullish source outright, so the common entry pays for the two that
-   * exist instead of the four that were written down.
+   * Spread, and only over the sources that exist. A four-source spread counts a
+   * source even when it is `undefined`, and three of these usually are: most
+   * loggers have no bindings and most calls produce no `invalidMessageInfo`.
+   *
+   * **Not `Object.assign`.** It copies with `[[Set]]`, so a source carrying an own
+   * `__proto__` key invokes the prototype setter instead of creating a property:
+   * the field vanishes from the entry and the merged object's prototype changes
+   * with it. `logger.info('req', JSON.parse(body))` is enough to reach that from
+   * outside. Spreading uses `CreateDataProperty` and keeps it an ordinary field.
    */
-  const merged: LogEntry = {};
-  Object.assign(
-    merged,
-    parts.bindings,
-    parts.context,
-    parts.extra,
-    parts.invalidMessageInfo,
-  );
+  const merged: LogEntry = parts.bindings
+    ? { ...parts.bindings, ...parts.context, ...parts.extra }
+    : { ...parts.context, ...parts.extra };
+  if (parts.invalidMessageInfo) {
+    // Built here, with fixed keys, so there is nothing hostile to copy.
+    Object.assign(merged, parts.invalidMessageInfo);
+  }
 
   if (parts.serializers) {
     applySerializers(merged, parts.serializers);

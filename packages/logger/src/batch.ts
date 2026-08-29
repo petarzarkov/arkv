@@ -179,9 +179,15 @@ export abstract class BatchTransport implements Transport {
     }
   }
 
-  /** Fire and forget. `#drain` swallows everything, so this cannot reject. */
+  /**
+   * Fire and forget. `#send` catches what `deliver` throws, but `retryable` and
+   * `retryDelay` are subclass hooks that can throw on their own, and there is no
+   * caller here to receive that: unhandled, it is a process-level rejection.
+   */
   #pump(): void {
-    void this.#drain();
+    this.#drain().catch((error: unknown) => {
+      this.#report(error);
+    });
   }
 
   #drain(): Promise<void> {

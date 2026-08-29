@@ -77,6 +77,13 @@ export interface LoggerConfig {
    *
    * A serializer that throws is caught: a logging call must not fail because a
    * field was not the shape it expected.
+   *
+   * **The reserved names cannot be serialized**, because the entry writes them
+   * itself after this runs: `level`, `timestamp`, `pid`, `message`, `appId` and
+   * `error`. A serializer keyed on any of them has no effect. That last one
+   * catches people arriving from pino, where `serializers: { err }` is the usual
+   * first configuration; here an error is rendered by `serializeError`, which
+   * already carries the cause chain and the error's own properties.
    */
   serializers?: Record<string, (value: unknown) => unknown>;
   /**

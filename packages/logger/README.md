@@ -275,7 +275,8 @@ new Logger({ transports: [new FileTransport({ path: '/var/log/app.log' })] });
 
 is how stdout/stderr output is turned off. An empty array logs nowhere.
 
-A transport is a three-method interface; implement it for anything else:
+A transport is one required method and five optional ones; implement it for
+anything else:
 
 ```typescript
 interface Transport {
@@ -283,6 +284,12 @@ interface Transport {
   write(entry: LogEntry, level: LogLevel): void;
   flush?(): void;
   close?(): void;
+  // Awaited by `logger.flushAsync()` / `closeAsync()`, for a sink that cannot
+  // answer synchronously. Implement whichever pair you can honour.
+  flushAsync?(): Promise<void>;
+  closeAsync?(): Promise<void>;
+  // What you are holding and what you have lost, for `logger.stats()`.
+  stats?(): TransportStats;
 }
 ```
 
@@ -319,10 +326,15 @@ hook; it does not end the stream, because `process.stdout` must not be ended.
 
 #### Flushing, exit, and durability
 
-Every transport method is **synchronous**, and `FileTransport` writes with
+`write`, `flush` and `close` are **synchronous**, and `FileTransport` writes with
 `fs.writeSync` on an append-mode fd. That is the whole design: `process.on('exit')`
-cannot await, so a transport that flushes asynchronously cannot guarantee its
+cannot await, so a transport whose only flush is asynchronous cannot guarantee its
 buffer reaches disk when the process ends.
+
+A network sink cannot honour that, so it implements `flushAsync` / `closeAsync`
+instead, and a graceful shutdown awaits `logger.closeAsync()`. The synchronous
+pair stays what `exit` calls, best-effort. Nothing about the file and stream
+guarantees below changes.
 
 - Default (`bufferBytes: 0`) writes through on every entry — nothing can be lost,
   at one syscall per line.
@@ -371,9 +383,9 @@ new Logger({
 
 `ConsoleTransport`, `StreamTransport` and `FileTransport` write synchronously,
 which is what makes flush-on-exit possible. A collector reached over a network
-cannot honour that, and pretending otherwise is worse than saying so. Those
-transports implement `flushAsync` and `closeAsync`, and a graceful shutdown awaits
-`logger.closeAsync()` rather than calling `close()`.
+cannot honour that, and pretending otherwise is worse than saying so. **The
+network transports** implement `flushAsync` and `closeAsync`, and a graceful
+shutdown awaits `logger.closeAsync()` rather than calling `close()`.
 
 ```typescript
 import { HttpTransport, Logger } from '@arkv/logger';

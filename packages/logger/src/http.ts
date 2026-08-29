@@ -103,8 +103,11 @@ export class HttpTransport extends BatchTransport {
     this.#method = options.method ?? 'POST';
     this.#encode =
       options.encode ??
+      // Terminated, not merely separated: NDJSON says every record ends with a
+      // newline, and Elasticsearch's `_bulk` rejects a body whose last one does
+      // not.
       ((batch) =>
-        batch.map((each) => format(each.entry, each.level)).join('\n'));
+        `${batch.map((each) => format(each.entry, each.level)).join('\n')}\n`);
     this.#headers = {
       'content-type': options.contentType ?? 'application/x-ndjson',
       ...options.headers,

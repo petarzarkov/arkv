@@ -196,6 +196,26 @@ export class StreamTransport implements Transport {
 
   close(): void {
     this.flush();
+    // One last attempt: the stream may have drained since it refused, and the
+    // `drain` listener that would otherwise notice is about to be removed. A
+    // refusal means "buffered, slow down", not "rejected", so handing the data
+    // over is the right answer whenever there is something to hand it to.
+    if (
+      !this.#broken &&
+      !this.#stream.destroyed &&
+      !this.#stream.writableEnded
+    ) {
+      this.#writable = true;
+      this.#releaseHeld();
+    }
+    // Whatever is still held has nowhere left to go. Counting it is the whole
+    // point of `droppedCount`; abandoning it silently would make `stats()` claim
+    // a clean shutdown that lost entries.
+    if (this.#held.length > 0) {
+      this.#drop(this.#held.reduce((total, each) => total + each.lines, 0));
+      this.#held = [];
+      this.#heldBytes = 0;
+    }
     if (this.#timer) {
       clearInterval(this.#timer);
       this.#timer = undefined;
