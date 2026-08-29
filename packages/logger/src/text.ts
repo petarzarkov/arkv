@@ -115,11 +115,14 @@ export const textFormat: LogFormatter = (entry, level) => {
    * Escaped once, here, rather than field by field.
    *
    * The message was escaped, then keys and values had to be, then the timestamp:
-   * three rounds of the same forging bug, each in a field the previous fix had
-   * not thought of. Every part of the line meets `oneLine` at one place now, so a
-   * field added later cannot reintroduce it. The error block is appended after,
-   * because its line breaks are this formatter's own structure rather than
-   * anything a caller supplied.
+   * the same forging bug in a field the previous fix had not thought of, three
+   * times. Every part of the line meets `oneLine` at one place now, so a field
+   * added later cannot reintroduce it.
+   *
+   * The error block is appended after this and escapes itself. Only the
+   * separators there are this formatter's own; the name, the message, the frames
+   * and the cause are all caller data, and treating the whole block as structure
+   * was how a fourth instance of the same bug got through.
    */
   let line = oneLine(
     `${parts.join(' ')}${pairs.length > 0 ? `  ${pairs.join(' ')}` : ''}`,
@@ -152,7 +155,11 @@ function renderError(
   label: 'error' | 'cause',
 ): string {
   const prefix = label === 'cause' ? 'Caused by: ' : '';
-  const head = `${prefix}${error.name ?? 'Error'}: ${error.message ?? ''}`;
+  // Every interpolated piece below is caller data. The `\n  ` and `\n    `
+  // separators are the only line breaks this function is entitled to write.
+  const head = oneLine(
+    `${prefix}${scalar(error.name ?? 'Error')}: ${scalar(error.message ?? '')}`,
+  );
   let out = `\n  ${colored ? getLevelColorFn('error')(head) : head}`;
 
   // The entry builder comma-flattens the stack, which is right for JSON and
@@ -160,7 +167,7 @@ function renderError(
   // that contains one, so only the parts that look like frames are taken.
   const stack = typeof error.stack === 'string' ? error.stack : '';
   for (const part of stack.split(',')) {
-    const frame = part.trim();
+    const frame = oneLine(part.trim());
     if (frame.startsWith('at ')) {
       out += `\n    ${colored ? dim(frame) : frame}`;
     }
@@ -172,7 +179,7 @@ function renderError(
   } else if (cause !== undefined) {
     // `new Error(msg, { cause: 'a string' })` is legal and the string is the
     // whole explanation.
-    const text = `Caused by: ${scalar(cause)}`;
+    const text = oneLine(`Caused by: ${scalar(cause)}`);
     out += `\n  ${colored ? getLevelColorFn('error')(text) : text}`;
   }
   return out;

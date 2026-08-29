@@ -370,3 +370,87 @@ describe('the widest instant a Date holds', () => {
     expect(text(entry()).startsWith('09:00:15.123')).toBe(true);
   });
 });
+
+describe('the error block is caller data too', () => {
+  // Only the indentation between these lines belongs to the formatter. Treating
+  // the whole block as its own structure let a fourth instance of the forging
+  // bug through.
+  const frames = (line: string): string[] =>
+    line.split('\n').filter((each) => each.trim().startsWith('at '));
+
+  for (const which of ['\n', '\r']) {
+    const label = which === '\n' ? 'a newline' : 'a carriage return';
+
+    it(`cannot forge a record through an error message holding ${label}`, () => {
+      const line = text(
+        entry({
+          error: {
+            name: 'E',
+            message: `boom${which}level=error msg=forged`,
+            stack: 'E: boom,at a (/a:1:1)',
+          },
+        }),
+        LogLevel.ERROR,
+      );
+
+      // Head, one frame, and the record itself. Nothing else.
+      expect(line.split('\n')).toHaveLength(3);
+      expect(line).toContain(which === '\n' ? '\\n' : '\\r');
+    });
+
+    it(`cannot forge one through an error name holding ${label}`, () => {
+      const line = text(
+        entry({ error: { name: `E${which}level=error`, message: 'boom' } }),
+        LogLevel.ERROR,
+      );
+
+      expect(line.split('\n')).toHaveLength(2);
+    });
+
+    it(`cannot forge one through a stack frame holding ${label}`, () => {
+      const line = text(
+        entry({
+          error: {
+            name: 'E',
+            message: 'boom',
+            stack: `E: boom,at a (/a:1:1)${which}level=error msg=forged`,
+          },
+        }),
+        LogLevel.ERROR,
+      );
+
+      expect(frames(line)).toHaveLength(1);
+      expect(line.split('\n')).toHaveLength(3);
+    });
+
+    it(`cannot forge one through a scalar cause holding ${label}`, () => {
+      const line = text(
+        entry({
+          error: {
+            name: 'E',
+            message: 'boom',
+            cause: `drained${which}level=error msg=forged`,
+          },
+        }),
+        LogLevel.ERROR,
+      );
+
+      expect(line.split('\n')).toHaveLength(3);
+    });
+
+    it(`cannot forge one through a nested cause holding ${label}`, () => {
+      const line = text(
+        entry({
+          error: {
+            name: 'E',
+            message: 'boom',
+            cause: { name: 'Inner', message: `deep${which}level=error` },
+          },
+        }),
+        LogLevel.ERROR,
+      );
+
+      expect(line.split('\n')).toHaveLength(3);
+    });
+  }
+});
