@@ -1,7 +1,7 @@
 {
   "name": "@arkv/logger",
   "version": "0.10.2",
-  "description": "Node.js structured logger with async context, sanitization, and console + rotating file transports",
+  "description": "Node.js structured logger with async context, sanitization, and console, file, stream, HTTP and syslog transports",
   "keywords": [
     "async-context",
     "logger",
@@ -47,6 +47,7 @@
   },
   "scripts": {
     "prebuild": "rm -rf dist",
+    "bench": "bun bench.ts",
     "build:esm": "tsc -p tsconfig.build.esm.json",
     "build:cjs": "tsc -p tsconfig.build.cjs.json",
     "build:types": "tsc -p tsconfig.build.types.json",

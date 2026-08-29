@@ -18,7 +18,7 @@ import {
   it,
   setSystemTime,
 } from 'bun:test';
-import { FileTransport } from './file.js';
+import { FileTransport, periodKey } from './file.js';
 import { FileTransport as FileTransportFromEntry } from './index.js';
 import { Logger } from './logger.js';
 import { type LogEntry, LogLevel } from './types.js';
@@ -337,5 +337,30 @@ describe('FileTransport failure handling', () => {
     expect(all).toContain('first');
     expect(all).toContain('recovered');
     expect(all).toContain('file transport dropped 1 log entries');
+  });
+});
+
+describe('periodKey', () => {
+  // 2026-08-29T23:30:00Z. In any zone east of UTC this is already the 30th
+  // locally, which is the whole difference the `utc` option controls.
+  const at = new Date(Date.UTC(2026, 7, 29, 23, 30));
+
+  it('buckets by the UTC day and hour', () => {
+    expect(periodKey('daily', true, at)).toBe('2026-08-29');
+    expect(periodKey('hourly', true, at)).toBe('2026-08-29T23');
+  });
+
+  it('buckets by the host clock when told not to follow UTC', () => {
+    const local = periodKey('daily', false, at);
+    const expected = `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, '0')}-${String(at.getDate()).padStart(2, '0')}`;
+
+    expect(local).toBe(expected);
+    expect(periodKey('hourly', false, at)).toBe(
+      `${expected}T${String(at.getHours()).padStart(2, '0')}`,
+    );
+  });
+
+  it('is empty with no interval, so nothing rotates on time', () => {
+    expect(periodKey(undefined, true, at)).toBe('');
   });
 });

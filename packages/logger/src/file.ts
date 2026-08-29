@@ -28,8 +28,14 @@ export interface FileTransportOptions {
   format?: LogFormatter;
   /** Rotate once the active file reaches this many bytes. `0` disables. */
   maxSize?: number;
-  /** Rotate when the UTC hour or day changes. */
+  /** Rotate when the hour or day changes. */
   interval?: RotationInterval;
+  /**
+   * Whether `interval` follows UTC. Default `true`, which is what it has always
+   * done. `false` follows the host's local time, so a daily file for a team in
+   * UTC+10 rolls at their midnight rather than at ten in the morning.
+   */
+  utc?: boolean;
   /** Rotated files to keep. The oldest is deleted. Default `5`. */
   maxFiles?: number;
   /**
@@ -52,16 +58,45 @@ export interface FileTransportOptions {
   onError?: (error: Error) => void;
 }
 
-function periodKey(interval: RotationInterval | undefined): string {
+const pad = (value: number): string => String(value).padStart(2, '0');
+
+/**
+ * The bucket a moment falls in. Exported for its own test, which is what lets the
+ * local branch be checked without moving the host's clock. Not re-exported from
+ * the package index.
+ */
+export function periodKey(
+  interval: RotationInterval | undefined,
+  utc: boolean,
+  now: Date = new Date(),
+): string {
   if (!interval) {
     return '';
   }
-  const iso = new Date().toISOString();
-  return interval === 'hourly' ? iso.slice(0, 13) : iso.slice(0, 10);
+  if (utc) {
+    const iso = now.toISOString();
+    return interval === 'hourly' ? iso.slice(0, 13) : iso.slice(0, 10);
+  }
+  const at = now;
+  const day = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`;
+  return interval === 'hourly' ? `${day}T${pad(at.getHours())}` : day;
 }
 
 /**
  * Appends entries to a file, with size- and time-based rotation.
+ *
+ * **One process per file.** Writes go through `writeSync` on an `O_APPEND` fd,
+ * which POSIX only guarantees to be atomic below `PIPE_BUF` (4096 bytes). A
+ * batched flush is routinely larger than that, so two processes appending to one
+ * path will interleave and tear each other's lines; concurrent rotation is worse,
+ * since both race the same rename chain and lose files. Under `cluster` or
+ * `worker_threads`, give each process its own path or ship through the parent.
+ *
+ * **Rotated files are not compressed.** Doing it synchronously would stall the
+ * event loop for as long as gzip takes on a file that may be hundreds of
+ * megabytes, and doing it asynchronously would race the next rotation. `logrotate`
+ * with `copytruncate` off, pointed at `path.*`, does it properly and is already on
+ * the host.
  *
  * Writes are **synchronous** (`fs.writeSync` on an append-mode fd), batched
  * when `bufferBytes` is set. That is deliberate: `process.on('exit')` cannot
@@ -84,6 +119,7 @@ export class FileTransport implements Transport {
   readonly #maxSize: number;
   readonly #maxFiles: number;
   readonly #interval?: RotationInterval;
+  readonly #utc: boolean;
   readonly #bufferBytes: number;
   readonly #onError?: (error: Error) => void;
   #fd: number | null = null;
@@ -108,9 +144,10 @@ export class FileTransport implements Transport {
     this.#maxSize = options.maxSize ?? 0;
     this.#maxFiles = Math.max(1, options.maxFiles ?? 5);
     this.#interval = options.interval;
+    this.#utc = options.utc ?? true;
     this.#bufferBytes = Math.max(0, options.bufferBytes ?? 0);
     this.#onError = options.onError;
-    this.#period = periodKey(this.#interval);
+    this.#period = periodKey(this.#interval, this.#utc);
     this.#open();
 
     if (this.#bufferBytes > 0) {
@@ -256,7 +293,7 @@ export class FileTransport implements Transport {
 
   #rotateIfNeeded(): void {
     if (this.#interval) {
-      const now = periodKey(this.#interval);
+      const now = periodKey(this.#interval, this.#utc);
       if (now !== this.#period) {
         this.#period = now;
         this.#rotate();

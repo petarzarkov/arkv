@@ -1,4 +1,4 @@
-import { isPlainObject, safeStringify } from '@arkv/shared';
+import { extractErrorAndExtra, prepareMessage } from './arguments.js';
 import {
   asReader,
   readContextOnce,
@@ -9,7 +9,6 @@ import { createLogEntry } from './entry.js';
 import { jsonFormat, prettyFormat } from './format.js';
 import {
   DEFAULT_MAX_DEPTH,
-  findNestedError,
   type PreparedSanitizeOptions,
   prepareSanitizeOptions,
   sanitizePrepared,
@@ -18,7 +17,6 @@ import { ConsoleTransport } from './transport.js';
 import {
   DEFAULT_MASK_FIELDS,
   LOG_LEVELS,
-  type LogEntry,
   type LoggerConfig,
   LogLevel,
   type Transport,
@@ -373,8 +371,12 @@ export class Logger {
     }
 
     const { preparedMessage, invalidMessageInfo, messageError, messageExtra } =
-      this.#prepareMessage(message);
-    const { error, extra } = this.#extractErrorAndExtra(optionalParams, level);
+      prepareMessage(message, this.#maxDepth);
+    const { error, extra } = extractErrorAndExtra(
+      optionalParams,
+      level,
+      this.#maxDepth,
+    );
 
     const finalError = messageError || error;
     const finalExtra = {
@@ -433,137 +435,5 @@ export class Logger {
     console.error(
       `[@arkv/logger] transport ${transport.constructor.name} failed and was ignored: ${err.message}. Further failures from this logger are suppressed.`,
     );
-  }
-
-  #prepareMessage(message: unknown): {
-    preparedMessage: string;
-    invalidMessageInfo?: LogEntry;
-    messageError?: Error;
-    messageExtra?: LogEntry;
-  } {
-    if (typeof message === 'string') {
-      return { preparedMessage: message };
-    }
-
-    if (message instanceof Error) {
-      return {
-        preparedMessage: message.message,
-        messageError: message,
-      };
-    }
-
-    if (isPlainObject(message)) {
-      const foundError = findNestedError(message, this.#maxDepth);
-      if (foundError) {
-        return {
-          preparedMessage: foundError.message,
-          messageError: foundError,
-          messageExtra: message,
-        };
-      }
-      return {
-        preparedMessage: 'Object logged',
-        messageExtra: message,
-      };
-    }
-
-    const stack = new Error().stack?.split('\n').slice(2, 7).join('\n');
-    const preparedMessage =
-      message === null || message === undefined
-        ? `[${String(message)}]`
-        : `[OBJECT]: ${safeStringify(message as LogEntry)}`;
-
-    const invalidMessageInfo = {
-      invalidMessageWarning: 'Logger called with non-string message parameter',
-      invalidMessageCallstack: stack,
-      originalMessageType: typeof message,
-      // Objects reach here — a Map, a Set, a Date, a class instance — so the
-      // value is handed over raw for the sanitizer to render. Pre-stringifying
-      // it would report `new Map([['a', 1]])` as `{}`.
-      originalMessage:
-        typeof message === 'object' && message !== null
-          ? message
-          : safeStringify(message as LogEntry),
-    };
-
-    return {
-      preparedMessage,
-      invalidMessageInfo,
-    };
-  }
-
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: handles multiple error extraction patterns
-  #extractErrorAndExtra(
-    params: unknown[],
-    level: LogLevel,
-  ): {
-    error: Error | null;
-    extra: LogEntry;
-  } {
-    let error: Error | null = null;
-    const extra: LogEntry = {};
-    const unmergeable: unknown[] = [];
-
-    for (const param of params) {
-      if (param instanceof Error) {
-        error = param;
-      } else if (typeof param === 'string') {
-        const isErrorLevel =
-          level === LogLevel.WARN ||
-          level === LogLevel.ERROR ||
-          level === LogLevel.FATAL;
-        if (isErrorLevel) {
-          error = new Error(param);
-        } else {
-          extra.context = param;
-        }
-      } else if (isPlainObject(param)) {
-        const isErrorLevel =
-          level === LogLevel.WARN ||
-          level === LogLevel.ERROR ||
-          level === LogLevel.FATAL;
-
-        if (param.err instanceof Error) {
-          error = param.err;
-          const { err: _, ...rest } = param;
-          Object.assign(extra, rest);
-        } else if (param.error instanceof Error) {
-          error = param.error;
-          const { error: _, ...rest } = param;
-          Object.assign(extra, rest);
-        } else if (isErrorLevel && typeof param.err === 'string') {
-          error = new Error(param.err);
-          const { err: _, ...rest } = param;
-          Object.assign(extra, rest);
-        } else if (isErrorLevel && typeof param.error === 'string') {
-          error = new Error(param.error as string);
-          const { error: _, ...rest } = param;
-          Object.assign(extra, rest);
-        } else {
-          const foundError = findNestedError(param, this.#maxDepth);
-          if (foundError) {
-            error = foundError;
-          }
-          Object.assign(extra, param);
-        }
-      } else if (typeof param === 'object' && param !== null) {
-        // An array, Map, Set, Date, typed array or class instance cannot be
-        // merged into a flat record — `Object.assign` copies none of a Map's
-        // entries, and a class instance's fields would collide with reserved
-        // entry keys. Collected under `params` instead, where the sanitizer
-        // knows how to render every one of those shapes.
-        const foundError = findNestedError(param, this.#maxDepth);
-        if (foundError) {
-          error = foundError;
-        }
-        unmergeable.push(param);
-      }
-    }
-
-    if (unmergeable.length > 0) {
-      extra.params = unmergeable;
-    }
-
-    return { error, extra };
   }
 }

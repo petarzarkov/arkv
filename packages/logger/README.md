@@ -367,6 +367,107 @@ new Logger({
 });
 ```
 
+### Shipping logs somewhere else
+
+`ConsoleTransport`, `StreamTransport` and `FileTransport` write synchronously,
+which is what makes flush-on-exit possible. A collector reached over a network
+cannot honour that, and pretending otherwise is worse than saying so. Those
+transports implement `flushAsync` and `closeAsync`, and a graceful shutdown awaits
+`logger.closeAsync()` rather than calling `close()`.
+
+```typescript
+import { HttpTransport, Logger } from '@arkv/logger';
+
+const logger = new Logger({
+  transports: [
+    new HttpTransport({
+      url: 'https://logs.example.com/ingest',
+      headers: { authorization: `Bearer ${token}` },
+      batchSize: 200,
+      flushIntervalMs: 2000,
+    }),
+  ],
+});
+
+process.on('SIGTERM', async () => {
+  await server.close();
+  await logger.closeAsync(); // the batch has actually left the process
+});
+```
+
+`encode` is the seam every collector differs at, and the reason there is one HTTP
+transport rather than four:
+
+```typescript
+// Datadog
+new HttpTransport({
+  url: 'https://http-intake.logs.datadoghq.com/api/v2/logs',
+  headers: { 'DD-API-KEY': key },
+  contentType: 'application/json',
+  encode: (batch) => JSON.stringify(batch.map((each) => each.entry)),
+});
+
+// Splunk HEC
+new HttpTransport({
+  url: 'https://splunk.example.com:8088/services/collector',
+  headers: { authorization: `Splunk ${token}` },
+  contentType: 'application/json',
+  encode: (batch) =>
+    batch.map((each) => JSON.stringify({ event: each.entry })).join(''),
+});
+```
+
+A 4xx that is not 408 or 429 is not retried, because the same bytes will be
+rejected the same way. `Retry-After` is obeyed in both its forms.
+
+`SyslogTransport` speaks RFC 5424 over UDP (one datagram per entry) or TCP
+(octet-counted per RFC 6587, reconnecting when the daemon restarts).
+
+Anything else that batches is a subclass of `BatchTransport` with a `deliver`
+method. The bounded queue, the batching, the single in-flight send, the backoff
+and the drop accounting all come from the base.
+
+### Thinning what gets through
+
+```typescript
+import { SamplingTransport, ConsoleTransport } from '@arkv/logger';
+
+new Logger({
+  transports: [
+    new SamplingTransport(new ConsoleTransport(), {
+      rate: 0.1,          // one in ten of the routine traffic
+      maxPerInterval: 50, // and at most fifty per second per event
+      intervalMs: 1000,
+    }),
+  ],
+});
+```
+
+Warnings and worse are never sampled, whatever the rate: sampling an error is how
+an incident becomes invisible. The per-event budget is what stops one hot loop
+spending the whole allowance. When a window closes having discarded anything, one
+line naming the count goes through, so a gap in the logs always carries its reason.
+
+### Knowing whether logs are being lost
+
+```typescript
+logger.stats();
+// [{ name: 'FileTransport', dropped: 0, queued: 0, errors: 0 }]
+```
+
+Anything above zero on `dropped` is worth an alert. A transport that keeps no
+counters is omitted rather than reported as zero, which would read as measured and
+fine.
+
+### Changing the level on a running process
+
+```typescript
+process.on('SIGUSR2', () => logger.setLevel(LogLevel.DEBUG));
+```
+
+A logger and every child it made share one level, so this reaches all of them. A
+transport that named its own `level` keeps it.
+
 ### Uncaught Errors
 
 ```typescript
@@ -436,7 +537,7 @@ new Logger(config?: LoggerConfig, context?: ContextStore)
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `logLevel` | `LogLevel` | Current log level (read-only) |
+| `logLevel` | `LogLevel` | Current log level. Set it with `setLevel` |
 | `appId` | `string \| undefined` | `name-version-env` or `undefined` |
 | `transports` | `readonly Transport[]` | The configured transports |
 
@@ -450,8 +551,12 @@ new Logger(config?: LoggerConfig, context?: ContextStore)
 | `error(message, ...params)` | Log at `error` level |
 | `fatal(message, ...params)` | Log at `fatal` level |
 | `child(bindings)` | Logger with bound fields, sharing transports |
+| `setLevel(level)` | Change the level of this logger and its children |
+| `stats()` | What each transport is holding and has dropped |
 | `flush()` | Push every transport's buffer. Synchronous |
 | `close()` | Flush, then release transport resources |
+| `flushAsync()` | Drain every transport, awaiting the async ones |
+| `closeAsync()` | Drain, then release. What a graceful shutdown awaits |
 
 Each method accepts `string`, `Record<string, unknown>`, or `Error` as the
 message, **plus optional extra params in every case**. `warn(err, { attempt: 3 })`
@@ -521,15 +626,24 @@ new ContextStore()
 
 ### Deliberately not included
 
-- **Sampling / rate limiting.** Any default policy is wrong for someone, and it
-  drops logs silently — the exact failure mode the reserved-key and `null`
-  handling above exist to avoid. A consumer can wrap a `Transport` in ten lines.
-- **Async transports.** The interface is synchronous so that flush-on-exit is
-  achievable at all. A network transport would need its own buffering story.
-- **Signal handlers.** Installing one changes how the process terminates.
-- **Browser support.** This is a Node package. `node:fs` and `node:async_hooks`
-  are imported directly from the main entry, and `process.pid` / `process.env`
-  are read without a guard.
+- **Signal handlers.** Installing one changes how the process terminates. The
+  `SIGUSR2` and `SIGTERM` examples above are yours to install.
+- **Compression of rotated files.** Doing it synchronously stalls the event loop
+  for as long as gzip takes on a file that may be hundreds of megabytes; doing it
+  asynchronously races the next rotation. `logrotate`, pointed at `path.*`, does it
+  properly and is already on the host.
+- **A vendor transport per collector.** They differ only in body shape, which is
+  `HttpTransport`'s `encode`. Four classes would be four buffering stories and
+  three of them a bug.
+- **Browser support.** This is a Node package. `node:fs`, `node:net`, `node:dgram`
+  and `node:async_hooks` are imported directly from the main entry, and
+  `process.pid` / `process.env` are read without a guard.
+
+Two things that used to be on this list and no longer are. **Sampling** is here as
+`SamplingTransport`, a decorator rather than a config field, so nothing is thinned
+unless it is wrapped and a discard is always announced. **Async transports** are
+here as the `flushAsync` / `closeAsync` half of the contract; the synchronous half
+stays exactly what it was, because `process.on('exit')` still cannot await.
 
 ## License
 

@@ -1,3 +1,8 @@
+export {
+  BatchTransport,
+  type BatchedEntry,
+  type BatchTransportOptions,
+} from './batch.js';
 export { ContextStore, type RunWithContextOptions } from './context.js';
 // The contract the logger reads its request fields through, so a consumer can
 // satisfy it without owning an `AsyncLocalStorage`. `asReader` and `readContextOnce`
@@ -19,8 +24,27 @@ export {
   type RotationInterval,
 } from './file.js';
 export { jsonFormat, prettyFormat } from './format.js';
+// `retryAfterMs` stays internal: it is how this transport reads one header, not
+// something a consumer has a use for.
+export {
+  HttpDeliveryError,
+  HttpTransport,
+  type HttpTransportOptions,
+} from './http.js';
 export { Logger } from './logger.js';
+export { SamplingTransport, type SamplingOptions } from './sampling.js';
+export {
+  MAX_AGGREGATE_ERRORS,
+  MAX_CAUSE_DEPTH,
+  type SerializedError,
+  serializeError,
+} from './serialize-error.js';
 export { StreamTransport, type StreamTransportOptions } from './stream.js';
+export {
+  type SyslogProtocol,
+  SyslogTransport,
+  type SyslogTransportOptions,
+} from './syslog.js';
 export { ConsoleTransport, type ConsoleTransportOptions } from './transport.js';
 export {
   type AsyncContext,
@@ -33,6 +57,7 @@ export {
   RESERVED_CONFLICTS_KEY,
   RESERVED_ENTRY_KEYS,
   type Transport,
+  type TransportStats,
 } from './types.js';
 
 /**
@@ -47,6 +72,9 @@ export {
 export {
   DEFAULT_MAX_DEPTH,
   findNestedError,
+  type PreparedSanitizeOptions,
+  prepareSanitizeOptions,
   sanitizeLogEntry,
+  sanitizePrepared,
   type SanitizeOptions,
 } from './sanitize.js';
