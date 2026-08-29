@@ -92,6 +92,7 @@ export class StreamTransport implements Transport {
   #exitHook: (() => void) | undefined;
   #reported = false;
   #closing = false;
+  #inFlight = 0;
   readonly #onDrain: () => void;
   readonly #onStreamError: (error: Error) => void;
 
@@ -122,10 +123,9 @@ export class StreamTransport implements Transport {
       this.#held = [];
       this.#heldBytes = 0;
       this.#report(error);
-      // `close()` left this listener attached for exactly this event. Now that it
-      // has arrived and been handled, there is nothing more to wait for.
-      if (this.#closing) {
-        this.#detach();
+      // The event this listener was being kept for. Nothing further is coming.
+      if (this.#closing && this.#inFlight === 0) {
+        this.#releaseErrorListener();
       }
     };
     stream.on('drain', this.#onDrain);
@@ -205,29 +205,16 @@ export class StreamTransport implements Transport {
     this.#closing = true;
 
     // One last attempt: the stream may have drained since it refused, and the
-    // `drain` listener that would otherwise notice is about to be removed. A
-    // refusal means "buffered, slow down", not "rejected", so handing the data
-    // over is the right answer whenever there is something to hand it to.
-    let writing = false;
+    // `drain` listener that would otherwise notice is about to go. A refusal
+    // means "buffered, slow down", not "rejected", so handing the data over is
+    // the right answer whenever there is something to hand it to.
     if (
       !this.#broken &&
       !this.#stream.destroyed &&
       !this.#stream.writableEnded
     ) {
       this.#writable = true;
-      /**
-       * The `error` listener has to outlive this write, and outlive it in both
-       * directions. Detaching before it settles leaves an asynchronous stream
-       * error with nothing listening; detaching when it settles *with* an error
-       * is the same thing one step later, because Node emits `'error'` after
-       * calling this back. So it detaches only on success, and `#onStreamError`
-       * detaches on the other path once it has handled the event.
-       */
-      writing = this.#releaseHeld((error) => {
-        if (!error) {
-          this.#detach();
-        }
-      });
+      this.#releaseHeld();
     }
     // Whatever is still held has nowhere left to go. Counting it is the whole
     // point of `droppedCount`; abandoning it silently would make `stats()` claim
@@ -245,13 +232,16 @@ export class StreamTransport implements Transport {
       process.off('exit', this.#exitHook);
       this.#exitHook = undefined;
     }
-    if (!writing) {
-      this.#detach();
+    // Nothing more will be released, so this one goes now regardless.
+    this.#stream.off('drain', this.#onDrain);
+    // The error listener outlives any write still in the stream. `#settle` and
+    // `#onStreamError` release it between them once none are left.
+    if (this.#inFlight === 0) {
+      this.#releaseErrorListener();
     }
   }
 
-  #detach(): void {
-    this.#stream.off('drain', this.#onDrain);
+  #releaseErrorListener(): void {
     this.#stream.off('error', this.#onStreamError);
   }
 
@@ -267,17 +257,29 @@ export class StreamTransport implements Transport {
     this.#writeNow(chunk, lines);
   }
 
-  #writeNow(
-    chunk: string,
-    lines: number,
-    settled?: (error?: Error | null) => void,
-  ): void {
+  /**
+   * Every write carries a completion callback, which is the only thing that knows
+   * a write is actually over.
+   *
+   * Two things depend on it. A write that fails does so **after** `write()`
+   * returned, so its entries can only be counted here; without this
+   * `droppedCount` reported a clean run that lost a batch. And `close()` must not
+   * remove the `error` listener while a write is still outstanding, because Node
+   * emits that event when the write eventually fails and an unhandled `error`
+   * ends the process.
+   *
+   * The closure costs an allocation per write. That is a few nanoseconds against
+   * a write path already measured at a small fraction of a log call, and this
+   * area has been wrong three times without it.
+   */
+  #writeNow(chunk: string, lines: number): void {
     const announced = this.#unannouncedDrops;
     const payload = announced > 0 ? this.#dropNotice(announced) + chunk : chunk;
+    this.#inFlight += 1;
     try {
-      const accepted = settled
-        ? this.#stream.write(payload, settled)
-        : this.#stream.write(payload);
+      const accepted = this.#stream.write(payload, (error) => {
+        this.#settle(lines, error);
+      });
       this.#unannouncedDrops -= announced;
       if (!accepted) {
         // Already buffered by the stream; anything further is held here, where
@@ -285,12 +287,27 @@ export class StreamTransport implements Transport {
         this.#writable = false;
       }
     } catch (error) {
-      this.#drop(lines);
+      // The stream never took it, so the callback above will never run.
+      this.#settle(
+        lines,
+        error instanceof Error ? error : new Error('write failed'),
+      );
       this.#report(error);
-      // The stream never took it, so its callback will never run. Reported as a
-      // failure, so the caller does not detach a listener the stream may still
-      // need.
-      settled?.(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  /** One write is over, for better or worse. */
+  #settle(lines: number, error?: Error | null): void {
+    this.#inFlight -= 1;
+    if (error) {
+      this.#broken = true;
+      this.#drop(lines);
+      // Node emits `'error'` *after* calling this back, so the listener has to
+      // survive here. `#onStreamError` releases it once that event lands.
+      return;
+    }
+    if (this.#closing && this.#inFlight === 0) {
+      this.#releaseErrorListener();
     }
   }
 
@@ -309,14 +326,13 @@ export class StreamTransport implements Transport {
   }
 
   /** Everything held goes out as one write, since it is all bound for one place. */
-  #releaseHeld(settled?: (error?: Error | null) => void): boolean {
-    if (this.#held.length === 0) return false;
+  #releaseHeld(): void {
+    if (this.#held.length === 0) return;
     const held = this.#held;
     this.#held = [];
     this.#heldBytes = 0;
     const lines = held.reduce((total, each) => total + each.lines, 0);
-    this.#writeNow(held.map((each) => each.text).join(''), lines, settled);
-    return true;
+    this.#writeNow(held.map((each) => each.text).join(''), lines);
   }
 
   #dropNotice(count: number): string {

@@ -325,3 +325,51 @@ describe('failures inside the failure paths', () => {
     expect(stream.listenerCount('error')).toBe(0);
   });
 });
+
+describe('a write that fails after it was accepted', () => {
+  class AcceptsThenFails extends Writable {
+    override _write(
+      _c: unknown,
+      _e: string,
+      cb: (error?: Error) => void,
+    ): void {
+      setImmediate(() => cb(new Error('disk went away')));
+    }
+  }
+
+  it('counts the entries it carried, which only the callback knows', async () => {
+    const stream = new AcceptsThenFails();
+    const transport = new StreamTransport(stream, {
+      onError: () => undefined,
+    });
+
+    transport.write({ message: 'one' }, LogLevel.INFO);
+    transport.write({ message: 'two' }, LogLevel.INFO);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    // `write()` returned before the failure, so nothing but its callback could
+    // attribute the loss. Reporting a clean run here is what this guards.
+    expect(transport.droppedCount).toBeGreaterThan(0);
+    expect(transport.stats().dropped).toBe(transport.droppedCount);
+    transport.close();
+  });
+});
+
+describe('a serializer whose thrown Error has a non-string message', () => {
+  it('is described without throwing on the interpolation', () => {
+    const sink = new MemoryTransport();
+    const weird = new Error('placeholder');
+    Object.defineProperty(weird, 'message', { value: Symbol('nope') });
+    const logger = new Logger({
+      serializers: {
+        req: () => {
+          throw weird;
+        },
+      },
+      transports: [sink],
+    });
+
+    expect(() => logger.info('handled', { req: {} })).not.toThrow();
+    expect(String(sink.last?.req)).toContain('serializer threw');
+  });
+});

@@ -145,7 +145,7 @@ describe('StreamTransport backpressure', () => {
     transport.close();
   });
 
-  it('leaves the stream unended, because it belongs to the caller', () => {
+  it('leaves the stream unended, because it belongs to the caller', async () => {
     const stream = new BlockingStream();
     const transport = new StreamTransport(stream);
 
@@ -153,7 +153,16 @@ describe('StreamTransport backpressure', () => {
     transport.close();
 
     expect(stream.writableEnded).toBe(false);
+    // Nothing more will be released, so this one goes at once.
     expect(stream.listenerCount('drain')).toBe(0);
+    // The write is still outstanding, and Node reports a failed one through
+    // `error`. Releasing that listener now is how an unhandled `error` event
+    // ends the process, so it waits.
+    expect(stream.listenerCount('error')).toBe(1);
+
+    stream.release();
+    await tick();
+
     expect(stream.listenerCount('error')).toBe(0);
   });
 });

@@ -43,7 +43,10 @@ export interface EntryParts {
  */
 function describeThrown(error: unknown): string {
   try {
-    return error instanceof Error ? error.message : String(error);
+    const described = error instanceof Error ? error.message : error;
+    // `Error.message` is a string by construction but not by guarantee: a
+    // subclass can define it as anything, and interpolating a symbol throws.
+    return typeof described === 'string' ? described : String(described);
   } catch {
     return 'a value that cannot be described';
   }
