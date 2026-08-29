@@ -448,6 +448,25 @@ an incident becomes invisible. The per-event budget is what stops one hot loop
 spending the whole allowance. When a window closes having discarded anything, one
 line naming the count goes through, so a gap in the logs always carries its reason.
 
+### Correlating with a trace
+
+There is no OpenTelemetry dependency here and there does not need to be. `Logger`'s
+second argument accepts a plain function, so the active span is read per entry
+without this package knowing what a span is:
+
+```typescript
+import { trace } from '@opentelemetry/api';
+
+const logger = new Logger(config, () => {
+  const span = trace.getActiveSpan()?.spanContext();
+  return span ? { traceId: span.traceId, spanId: span.spanId } : {};
+});
+```
+
+The same shape works for any propagation you already have. A `ContextStore` is for
+fields you set yourself; a function is for fields something else is already
+tracking.
+
 ### Knowing whether logs are being lost
 
 ```typescript
@@ -611,6 +630,11 @@ an `invalidMessageWarning`, and the value itself is kept under
 Readable state: `filePath`, `droppedCount`, `errorCount`, `pendingBytes`.
 Rotation is checked before each write, so a file overshoots `maxSize` by at most
 one batch.
+
+Rotated files are named `app.log.1`, `app.log.2` by default. `naming: 'date'`
+names them for the period they hold instead, `app.log.2026-08-29`, so a rotated
+file's name never changes again and a shipper globbing by day finds it. `utc: false`
+makes `interval` follow the host clock rather than UTC.
 
 ### `ContextStore`
 

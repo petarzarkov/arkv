@@ -4,11 +4,12 @@ import {
   fstatSync,
   mkdirSync,
   openSync,
+  readdirSync,
   renameSync,
   unlinkSync,
   writeSync,
 } from 'node:fs';
-import { dirname } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { safeStringify } from '@arkv/shared';
 import { jsonFormat } from './format.js';
 import type {
@@ -38,6 +39,16 @@ export interface FileTransportOptions {
   utc?: boolean;
   /** Rotated files to keep. The oldest is deleted. Default `5`. */
   maxFiles?: number;
+  /**
+   * How a rotated file is named.
+   *
+   * `sequence`, the default, shifts `app.log.1` to `app.log.2` and so on, which is
+   * what `logrotate` produces and what this has always done. `date` names it for
+   * the period it holds instead, `app.log.2026-08-29`, which is what a shipper
+   * globbing by day expects and what stops a file's name changing after it was
+   * written. A second rotation inside one period gets a `.1` suffix.
+   */
+  naming?: 'sequence' | 'date';
   /**
    * Batch writes until this many bytes are pending. `0` (the default) writes
    * through on every entry, which cannot lose anything but pays a syscall per
@@ -120,11 +131,14 @@ export class FileTransport implements Transport {
   readonly #maxFiles: number;
   readonly #interval?: RotationInterval;
   readonly #utc: boolean;
+  readonly #naming: 'sequence' | 'date';
   readonly #bufferBytes: number;
   readonly #onError?: (error: Error) => void;
   #fd: number | null = null;
   #size = 0;
   #period: string;
+  #previousPeriod = '';
+  #openedAt = new Date();
   #buffer: string[] = [];
   #pending = 0;
   #droppedTotal = 0;
@@ -145,6 +159,7 @@ export class FileTransport implements Transport {
     this.#maxFiles = Math.max(1, options.maxFiles ?? 5);
     this.#interval = options.interval;
     this.#utc = options.utc ?? true;
+    this.#naming = options.naming ?? 'sequence';
     this.#bufferBytes = Math.max(0, options.bufferBytes ?? 0);
     this.#onError = options.onError;
     this.#period = periodKey(this.#interval, this.#utc);
@@ -282,6 +297,7 @@ export class FileTransport implements Transport {
       }
       this.#fd = openSync(this.#path, 'a');
       this.#size = fstatSync(this.#fd).size;
+      this.#openedAt = new Date();
     } catch (error) {
       this.#fd = null;
       // A path that cannot be opened will not start opening on its own, so the
@@ -295,6 +311,7 @@ export class FileTransport implements Transport {
     if (this.#interval) {
       const now = periodKey(this.#interval, this.#utc);
       if (now !== this.#period) {
+        this.#previousPeriod = this.#period;
         this.#period = now;
         this.#rotate();
         return;
@@ -312,6 +329,15 @@ export class FileTransport implements Transport {
       closeSync(this.#fd);
       this.#fd = null;
     }
+    if (this.#naming === 'date') {
+      this.#rotateByDate();
+    } else {
+      this.#rotateBySequence();
+    }
+    this.#open();
+  }
+
+  #rotateBySequence(): void {
     const oldest = `${this.#path}.${this.#maxFiles}`;
     if (existsSync(oldest)) {
       unlinkSync(oldest);
@@ -325,7 +351,54 @@ export class FileTransport implements Transport {
     if (existsSync(this.#path)) {
       renameSync(this.#path, `${this.#path}.1`);
     }
-    this.#open();
+  }
+
+  /**
+   * Named for the period it holds, so a rotated file's name never changes again.
+   * That is the difference from the sequence scheme, where every rotation renames
+   * every previous file and a shipper watching `app.log.1` sees new contents.
+   */
+  #rotateByDate(): void {
+    // `#period` is the bucket now, and the file being closed holds the one before
+    // it; with no interval configured there is no such bucket, so the day is used.
+    const stamp =
+      this.#previousPeriod || periodKey('daily', this.#utc, this.#openedAt);
+    let target = `${this.#path}.${stamp}`;
+    for (let at = 1; existsSync(target); at += 1) {
+      // A second rotation inside one period, which `maxSize` can cause.
+      target = `${this.#path}.${stamp}.${at}`;
+    }
+    if (existsSync(this.#path)) {
+      renameSync(this.#path, target);
+    }
+    this.#prune();
+  }
+
+  /** Keeps the newest `maxFiles` rotated files, by name, and deletes the rest. */
+  #prune(): void {
+    const directory = dirname(this.#path);
+    const prefix = `${basename(this.#path)}.`;
+    let rotated: string[];
+    try {
+      rotated = readdirSync(directory).filter((name) =>
+        name.startsWith(prefix),
+      );
+    } catch {
+      // The directory went away underneath us; the next write reports it.
+      return;
+    }
+    // Lexical order is chronological for an ISO stamp, which is why it is one.
+    rotated.sort();
+    for (const name of rotated.slice(
+      0,
+      Math.max(0, rotated.length - this.#maxFiles),
+    )) {
+      try {
+        unlinkSync(join(directory, name));
+      } catch {
+        // Someone else's to delete, or already gone.
+      }
+    }
   }
 
   #writeAll(data: string): void {
