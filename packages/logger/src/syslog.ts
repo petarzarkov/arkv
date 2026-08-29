@@ -133,6 +133,10 @@ export class SyslogTransport extends BatchTransport {
             (line) => Buffer.byteLength(framed(line)) <= this.#maxMessageBytes,
           );
 
+    // Refusing an oversized message is still losing it, and a silent loss is
+    // what every other transport here is built to avoid.
+    this.discard(rendered.length - lines.length);
+
     if (lines.length === 0) {
       return;
     }

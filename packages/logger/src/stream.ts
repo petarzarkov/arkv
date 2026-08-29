@@ -196,17 +196,28 @@ export class StreamTransport implements Transport {
 
   close(): void {
     this.flush();
+
+    const detach = (): void => {
+      this.#stream.off('drain', this.#onDrain);
+      this.#stream.off('error', this.#onStreamError);
+    };
+
     // One last attempt: the stream may have drained since it refused, and the
     // `drain` listener that would otherwise notice is about to be removed. A
     // refusal means "buffered, slow down", not "rejected", so handing the data
     // over is the right answer whenever there is something to hand it to.
+    let writing = false;
     if (
       !this.#broken &&
       !this.#stream.destroyed &&
       !this.#stream.writableEnded
     ) {
       this.#writable = true;
-      this.#releaseHeld();
+      // The `error` listener has to outlive this write. Removing it first would
+      // leave an asynchronous stream error with nothing listening, and an
+      // unhandled `error` event takes the process down: the one thing this
+      // transport exists not to do.
+      writing = this.#releaseHeld(detach);
     }
     // Whatever is still held has nowhere left to go. Counting it is the whole
     // point of `droppedCount`; abandoning it silently would make `stats()` claim
@@ -224,8 +235,9 @@ export class StreamTransport implements Transport {
       process.off('exit', this.#exitHook);
       this.#exitHook = undefined;
     }
-    this.#stream.off('drain', this.#onDrain);
-    this.#stream.off('error', this.#onStreamError);
+    if (!writing) {
+      detach();
+    }
   }
 
   #push(chunk: string, lines: number): void {
@@ -240,11 +252,13 @@ export class StreamTransport implements Transport {
     this.#writeNow(chunk, lines);
   }
 
-  #writeNow(chunk: string, lines: number): void {
+  #writeNow(chunk: string, lines: number, settled?: () => void): void {
     const announced = this.#unannouncedDrops;
     const payload = announced > 0 ? this.#dropNotice(announced) + chunk : chunk;
     try {
-      const accepted = this.#stream.write(payload);
+      const accepted = settled
+        ? this.#stream.write(payload, settled)
+        : this.#stream.write(payload);
       this.#unannouncedDrops -= announced;
       if (!accepted) {
         // Already buffered by the stream; anything further is held here, where
@@ -254,6 +268,8 @@ export class StreamTransport implements Transport {
     } catch (error) {
       this.#drop(lines);
       this.#report(error);
+      // The stream never took it, so its callback will never run.
+      settled?.();
     }
   }
 
@@ -272,13 +288,14 @@ export class StreamTransport implements Transport {
   }
 
   /** Everything held goes out as one write, since it is all bound for one place. */
-  #releaseHeld(): void {
-    if (this.#held.length === 0) return;
+  #releaseHeld(settled?: () => void): boolean {
+    if (this.#held.length === 0) return false;
     const held = this.#held;
     this.#held = [];
     this.#heldBytes = 0;
     const lines = held.reduce((total, each) => total + each.lines, 0);
-    this.#writeNow(held.map((each) => each.text).join(''), lines);
+    this.#writeNow(held.map((each) => each.text).join(''), lines, settled);
+    return true;
   }
 
   #dropNotice(count: number): string {

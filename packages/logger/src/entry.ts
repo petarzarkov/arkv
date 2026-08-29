@@ -1,3 +1,4 @@
+import { defineField } from './assign.js';
 import { serializeError } from './serialize-error.js';
 import {
   type LogEntry,
@@ -46,13 +47,17 @@ function applySerializers(
       continue;
     }
     try {
-      merged[key] = serialize(merged[key]);
+      defineField(merged, key, serialize(merged[key]));
     } catch (error) {
       // A logging call must not fail because a field was not the shape a
       // serializer expected, and a silent drop would hide that it happened.
-      merged[key] = `[serializer threw: ${
-        error instanceof Error ? error.message : String(error)
-      }]`;
+      defineField(
+        merged,
+        key,
+        `[serializer threw: ${
+          error instanceof Error ? error.message : String(error)
+        }]`,
+      );
     }
   }
 }

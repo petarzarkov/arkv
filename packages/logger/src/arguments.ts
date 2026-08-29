@@ -1,4 +1,5 @@
 import { isPlainObject, safeStringify } from '@arkv/shared';
+import { assignFields } from './assign.js';
 import { findNestedError } from './sanitize.js';
 import { type LogEntry, LogLevel } from './types.js';
 
@@ -97,25 +98,25 @@ export function extractErrorAndExtra(
       if (param.err instanceof Error) {
         error = param.err;
         const { err: _, ...rest } = param;
-        Object.assign(extra, rest);
+        assignFields(extra, rest);
       } else if (param.error instanceof Error) {
         error = param.error;
         const { error: _, ...rest } = param;
-        Object.assign(extra, rest);
+        assignFields(extra, rest);
       } else if (isErrorLevel(level) && typeof param.err === 'string') {
         error = new Error(param.err);
         const { err: _, ...rest } = param;
-        Object.assign(extra, rest);
+        assignFields(extra, rest);
       } else if (isErrorLevel(level) && typeof param.error === 'string') {
         error = new Error(param.error as string);
         const { error: _, ...rest } = param;
-        Object.assign(extra, rest);
+        assignFields(extra, rest);
       } else {
         const foundError = findNestedError(param, maxDepth);
         if (foundError) {
           error = foundError;
         }
-        Object.assign(extra, param);
+        assignFields(extra, param);
       }
     } else if (typeof param === 'object' && param !== null) {
       // An array, Map, Set, Date, typed array or class instance cannot be

@@ -106,6 +106,18 @@ export abstract class BatchTransport implements Transport {
     return this.#retryBaseMs * 2 ** attempt;
   }
 
+  /**
+   * Record entries a subclass discarded inside `deliver`, so they reach
+   * `droppedCount` and the in-band notice like any other loss. A `deliver` that
+   * quietly sends fewer entries than it was handed would otherwise report
+   * success and leave `stats()` claiming nothing was lost.
+   */
+  protected discard(count: number): void {
+    if (count > 0) {
+      this.#drop(count);
+    }
+  }
+
   /** Entries the sink has not accepted yet. */
   get queuedCount(): number {
     return this.#queue.length;

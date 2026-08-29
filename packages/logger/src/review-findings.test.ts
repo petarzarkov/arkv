@@ -34,10 +34,17 @@ describe('a field literally named __proto__', () => {
 
     const entry = sink.last as LogEntry;
     expect(entry.ok).toBe(1);
+    // Logged, not merely "not exploited": a field named `__proto__` is a field.
+    expect(Object.hasOwn(entry, '__proto__')).toBe(true);
+    expect(Object.getOwnPropertyDescriptor(entry, '__proto__')?.value).toEqual({
+      polluted: true,
+    });
+    expect(JSON.stringify(entry)).toContain('__proto__');
+    // And the prototype of nothing has moved.
+    expect(Object.getPrototypeOf(entry)).toBe(Object.prototype);
     expect(
       (Object.prototype as unknown as { polluted?: unknown }).polluted,
     ).toBeUndefined();
-    expect((entry as { polluted?: unknown }).polluted).toBeUndefined();
   });
 
   it('leaves the prototype alone when it arrives through a binding', () => {
@@ -49,7 +56,10 @@ describe('a field literally named __proto__', () => {
 
     logger.info('booted');
 
-    expect(sink.last?.service).toBe('api');
+    const entry = sink.last as LogEntry;
+    expect(entry.service).toBe('api');
+    expect(Object.hasOwn(entry, '__proto__')).toBe(true);
+    expect(Object.getPrototypeOf(entry)).toBe(Object.prototype);
     expect(
       (Object.prototype as unknown as { polluted?: unknown }).polluted,
     ).toBeUndefined();
@@ -108,6 +118,22 @@ describe('StreamTransport close', () => {
 });
 
 describe('SyslogTransport', () => {
+  it('counts an oversized message as dropped rather than losing it quietly', async () => {
+    const transport = new SyslogTransport({
+      port: 1,
+      flushIntervalMs: 0,
+      maxMessageBytes: 480,
+    });
+
+    transport.write({ message: 'x'.repeat(4000) }, LogLevel.INFO);
+    await transport.flushAsync();
+
+    // Refusing to send it is still losing it, and `stats()` has to say so.
+    expect(transport.droppedCount).toBe(1);
+    expect(transport.stats().dropped).toBe(1);
+    transport.close();
+  });
+
   it('keeps an epoch timestamp rather than relabelling with the ship time', () => {
     const transport = new SyslogTransport({ flushIntervalMs: 0 });
     const at = Date.UTC(2026, 7, 29, 6, 50, 27);

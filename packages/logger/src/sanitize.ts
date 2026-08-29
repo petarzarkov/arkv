@@ -1,4 +1,5 @@
 import { safeEntries } from '@arkv/shared';
+import { defineField } from './assign.js';
 import type { LogEntry } from './types.js';
 
 export interface SanitizeOptions {
@@ -173,12 +174,16 @@ function sanitizeObject(
       continue;
     }
     if (value === null) {
-      cleaned[key] = null;
+      defineField(cleaned, key, null);
       continue;
     }
-    cleaned[key] = shouldMask(key, options)
-      ? MASKED
-      : makeSafeForJson(value, options, visited, depth + 1);
+    defineField(
+      cleaned,
+      key,
+      shouldMask(key, options)
+        ? MASKED
+        : makeSafeForJson(value, options, visited, depth + 1),
+    );
   }
   return cleaned;
 }
