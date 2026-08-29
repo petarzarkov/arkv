@@ -288,7 +288,72 @@ describe('a key is caller data too', () => {
       LogLevel.INFO,
     );
 
-    expect(line.split('\n')).toHaveLength(1);
+    // `split('\n')` alone cannot see a raw carriage return, and a terminal
+    // treats one as a line break all the same.
+    expect(line).not.toMatch(/[\n\r]/);
+    expect(line).toContain('\\r');
+  });
+});
+
+describe('every field meets the same boundary', () => {
+  // The message was escaped, then keys and values, then the timestamp. Each was
+  // the same bug in a field the previous fix had not thought of, which is why
+  // the escaping moved to one place per format.
+  const breaks = ['\n', '\r'];
+
+  for (const which of breaks) {
+    const label = which === '\n' ? 'a newline' : 'a carriage return';
+
+    it(`cannot start a line from a timestamp holding ${label}`, () => {
+      const forged = `bad${which}level=error msg=forged`;
+      expect(text(entry({ timestamp: forged }))).not.toMatch(/[\n\r]/);
+    });
+
+    it(`cannot start one from an ISO-prefixed timestamp holding ${label}`, () => {
+      // Matches the ISO shape at the front and carries a break behind it.
+      const forged = `2026-08-29T09:00:15${which}level=error`;
+      expect(text(entry({ timestamp: forged }))).not.toMatch(/[\n\r]/);
+    });
+
+    it(`cannot start one from a message holding ${label}`, () => {
+      expect(text(entry({ message: `ok${which}level=error` }))).not.toMatch(
+        /[\n\r]/,
+      );
+    });
+
+    it(`cannot start one from a field name holding ${label}`, () => {
+      expect(text(entry({ [`k${which}level=error`]: 1 }))).not.toMatch(
+        /[\n\r]/,
+      );
+    });
+
+    it(`cannot start a logfmt line from any of them holding ${label}`, () => {
+      const line = logfmtFormat(
+        entry({
+          timestamp: `bad${which}x`,
+          message: `ok${which}y`,
+          [`k${which}z`]: `v${which}w`,
+        }),
+        LogLevel.INFO,
+      );
+      expect(line).not.toMatch(/[\n\r]/);
+    });
+  }
+
+  it('still renders the error block it writes itself', () => {
+    const line = text(
+      entry({
+        error: {
+          name: 'Error',
+          message: 'boom',
+          stack: 'Error: boom,at a (/a:1:1)',
+        },
+      }),
+      LogLevel.ERROR,
+    );
+
+    // Ours, not the caller's, so it keeps its lines.
+    expect(line.split('\n')).toHaveLength(3);
   });
 });
 

@@ -99,8 +99,7 @@ export const textFormat: LogFormatter = (entry, level) => {
   // Through `scalar`, not `String`: the entry builder always writes a string
   // here, but `LogEntry` does not promise one and a hand-built entry can hold
   // anything. `String({})` would render `[object Object]`.
-  const message =
-    entry.message === undefined ? '' : oneLine(scalar(entry.message));
+  const message = entry.message === undefined ? '' : scalar(entry.message);
   parts.push(colored ? bold(message) : message);
 
   const pairs: string[] = [];
@@ -108,13 +107,23 @@ export const textFormat: LogFormatter = (entry, level) => {
     if (HEADER_KEYS.has(key)) {
       continue;
     }
-    // The key is caller data too: `{ 'note\nlevel=error': 1 }` is a legal object
-    // and forges a record exactly as a value would.
-    const rendered = `${oneLine(key)}=${oneLine(scalar(entry[key]))}`;
+    const rendered = `${key}=${scalar(entry[key])}`;
     pairs.push(colored ? dim(rendered) : rendered);
   }
 
-  let line = `${parts.join(' ')}${pairs.length > 0 ? `  ${pairs.join(' ')}` : ''}`;
+  /**
+   * Escaped once, here, rather than field by field.
+   *
+   * The message was escaped, then keys and values had to be, then the timestamp:
+   * three rounds of the same forging bug, each in a field the previous fix had
+   * not thought of. Every part of the line meets `oneLine` at one place now, so a
+   * field added later cannot reintroduce it. The error block is appended after,
+   * because its line breaks are this formatter's own structure rather than
+   * anything a caller supplied.
+   */
+  let line = oneLine(
+    `${parts.join(' ')}${pairs.length > 0 ? `  ${pairs.join(' ')}` : ''}`,
+  );
 
   const error = entry.error as SerializedShape | undefined;
   if (error) {
@@ -187,7 +196,10 @@ const quote = (value: string): string =>
     .replaceAll('\n', '\\n')
     .replaceAll('\r', '\\r')}"`;
 
-/** The same guarantee for the format that is not quoted at all. */
+/**
+ * The one guarantee both formats owe: nothing a caller supplied starts a new line.
+ * Applied at each formatter's output boundary rather than per field.
+ */
 const oneLine = (value: string): string =>
   value.includes('\n') || value.includes('\r')
     ? value.replaceAll('\n', '\\n').replaceAll('\r', '\\r')
@@ -206,14 +218,12 @@ function flatten(
     const keys = Object.keys(value);
     if (keys.length > 0) {
       for (const nested of keys) {
-        flatten(into, `${key}.${oneLine(nested)}`, value[nested], depth + 1);
+        flatten(into, `${key}.${nested}`, value[nested], depth + 1);
       }
       return;
     }
   }
-  // `token` quotes and escapes the value; the key gets the same line-break
-  // treatment, since an object key can hold one just as freely.
-  into.push(`${token(oneLine(key))}=${token(scalar(value))}`);
+  into.push(`${token(key)}=${token(scalar(value))}`);
 }
 
 /**
@@ -250,5 +260,7 @@ export const logfmtFormat: LogFormatter = (entry) => {
     }
     flatten(pairs, key, entry[key], 0);
   }
-  return pairs.join(' ');
+  // The same single boundary as `textFormat`. `token` escapes what it quotes, and
+  // this catches anything that reached the line unquoted, a key included.
+  return oneLine(pairs.join(' '));
 };
