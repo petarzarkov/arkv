@@ -13,8 +13,15 @@ import { Logger } from './src/logger.js';
 import { prepareSanitizeOptions, sanitizePrepared } from './src/sanitize.js';
 import { createLogEntry } from './src/entry.js';
 import { serializeError } from './src/serialize-error.js';
+import { logfmtFormat, textFormat } from './src/text.js';
+import { prettyFormat } from './src/format.js';
 import { DEFAULT_MASK_FIELDS, LogLevel, type LogEntry } from './src/types.js';
 import type { Transport } from './src/types.js';
+
+// `isColorSupported()` reads the environment and stdout's TTY status, so without
+// this the formatter numbers depend on where the benchmark was run from. Off is
+// also the production path: nothing in a container renders escapes.
+process.env.NO_COLOR = '1';
 
 const N = 200_000;
 
@@ -127,6 +134,18 @@ bench('Logger.error with an error', N, () => {
   withError.error('checkout failed', wrapped);
 });
 
+bench('textFormat', N, () => {
+  textFormat(assembled, LogLevel.INFO);
+});
+
+bench('logfmtFormat', N, () => {
+  logfmtFormat(assembled, LogLevel.INFO);
+});
+
+bench('prettyFormat', N, () => {
+  prettyFormat(assembled, LogLevel.INFO);
+});
+
 const widest = results.reduce(
   (longest, each) => Math.max(longest, each.label.length),
   0,
@@ -152,5 +171,10 @@ for (const { label, ns } of results) {
   );
 }
 console.log(
-  '\nShare is of one `Logger.info` into a sink that discards, which is the\nfloor a transport is measured against.\n',
+  '\nShare is of one `Logger.info` into a sink that discards, which is the\n' +
+    'floor a transport is measured against.\n' +
+    '\nThe formatters run with colour off, because this is not a terminal. That\n' +
+    'is also the production path: `prettyFormat` falls back to plain JSON when\n' +
+    'nothing can render the escapes, so what it costs here is what it costs\n' +
+    'in a container.\n',
 );
