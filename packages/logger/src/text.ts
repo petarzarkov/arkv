@@ -5,15 +5,13 @@ import { type LogEntry, type LogFormatter } from './types.js';
 /**
  * Fields the line renders in its own positions, so they are not repeated among
  * the trailing pairs.
+ *
+ * `pid` and `appId` are deliberately not here. They were, and since nothing
+ * rendered them in a position either, the text output simply dropped both. They
+ * trail as ordinary pairs instead: no information lost, and no header layout
+ * invented to hold them.
  */
-const HEADER_KEYS = new Set([
-  'level',
-  'timestamp',
-  'pid',
-  'message',
-  'error',
-  'appId',
-]);
+const HEADER_KEYS = new Set(['level', 'timestamp', 'message', 'error']);
 
 /** How deep `logfmtFormat` flattens before giving up and encoding the rest. */
 const MAX_FLATTEN_DEPTH = 4;
@@ -22,14 +20,26 @@ const MAX_FLATTEN_DEPTH = 4;
  * `09:00:15.123` out of an ISO string, or out of the epoch milliseconds that
  * `timestamp: 'epoch'` writes. Anything else is rendered as it stands.
  */
+const ISO_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+
+/** The widest instant a `Date` can hold. Past it `toISOString` throws. */
+const MAX_EPOCH_MS = 8.64e15;
+
 function clockTime(value: unknown): string {
-  if (typeof value === 'number' && Number.isFinite(value)) {
+  if (typeof value === 'number') {
+    // `new Date(1e20).toISOString()` is a `RangeError`, and a formatter that
+    // throws takes the log call down with it.
+    if (!Number.isFinite(value) || Math.abs(value) > MAX_EPOCH_MS) {
+      return String(value);
+    }
     return new Date(value).toISOString().slice(11, 23);
   }
-  if (typeof value === 'string' && value.length >= 23) {
-    return value.slice(11, 23);
+  if (typeof value === 'string') {
+    // Sliced only when it is the shape the slice assumes; anything else would
+    // come out as a meaningless window into the middle of the string.
+    return ISO_SHAPE.test(value) ? value.slice(11, 23) : value;
   }
-  return typeof value === 'string' ? value : '';
+  return '';
 }
 
 /** A value as one token. An object becomes JSON, which is the cheap rendering. */
@@ -80,7 +90,8 @@ export const textFormat: LogFormatter = (entry, level) => {
   // Through `scalar`, not `String`: the entry builder always writes a string
   // here, but `LogEntry` does not promise one and a hand-built entry can hold
   // anything. `String({})` would render `[object Object]`.
-  const message = entry.message === undefined ? '' : scalar(entry.message);
+  const message =
+    entry.message === undefined ? '' : oneLine(scalar(entry.message));
   parts.push(colored ? bold(message) : message);
 
   const pairs: string[] = [];
@@ -88,7 +99,7 @@ export const textFormat: LogFormatter = (entry, level) => {
     if (HEADER_KEYS.has(key)) {
       continue;
     }
-    const rendered = `${key}=${scalar(entry[key])}`;
+    const rendered = `${key}=${oneLine(scalar(entry[key]))}`;
     pairs.push(colored ? dim(rendered) : rendered);
   }
 
@@ -150,8 +161,26 @@ function renderError(
 const needsQuoting = (value: string): boolean =>
   value === '' || /[\s"=]/.test(value);
 
+/**
+ * Backslashes first, then quotes, then the line breaks.
+ *
+ * A raw newline inside a quoted value still ends the physical line, so a message
+ * of `ok\nlevel=error msg=forged` produced two records and the second parsed as a
+ * genuine one. That is log forging, and it is reachable from any string a caller
+ * logs. One entry is one line, always.
+ */
 const quote = (value: string): string =>
-  `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
+  `"${value
+    .replaceAll('\\', '\\\\')
+    .replaceAll('"', '\\"')
+    .replaceAll('\n', '\\n')
+    .replaceAll('\r', '\\r')}"`;
+
+/** The same guarantee for the format that is not quoted at all. */
+const oneLine = (value: string): string =>
+  value.includes('\n') || value.includes('\r')
+    ? value.replaceAll('\n', '\\n').replaceAll('\r', '\\r')
+    : value;
 
 const token = (value: string): string =>
   needsQuoting(value) ? quote(value) : value;

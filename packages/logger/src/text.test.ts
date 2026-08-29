@@ -212,3 +212,58 @@ describe('through a Logger', () => {
     expect(lines[0]).toContain('password=[MASKED]');
   });
 });
+
+describe('one entry is one line', () => {
+  it('escapes the line breaks that would forge a second logfmt record', () => {
+    const forged = logfmtFormat(
+      entry({ message: 'ok\nlevel=error msg="admin deleted everything"' }),
+      LogLevel.INFO,
+    );
+
+    // A raw newline inside a quoted value still ends the physical line, and the
+    // remainder parses as a genuine record of its own.
+    expect(forged.split('\n')).toHaveLength(1);
+    expect(forged).toContain('\\n');
+    expect(forged).not.toMatch(/\n/);
+  });
+
+  it('escapes a carriage return too, which ends a line on its own', () => {
+    const line = logfmtFormat(entry({ note: 'a\rb' }), LogLevel.INFO);
+
+    expect(line.split('\n')).toHaveLength(1);
+    expect(line).toContain('\\r');
+  });
+
+  it('keeps a text line to one line, error block aside', () => {
+    const line = text(entry({ message: 'ok\nfake line', note: 'a\nb' }));
+
+    expect(line.split('\n')).toHaveLength(1);
+    expect(line).toContain('\\n');
+  });
+});
+
+describe('fields the header does not render', () => {
+  it('trails pid and appId rather than dropping them', () => {
+    const line = text(entry({ appId: 'api-1.0.0-prod' }));
+
+    expect(line).toContain('pid=4242');
+    expect(line).toContain('appId=api-1.0.0-prod');
+  });
+});
+
+describe('a timestamp that is not what it claims', () => {
+  it('does not throw on an epoch outside the Date range', () => {
+    // `new Date(1e20).toISOString()` is a RangeError, and a formatter that
+    // throws takes the log call with it.
+    expect(() => text(entry({ timestamp: 1e20 }))).not.toThrow();
+    expect(() => text(entry({ timestamp: Number.NaN }))).not.toThrow();
+    expect(() => text(entry({ timestamp: Infinity }))).not.toThrow();
+  });
+
+  it('leaves a string that is not an ISO timestamp alone', () => {
+    // Slicing 11..23 of this would produce a meaningless window into it.
+    const line = text(entry({ timestamp: 'not-a-timestamp-but-long-enough' }));
+
+    expect(line).toContain('not-a-timestamp-but-long-enough');
+  });
+});

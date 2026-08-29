@@ -18,6 +18,11 @@ import { prettyFormat } from './src/format.js';
 import { DEFAULT_MASK_FIELDS, LogLevel, type LogEntry } from './src/types.js';
 import type { Transport } from './src/types.js';
 
+// `isColorSupported()` reads the environment and stdout's TTY status, so without
+// this the formatter numbers depend on where the benchmark was run from. Off is
+// also the production path: nothing in a container renders escapes.
+process.env.NO_COLOR = '1';
+
 const N = 200_000;
 
 class NullTransport implements Transport {

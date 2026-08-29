@@ -387,8 +387,8 @@ Four formatters ship, and every transport takes one as `format`:
 | --- | --- | ---: |
 | `jsonFormat` | `{"level":"info","message":"order placed",…}` | 272 |
 | `prettyFormat` | the same JSON, ANSI-coloured for a terminal | 238 |
-| `textFormat` | `09:00:15.123 INFO  order placed  requestId=r-1` | 568 |
-| `logfmtFormat` | `level=info time=… msg="order placed" order.id=ord_1` | 815 |
+| `textFormat` | `09:00:15.123 INFO  order placed  requestId=r-1` | 661 |
+| `logfmtFormat` | `level=info time=… msg="order placed" order.id=ord_1` | 826 |
 
 ```typescript
 import { ConsoleTransport, Logger, textFormat, logfmtFormat } from '@arkv/logger';
@@ -410,6 +410,11 @@ trail as `key=value`, and an error follows on its own lines with its frames and 
 being told a schema. logfmt is flat, so a nested object becomes dotted keys,
 `order.id=ord_1` rather than an encoded blob, down to four levels. Values are quoted
 when they hold whitespace, a quote or an equals sign. It is never coloured.
+
+**One entry is always one line.** A newline inside a value is escaped rather than
+written, in both text and logfmt. A raw one ends the physical line, so a message of
+`ok\nlevel=error msg=forged` would produce a second record that parses as genuine,
+and any string a caller logs can carry one.
 
 **`util.inspect` is not one of the options, and that is a measurement rather than a
 preference.** It renders objects beautifully and costs 7.4 microseconds against
