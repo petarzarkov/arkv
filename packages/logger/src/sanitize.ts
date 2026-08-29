@@ -7,8 +7,8 @@ export interface SanitizeOptions {
   maxDepth: number;
 }
 
-/** `SanitizeOptions` with the mask list already lowercased. Internal. */
-interface ResolvedOptions extends SanitizeOptions {
+/** `SanitizeOptions` with the mask list already lowercased. */
+export interface PreparedSanitizeOptions extends SanitizeOptions {
   readonly lowerMaskFields: readonly string[];
 }
 
@@ -27,6 +27,8 @@ export const DEFAULT_MAX_DEPTH = 32;
  * Recomputed per `sanitizeLogEntry` call rather than cached against the array,
  * because `maskFields` is public input: a caller that mutates its array between
  * calls would otherwise keep matching against the list it passed the first time.
+ * A caller that owns its list privately calls `prepareSanitizeOptions` once
+ * instead, which is what `Logger` does.
  */
 const loweredMasks = (maskFields: string[]): string[] =>
   maskFields.map((field) => field.toLowerCase());
@@ -83,7 +85,7 @@ function sanitizeFormData(form: FormData): LogEntry | string {
  */
 function sanitizeMap(
   map: ReadonlyMap<unknown, unknown>,
-  options: ResolvedOptions,
+  options: PreparedSanitizeOptions,
   visited: WeakSet<object>,
   depth: number,
 ): LogEntry {
@@ -107,7 +109,7 @@ function sanitizeMap(
 
 function sanitizeArray(
   array: unknown[],
-  options: ResolvedOptions,
+  options: PreparedSanitizeOptions,
   visited: WeakSet<object>,
   depth: number,
 ): unknown[] {
@@ -124,7 +126,7 @@ function sanitizeArray(
 
 function sanitizeObject(
   obj: Record<string, unknown>,
-  options: ResolvedOptions,
+  options: PreparedSanitizeOptions,
   visited: WeakSet<object>,
   depth: number,
 ): LogEntry {
@@ -150,7 +152,7 @@ function sanitizeObject(
 
 function makeSafeForJson(
   value: unknown,
-  options: ResolvedOptions,
+  options: PreparedSanitizeOptions,
   visited: WeakSet<object>,
   depth: number,
 ): unknown {
@@ -259,15 +261,35 @@ function makeSafeForJson(
   }
 }
 
+/**
+ * Lowercases the mask list once, for a caller that holds its options across many
+ * entries.
+ *
+ * `Logger` prepares in its constructor: its `maskFields` copy is private and no
+ * caller can reach it, so the mutation hazard that makes `sanitizeLogEntry`
+ * re-lower on every call does not apply. That call was an array allocation plus
+ * one `toLowerCase()` per mask field on every line logged.
+ */
+export const prepareSanitizeOptions = (
+  options: SanitizeOptions,
+): PreparedSanitizeOptions => ({
+  ...options,
+  lowerMaskFields: loweredMasks(options.maskFields),
+});
+
+/** `sanitizeLogEntry` for a caller that already prepared its options. */
+export function sanitizePrepared(
+  obj: LogEntry,
+  options: PreparedSanitizeOptions,
+): LogEntry {
+  return sanitizeObject(obj, options, new WeakSet<object>([obj]), 0);
+}
+
 export function sanitizeLogEntry(
   obj: LogEntry,
   options: SanitizeOptions,
 ): LogEntry {
-  const resolved: ResolvedOptions = {
-    ...options,
-    lowerMaskFields: loweredMasks(options.maskFields),
-  };
-  return sanitizeObject(obj, resolved, new WeakSet<object>([obj]), 0);
+  return sanitizePrepared(obj, prepareSanitizeOptions(options));
 }
 
 function searchForError(

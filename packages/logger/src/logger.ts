@@ -10,7 +10,9 @@ import { jsonFormat, prettyFormat } from './format.js';
 import {
   DEFAULT_MAX_DEPTH,
   findNestedError,
-  sanitizeLogEntry,
+  type PreparedSanitizeOptions,
+  prepareSanitizeOptions,
+  sanitizePrepared,
 } from './sanitize.js';
 import { ConsoleTransport } from './transport.js';
 import {
@@ -22,12 +24,47 @@ import {
   type Transport,
 } from './types.js';
 
+/**
+ * Built once. `LOG_LEVELS.indexOf(level)` was a linear scan run once per entry
+ * plus once per transport per entry, to answer a question with six possible
+ * inputs.
+ */
+const LEVEL_INDEX = Object.freeze(
+  Object.fromEntries(LOG_LEVELS.map((level, at) => [level, at])),
+) as Readonly<Record<LogLevel, number>>;
+
 function levelIndex(level: LogLevel): number {
-  return LOG_LEVELS.indexOf(level);
+  return LEVEL_INDEX[level];
+}
+
+/**
+ * The level, and the comparisons derived from it, shared by reference between a
+ * logger and the children it made.
+ *
+ * Shared rather than copied because the point of `setLevel` is to turn debug on
+ * in a running process, and a fix that reached the root logger but not the twenty
+ * children holding its transports would not be one. It is the same sharing
+ * `child()` already does with the transports themselves.
+ */
+interface LevelGate {
+  level: LogLevel;
+  /** The cheapest gate: the lowest threshold any transport will accept. */
+  min: number;
+  /** One threshold per transport, positionally. */
+  thresholds: number[];
+}
+
+function retune(gate: LevelGate, transports: readonly Transport[]): void {
+  gate.thresholds = transports.map((transport) =>
+    levelIndex(transport.level ?? gate.level),
+  );
+  gate.min =
+    gate.thresholds.length === 0
+      ? Number.POSITIVE_INFINITY
+      : Math.min(...gate.thresholds);
 }
 
 export class Logger {
-  public readonly logLevel: LogLevel;
   readonly #config: LoggerConfig;
   readonly #maskFields: string[];
   readonly #maxArrayLength: number;
@@ -39,14 +76,14 @@ export class Logger {
   readonly #appEnv?: string;
   readonly #bindings?: Record<string, unknown>;
   readonly #transports: Transport[];
-  readonly #minLevelIdx: number;
+  readonly #sanitizeOptions: PreparedSanitizeOptions;
+  #gate: LevelGate;
   readonly #onTransportError?: (error: Error, transport: Transport) => void;
   #reportedTransportFailure = false;
 
   constructor(config?: LoggerConfig, context?: ContextSource) {
     const cfg = config ?? {};
     this.#config = cfg;
-    this.logLevel = cfg.level ?? LogLevel.DEBUG;
     const isDevelopment =
       cfg.isDevelopment ?? process.env.NODE_ENV !== 'production';
     this.#maskFields =
@@ -68,15 +105,37 @@ export class Logger {
       }),
     ];
     // A transport with its own level is independent of the logger's; one
-    // without inherits it. The cheapest gate is the lowest of them all.
-    this.#minLevelIdx =
-      this.#transports.length === 0
-        ? Number.POSITIVE_INFINITY
-        : Math.min(
-            ...this.#transports.map((t) =>
-              levelIndex(t.level ?? this.logLevel),
-            ),
-          );
+    // without inherits it. Both comparisons are precomputed here rather than
+    // recomputed per entry.
+    this.#gate = {
+      level: cfg.level ?? LogLevel.DEBUG,
+      min: Number.POSITIVE_INFINITY,
+      thresholds: [],
+    };
+    retune(this.#gate, this.#transports);
+    this.#sanitizeOptions = prepareSanitizeOptions({
+      maskFields: this.#maskFields,
+      maxArrayLength: this.#maxArrayLength,
+      maxDepth: this.#maxDepth,
+    });
+  }
+
+  get logLevel(): LogLevel {
+    return this.#gate.level;
+  }
+
+  /**
+   * Change the level of this logger and every child it made, without rebuilding
+   * anything. What a SIGUSR2 handler or an admin endpoint calls to turn debug on
+   * against a running process.
+   *
+   * A transport that named its own `level` keeps it: that is what makes
+   * `transports: [console, file]` able to send debug to one and warnings to the
+   * other, and a global switch that overrode it would defeat the arrangement.
+   */
+  setLevel(level: LogLevel): void {
+    this.#gate.level = level;
+    retune(this.#gate, this.#transports);
   }
 
   get appId(): string | undefined {
@@ -99,7 +158,7 @@ export class Logger {
    * parent too — close the root logger, not a child.
    */
   child(bindings: Record<string, unknown>): Logger {
-    return new Logger(
+    const child = new Logger(
       {
         ...this.#config,
         bindings: { ...this.#bindings, ...bindings },
@@ -107,6 +166,10 @@ export class Logger {
       },
       this.#context,
     );
+    // The gate is adopted rather than rebuilt, so `setLevel` on either one moves
+    // both. Private field access across instances of the same class is legal.
+    child.#gate = this.#gate;
+    return child;
   }
 
   /** Push every transport's buffer to its destination. Synchronous. */
@@ -214,7 +277,8 @@ export class Logger {
     message: string | Record<string, unknown> | Error,
     optionalParams: unknown[],
   ): void {
-    if (levelIndex(level) < this.#minLevelIdx) {
+    const idx = LEVEL_INDEX[level];
+    if (idx < this.#gate.min) {
       return;
     }
 
@@ -248,15 +312,12 @@ export class Logger {
       appId: this.appId,
     });
 
-    const sanitizedLogEntry = sanitizeLogEntry(logEntry, {
-      maskFields: this.#maskFields,
-      maxArrayLength: this.#maxArrayLength,
-      maxDepth: this.#maxDepth,
-    });
+    const sanitizedLogEntry = sanitizePrepared(logEntry, this.#sanitizeOptions);
 
-    const idx = levelIndex(level);
-    for (const transport of this.#transports) {
-      if (idx < levelIndex(transport.level ?? this.logLevel)) {
+    const { thresholds } = this.#gate;
+    for (let at = 0; at < this.#transports.length; at += 1) {
+      const transport = this.#transports[at] as Transport;
+      if (idx < (thresholds[at] as number)) {
         continue;
       }
       try {
