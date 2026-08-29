@@ -1,3 +1,4 @@
+import { serializeError } from './serialize-error.js';
 import {
   type LogEntry,
   type LogLevel,
@@ -6,6 +7,13 @@ import {
 } from './types.js';
 
 export const PID = process.pid;
+
+/**
+ * Built once. This was a `new Set(RESERVED_ENTRY_KEYS)` plus two `delete` calls
+ * per entry, which is an allocation on the hot path to express two conditions the
+ * loop below can ask directly.
+ */
+const RESERVED = new Set<string>(RESERVED_ENTRY_KEYS);
 
 export interface EntryParts {
   level: LogLevel;
@@ -39,16 +47,12 @@ export function createLogEntry(parts: EntryParts): LogEntry {
     ...parts.invalidMessageInfo,
   };
 
-  const reserved = new Set<string>(RESERVED_ENTRY_KEYS);
-  if (!appId) {
-    reserved.delete('appId');
-  }
-  if (!error) {
-    reserved.delete('error');
-  }
-
   const conflicts: LogEntry = {};
-  for (const key of reserved) {
+  for (const key of RESERVED) {
+    // Neither is a reserved name when the entry is not going to write it.
+    if ((key === 'appId' && !appId) || (key === 'error' && !error)) {
+      continue;
+    }
     if (!(key in merged)) {
       continue;
     }
@@ -70,11 +74,7 @@ export function createLogEntry(parts: EntryParts): LogEntry {
   };
 
   if (error) {
-    logEntry.error = {
-      name: error.name,
-      message: error.message,
-      stack: error.stack?.replace(/\n(\s+)?/g, ','),
-    };
+    logEntry.error = serializeError(error);
   }
 
   if (Object.keys(conflicts).length > 0) {
