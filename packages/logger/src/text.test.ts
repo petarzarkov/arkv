@@ -378,6 +378,22 @@ describe('the error block is caller data too', () => {
   const frames = (line: string): string[] =>
     line.split('\n').filter((each) => each.trim().startsWith('at '));
 
+  /**
+   * Every case in this matrix asserts through here rather than through
+   * `split('\n')` alone, which cannot see a carriage return at all: a regression
+   * emitting a raw one would pass every line-count assertion in the file. That
+   * weakness was found once in the nested-key test and then written again here,
+   * so it lives in one helper now.
+   *
+   * A raw `\n` cannot be asserted away in this block, because the separators
+   * between the head, the frames and the cause are the formatter's own. The line
+   * count is what pins those down, and each case checks it.
+   */
+  const escapedNotRaw = (line: string, which: string): void => {
+    expect(line).not.toContain('\r');
+    expect(line).toContain(which === '\n' ? '\\n' : '\\r');
+  };
+
   for (const which of ['\n', '\r']) {
     const label = which === '\n' ? 'a newline' : 'a carriage return';
 
@@ -395,7 +411,7 @@ describe('the error block is caller data too', () => {
 
       // Head, one frame, and the record itself. Nothing else.
       expect(line.split('\n')).toHaveLength(3);
-      expect(line).toContain(which === '\n' ? '\\n' : '\\r');
+      escapedNotRaw(line, which);
     });
 
     it(`cannot forge one through an error name holding ${label}`, () => {
@@ -405,6 +421,7 @@ describe('the error block is caller data too', () => {
       );
 
       expect(line.split('\n')).toHaveLength(2);
+      escapedNotRaw(line, which);
     });
 
     it(`cannot forge one through a stack frame holding ${label}`, () => {
@@ -421,6 +438,7 @@ describe('the error block is caller data too', () => {
 
       expect(frames(line)).toHaveLength(1);
       expect(line.split('\n')).toHaveLength(3);
+      escapedNotRaw(line, which);
     });
 
     it(`cannot forge one through a scalar cause holding ${label}`, () => {
@@ -436,6 +454,7 @@ describe('the error block is caller data too', () => {
       );
 
       expect(line.split('\n')).toHaveLength(3);
+      escapedNotRaw(line, which);
     });
 
     it(`cannot forge one through a nested cause holding ${label}`, () => {
@@ -451,6 +470,7 @@ describe('the error block is caller data too', () => {
       );
 
       expect(line.split('\n')).toHaveLength(3);
+      escapedNotRaw(line, which);
     });
   }
 });
