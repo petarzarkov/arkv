@@ -56,9 +56,10 @@ const DEFAULT_MAX_BUFFER_BYTES = 1_048_576;
  * **Batching buys syscalls, not throughput.** Measured on Bun 1.3.14 and Node
  * v24.18.0, batching 100 entries per turn cuts `write(2)` from 1.000 per entry to
  * 0.010, worth 5.4x on the write path alone. End to end through `Logger` it is
- * 1.00x, because the write is 4 to 9 percent of a log call and entry assembly plus
- * sanitization is 73 to 93 percent. Turn it on for the syscall economy and to bound
- * what a full pipe does, not expecting faster logging.
+ * 1.00x, because the sink is a small share of a log call and entry assembly plus
+ * sanitization is most of it. Turn it on for the syscall economy and to bound what
+ * a full pipe does, not expecting faster logging. `bench.ts` is what keeps that
+ * split honest; the shares move whenever the hot path does.
  *
  * **Backpressure is observed.** `Writable.write` returning `false` means the sink
  * is behind, and the data is already sitting in the stream's own buffer. Writing

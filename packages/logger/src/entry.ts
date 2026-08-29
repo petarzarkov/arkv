@@ -68,12 +68,21 @@ function applySerializers(
 export function createLogEntry(parts: EntryParts): LogEntry {
   const { level, message, error, appId } = parts;
 
-  const merged: LogEntry = {
-    ...parts.bindings,
-    ...parts.context,
-    ...parts.extra,
-    ...parts.invalidMessageInfo,
-  };
+  /**
+   * `Object.assign` rather than a four-source spread. Spreading counts a source
+   * even when it is `undefined`, and three of these usually are: most loggers have
+   * no bindings and most calls produce no `invalidMessageInfo`. `Object.assign`
+   * skips a nullish source outright, so the common entry pays for the two that
+   * exist instead of the four that were written down.
+   */
+  const merged: LogEntry = {};
+  Object.assign(
+    merged,
+    parts.bindings,
+    parts.context,
+    parts.extra,
+    parts.invalidMessageInfo,
+  );
 
   if (parts.serializers) {
     applySerializers(merged, parts.serializers);
