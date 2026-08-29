@@ -68,6 +68,31 @@ export interface LoggerConfig {
   /** Static fields merged into every entry. See `Logger#child`. */
   bindings?: Record<string, unknown>;
   /**
+   * Rewrites one top-level field before the entry is sanitized, keyed by its name.
+   *
+   * `{ req: (value) => ({ method: value.method, url: value.url }) }` is how a
+   * request object becomes three fields instead of a walk of the whole thing.
+   * Cheaper and far more controllable than letting the generic sanitizer descend
+   * into it, and the only way to say "log this shape, not everything on it".
+   *
+   * A serializer that throws is caught: a logging call must not fail because a
+   * field was not the shape it expected.
+   *
+   * **The reserved names cannot be serialized**, because the entry writes them
+   * itself after this runs: `level`, `timestamp`, `pid`, `message`, `appId` and
+   * `error`. A serializer keyed on any of them has no effect. That last one
+   * catches people arriving from pino, where `serializers: { err }` is the usual
+   * first configuration; here an error is rendered by `serializeError`, which
+   * already carries the cause chain and the error's own properties.
+   */
+  serializers?: Record<string, (value: unknown) => unknown>;
+  /**
+   * `iso` (the default) writes `2026-08-29T06:50:27.000Z`. `epoch` writes
+   * milliseconds as a number, which some ingesters prefer and which costs no
+   * `Date` allocation per entry.
+   */
+  timestamp?: 'iso' | 'epoch';
+  /**
    * Called when a transport's `write`/`flush`/`close` throws. A throwing
    * transport never propagates into the caller's code path; without this hook
    * the first failure per logger is reported on `console.error` and the rest
@@ -82,13 +107,31 @@ export type LogEntry = Record<string, unknown> & {
 
 export type LogFormatter = (entry: LogEntry, level: LogLevel) => string;
 
+/** What a transport is holding and what it has lost, for a health endpoint. */
+export interface TransportStats {
+  /** The transport's class name, so a report can say which one is unhappy. */
+  readonly name: string;
+  /** Entries discarded. Anything above zero is worth an alert. */
+  readonly dropped: number;
+  /** Entries or bytes waiting to be sent. */
+  readonly queued: number;
+  /** Write, send or open failures since construction. */
+  readonly errors: number;
+}
+
 /**
  * A sink for sanitized log entries.
  *
- * Every method is synchronous on purpose. `process.on('exit')` cannot await, so
- * a transport whose flush is async cannot guarantee its buffer reaches the disk
- * when the process ends — which is the one guarantee a file transport exists to
- * provide. See `FileTransport`.
+ * `write`, `flush` and `close` are synchronous on purpose. `process.on('exit')`
+ * cannot await, so a transport whose only flush is async cannot guarantee its
+ * buffer reaches the disk when the process ends — which is the one guarantee a
+ * file transport exists to provide. See `FileTransport`.
+ *
+ * A network sink cannot honour that, and pretending otherwise is worse than
+ * saying so. `flushAsync` and `closeAsync` are the half a graceful shutdown
+ * awaits, where there is still an event loop to await on; the synchronous pair
+ * stays what `process.on('exit')` calls, best-effort. A transport implements
+ * whichever it can honour, and `Logger` prefers the async one when it is there.
  */
 export interface Transport {
   /**
@@ -100,6 +143,12 @@ export interface Transport {
   write(entry: LogEntry, level: LogLevel): void;
   flush?(): void;
   close?(): void;
+  /** Drain what is held, awaiting the sink. Preferred by `Logger#flushAsync`. */
+  flushAsync?(): Promise<void>;
+  /** Drain, then release. Preferred by `Logger#closeAsync`. */
+  closeAsync?(): Promise<void>;
+  /** What this transport is holding and what it has lost. */
+  stats?(): TransportStats;
 }
 
 /**

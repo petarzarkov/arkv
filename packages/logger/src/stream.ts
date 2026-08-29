@@ -1,10 +1,12 @@
 import type { Writable } from 'node:stream';
+import { safeStringify } from '@arkv/shared';
 import { jsonFormat } from './format.js';
 import {
   type LogEntry,
   type LogFormatter,
   type LogLevel,
   type Transport,
+  type TransportStats,
 } from './types.js';
 
 export interface StreamTransportOptions {
@@ -25,9 +27,22 @@ export interface StreamTransportOptions {
   flushIntervalMs?: number;
   /** Flush from `process.on('exit')`. Default `true` when buffering. */
   flushOnExit?: boolean;
+  /**
+   * How much to hold in memory while the stream is refusing writes. Default one
+   * mebibyte. Entries past it are discarded and counted on `droppedCount`.
+   */
+  maxBufferBytes?: number;
   /** Called on a write failure. Without it the first is reported on `console.error`. */
   onError?: (error: Error) => void;
 }
+
+interface Held {
+  readonly text: string;
+  readonly lines: number;
+  readonly bytes: number;
+}
+
+const DEFAULT_MAX_BUFFER_BYTES = 1_048_576;
 
 /**
  * Writes entries to any `Writable`: a socket, a pipe to a collector, an open file
@@ -41,32 +56,80 @@ export interface StreamTransportOptions {
  * **Batching buys syscalls, not throughput.** Measured on Bun 1.3.14 and Node
  * v24.18.0, batching 100 entries per turn cuts `write(2)` from 1.000 per entry to
  * 0.010, worth 5.4x on the write path alone. End to end through `Logger` it is
- * 1.00x, because the write is 4 to 9 percent of a log call and entry assembly plus
- * sanitization is 73 to 93 percent. Turn it on for the syscall economy and to bound
- * what a full pipe does, not expecting faster logging.
+ * 1.00x, because the sink is a small share of a log call and entry assembly plus
+ * sanitization is most of it. Turn it on for the syscall economy and to bound what
+ * a full pipe does, not expecting faster logging. `bench.ts` is what keeps that
+ * split honest; the shares move whenever the hot path does.
+ *
+ * **Backpressure is observed.** `Writable.write` returning `false` means the sink
+ * is behind, and the data is already sitting in the stream's own buffer. Writing
+ * anyway is how a service logging to a pipe that stopped being read grows that
+ * buffer without bound and is killed for it. This stops on the first refusal, holds
+ * at most `maxBufferBytes` of its own, discards past that with a count, and resumes
+ * on `drain`.
  *
  * **The stream is the caller's.** `close()` flushes and releases this transport's
- * timer and exit hook; it does not end the stream, because the caller may still be
- * using it and `process.stdout` must not be ended at all.
+ * timer, listeners and exit hook; it does not end the stream, because the caller
+ * may still be using it and `process.stdout` must not be ended at all.
  */
 export class StreamTransport implements Transport {
   readonly level?: LogLevel;
   readonly #stream: Writable;
   readonly #format: LogFormatter;
   readonly #bufferBytes: number;
+  readonly #maxBufferBytes: number;
   readonly #onError?: (error: Error) => void;
   #buffer: string[] = [];
   #pending = 0;
+  #held: Held[] = [];
+  #heldBytes = 0;
+  #writable = true;
+  #broken = false;
+  #droppedTotal = 0;
+  #unannouncedDrops = 0;
+  #errorCount = 0;
   #timer: ReturnType<typeof setInterval> | undefined;
   #exitHook: (() => void) | undefined;
   #reported = false;
+  #closing = false;
+  #inFlight = 0;
+  readonly #onDrain: () => void;
+  readonly #onStreamError: (error: Error) => void;
 
   constructor(stream: Writable, options: StreamTransportOptions = {}) {
     this.#stream = stream;
     this.level = options.level;
     this.#format = options.format ?? jsonFormat;
     this.#bufferBytes = Math.max(0, options.bufferBytes ?? 0);
+    this.#maxBufferBytes = Math.max(
+      0,
+      options.maxBufferBytes ?? DEFAULT_MAX_BUFFER_BYTES,
+    );
     this.#onError = options.onError;
+
+    this.#onDrain = (): void => {
+      this.#writable = true;
+      this.#releaseHeld();
+    };
+    /**
+     * A `Writable` with no `error` listener throws the event, which takes the
+     * process down. A logger must not be the reason a service dies, so this
+     * listens, reports through the same path as a failed write, and stops
+     * queueing for a stream that will not accept anything again.
+     */
+    this.#onStreamError = (error: Error): void => {
+      this.#broken = true;
+      this.#drop(this.#held.reduce((total, held) => total + held.lines, 0));
+      this.#held = [];
+      this.#heldBytes = 0;
+      this.#report(error);
+      // The event this listener was being kept for. Nothing further is coming.
+      if (this.#closing && this.#inFlight === 0) {
+        this.#releaseErrorListener();
+      }
+    };
+    stream.on('drain', this.#onDrain);
+    stream.on('error', this.#onStreamError);
 
     if (this.#bufferBytes > 0) {
       const every = options.flushIntervalMs ?? 1000;
@@ -87,15 +150,38 @@ export class StreamTransport implements Transport {
     }
   }
 
-  /** Bytes waiting in memory. Always `0` unless `bufferBytes` was set. */
+  /** Bytes waiting to be batched. Always `0` unless `bufferBytes` was set. */
   get pendingBytes(): number {
     return this.#pending;
+  }
+
+  /** Bytes held because the stream is refusing writes. */
+  get queuedBytes(): number {
+    return this.#heldBytes;
+  }
+
+  /** Entries discarded because the hold reached `maxBufferBytes`, or the stream broke. */
+  get droppedCount(): number {
+    return this.#droppedTotal;
+  }
+
+  get errorCount(): number {
+    return this.#errorCount;
+  }
+
+  stats(): TransportStats {
+    return {
+      name: 'StreamTransport',
+      dropped: this.#droppedTotal,
+      queued: this.#heldBytes + this.#pending,
+      errors: this.#errorCount,
+    };
   }
 
   write(entry: LogEntry, level: LogLevel): void {
     const line = `${this.#format(entry, level)}\n`;
     if (this.#bufferBytes === 0) {
-      this.#push(line);
+      this.#push(line, 1);
       return;
     }
 
@@ -111,11 +197,33 @@ export class StreamTransport implements Transport {
     const lines = this.#buffer;
     this.#buffer = [];
     this.#pending = 0;
-    this.#push(lines.join(''));
+    this.#push(lines.join(''), lines.length);
   }
 
   close(): void {
     this.flush();
+    this.#closing = true;
+
+    // One last attempt: the stream may have drained since it refused, and the
+    // `drain` listener that would otherwise notice is about to go. A refusal
+    // means "buffered, slow down", not "rejected", so handing the data over is
+    // the right answer whenever there is something to hand it to.
+    if (
+      !this.#broken &&
+      !this.#stream.destroyed &&
+      !this.#stream.writableEnded
+    ) {
+      this.#writable = true;
+      this.#releaseHeld();
+    }
+    // Whatever is still held has nowhere left to go. Counting it is the whole
+    // point of `droppedCount`; abandoning it silently would make `stats()` claim
+    // a clean shutdown that lost entries.
+    if (this.#held.length > 0) {
+      this.#drop(this.#held.reduce((total, each) => total + each.lines, 0));
+      this.#held = [];
+      this.#heldBytes = 0;
+    }
     if (this.#timer) {
       clearInterval(this.#timer);
       this.#timer = undefined;
@@ -124,14 +232,121 @@ export class StreamTransport implements Transport {
       process.off('exit', this.#exitHook);
       this.#exitHook = undefined;
     }
+    // Nothing more will be released, so this one goes now regardless.
+    this.#stream.off('drain', this.#onDrain);
+    // The error listener outlives any write still in the stream. `#settle` and
+    // `#onStreamError` release it between them once none are left.
+    if (this.#inFlight === 0) {
+      this.#releaseErrorListener();
+    }
   }
 
-  #push(chunk: string): void {
+  #releaseErrorListener(): void {
+    this.#stream.off('error', this.#onStreamError);
+  }
+
+  #push(chunk: string, lines: number): void {
+    if (this.#broken) {
+      this.#drop(lines);
+      return;
+    }
+    if (!this.#writable) {
+      this.#hold(chunk, lines);
+      return;
+    }
+    this.#writeNow(chunk, lines);
+  }
+
+  /**
+   * Every write carries a completion callback, which is the only thing that knows
+   * a write is actually over.
+   *
+   * Two things depend on it. A write that fails does so **after** `write()`
+   * returned, so its entries can only be counted here; without this
+   * `droppedCount` reported a clean run that lost a batch. And `close()` must not
+   * remove the `error` listener while a write is still outstanding, because Node
+   * emits that event when the write eventually fails and an unhandled `error`
+   * ends the process.
+   *
+   * The closure costs an allocation per write. That is a few nanoseconds against
+   * a write path already measured at a small fraction of a log call, and this
+   * area has been wrong three times without it.
+   */
+  #writeNow(chunk: string, lines: number): void {
+    const announced = this.#unannouncedDrops;
+    const payload = announced > 0 ? this.#dropNotice(announced) + chunk : chunk;
+    this.#inFlight += 1;
     try {
-      this.#stream.write(chunk);
+      const accepted = this.#stream.write(payload, (error) => {
+        this.#settle(lines, error);
+      });
+      this.#unannouncedDrops -= announced;
+      if (!accepted) {
+        // Already buffered by the stream; anything further is held here, where
+        // there is a bound, rather than there, where there is not.
+        this.#writable = false;
+      }
     } catch (error) {
+      // The stream never took it, so the callback above will never run.
+      this.#settle(
+        lines,
+        error instanceof Error ? error : new Error('write failed'),
+      );
       this.#report(error);
     }
+  }
+
+  /** One write is over, for better or worse. */
+  #settle(lines: number, error?: Error | null): void {
+    this.#inFlight -= 1;
+    if (error) {
+      this.#broken = true;
+      this.#drop(lines);
+      // Node emits `'error'` *after* calling this back, so the listener has to
+      // survive here. `#onStreamError` releases it once that event lands.
+      return;
+    }
+    if (this.#closing && this.#inFlight === 0) {
+      this.#releaseErrorListener();
+    }
+  }
+
+  #hold(chunk: string, lines: number): void {
+    const bytes = Buffer.byteLength(chunk);
+    if (this.#heldBytes + bytes > this.#maxBufferBytes) {
+      // Discarding the newest rather than evicting the oldest, which is what
+      // `FileTransport` does when a write fails: holding a growing backlog
+      // against a sink that is not draining is how a logger takes down the
+      // service it was meant to observe.
+      this.#drop(lines);
+      return;
+    }
+    this.#held.push({ text: chunk, lines, bytes });
+    this.#heldBytes += bytes;
+  }
+
+  /** Everything held goes out as one write, since it is all bound for one place. */
+  #releaseHeld(): void {
+    if (this.#held.length === 0) return;
+    const held = this.#held;
+    this.#held = [];
+    this.#heldBytes = 0;
+    const lines = held.reduce((total, each) => total + each.lines, 0);
+    this.#writeNow(held.map((each) => each.text).join(''), lines);
+  }
+
+  #dropNotice(count: number): string {
+    return `${safeStringify({
+      level: 'warn',
+      timestamp: new Date().toISOString(),
+      message: `stream transport dropped ${count} log entries`,
+      droppedEntries: count,
+    })}\n`;
+  }
+
+  #drop(count: number): void {
+    this.#droppedTotal += count;
+    this.#unannouncedDrops += count;
   }
 
   /**
@@ -141,6 +356,7 @@ export class StreamTransport implements Transport {
    * throwing transport.
    */
   #report(error: unknown): void {
+    this.#errorCount += 1;
     const err = error instanceof Error ? error : new Error(String(error));
     if (this.#onError) {
       this.#onError(err);

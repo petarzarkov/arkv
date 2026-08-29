@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -18,7 +19,7 @@ import {
   it,
   setSystemTime,
 } from 'bun:test';
-import { FileTransport } from './file.js';
+import { FileTransport, periodKey } from './file.js';
 import { FileTransport as FileTransportFromEntry } from './index.js';
 import { Logger } from './logger.js';
 import { type LogEntry, LogLevel } from './types.js';
@@ -337,5 +338,107 @@ describe('FileTransport failure handling', () => {
     expect(all).toContain('first');
     expect(all).toContain('recovered');
     expect(all).toContain('file transport dropped 1 log entries');
+  });
+});
+
+describe('periodKey', () => {
+  // 2026-08-29T23:30:00Z. In any zone east of UTC this is already the 30th
+  // locally, which is the whole difference the `utc` option controls.
+  const at = new Date(Date.UTC(2026, 7, 29, 23, 30));
+
+  it('buckets by the UTC day and hour', () => {
+    expect(periodKey('daily', true, at)).toBe('2026-08-29');
+    expect(periodKey('hourly', true, at)).toBe('2026-08-29T23');
+  });
+
+  it('buckets by the host clock when told not to follow UTC', () => {
+    const local = periodKey('daily', false, at);
+    const expected = `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, '0')}-${String(at.getDate()).padStart(2, '0')}`;
+
+    expect(local).toBe(expected);
+    expect(periodKey('hourly', false, at)).toBe(
+      `${expected}T${String(at.getHours()).padStart(2, '0')}`,
+    );
+  });
+
+  it('is empty with no interval, so nothing rotates on time', () => {
+    expect(periodKey(undefined, true, at)).toBe('');
+  });
+});
+
+describe('date-stamped rotation', () => {
+  it('names a rotated file for the period it holds', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'arkv-datenaming-'));
+    const path = join(dir, 'app.log');
+    const transport = new FileTransport({
+      path,
+      naming: 'date',
+      maxSize: 1,
+    });
+
+    transport.write({ message: 'first' }, LogLevel.INFO);
+    transport.write({ message: 'second' }, LogLevel.INFO);
+    transport.close();
+
+    const rotated = readdirSync(dir).filter((name) => name !== 'app.log');
+    expect(rotated).toHaveLength(1);
+    // `app.log.2026-08-29`, not `app.log.1`.
+    expect(rotated[0]).toMatch(/^app\.log\.\d{4}-\d{2}-\d{2}$/);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('suffixes a second rotation inside the same period', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'arkv-datenaming-'));
+    const path = join(dir, 'app.log');
+    const transport = new FileTransport({ path, naming: 'date', maxSize: 1 });
+
+    for (let at = 0; at < 4; at += 1) {
+      transport.write({ message: `entry ${at}` }, LogLevel.INFO);
+    }
+    transport.close();
+
+    const rotated = readdirSync(dir)
+      .filter((name) => name !== 'app.log')
+      .sort();
+    expect(rotated.length).toBeGreaterThan(1);
+    expect(rotated.some((name) => /\.\d{4}-\d{2}-\d{2}\.\d+$/.test(name))).toBe(
+      true,
+    );
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('keeps only maxFiles of them', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'arkv-datenaming-'));
+    const path = join(dir, 'app.log');
+    const transport = new FileTransport({
+      path,
+      naming: 'date',
+      maxSize: 1,
+      maxFiles: 2,
+    });
+
+    for (let at = 0; at < 8; at += 1) {
+      transport.write({ message: `entry ${at}` }, LogLevel.INFO);
+    }
+    transport.close();
+
+    const rotated = readdirSync(dir).filter((name) => name !== 'app.log');
+    expect(rotated).toHaveLength(2);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('still shifts a numbered chain under the default naming', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'arkv-seqnaming-'));
+    const path = join(dir, 'app.log');
+    const transport = new FileTransport({ path, maxSize: 1, maxFiles: 3 });
+
+    for (let at = 0; at < 3; at += 1) {
+      transport.write({ message: `entry ${at}` }, LogLevel.INFO);
+    }
+    transport.close();
+
+    expect(existsSync(`${path}.1`)).toBe(true);
+    expect(existsSync(`${path}.2`)).toBe(true);
+    rmSync(dir, { recursive: true, force: true });
   });
 });

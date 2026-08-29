@@ -1,3 +1,5 @@
+import { defineField } from './assign.js';
+import { serializeError } from './serialize-error.js';
 import {
   type LogEntry,
   type LogLevel,
@@ -6,6 +8,13 @@ import {
 } from './types.js';
 
 export const PID = process.pid;
+
+/**
+ * Built once. This was a `new Set(RESERVED_ENTRY_KEYS)` plus two `delete` calls
+ * per entry, which is an allocation on the hot path to express two conditions the
+ * loop below can ask directly.
+ */
+const RESERVED = new Set<string>(RESERVED_ENTRY_KEYS);
 
 export interface EntryParts {
   level: LogLevel;
@@ -19,6 +28,51 @@ export interface EntryParts {
   invalidMessageInfo?: LogEntry;
   error?: Error | null;
   appId?: string;
+  serializers?: Record<string, (value: unknown) => unknown>;
+  /** `iso` writes a string, `epoch` writes milliseconds as a number. */
+  timestamp?: 'iso' | 'epoch';
+}
+
+/**
+ * What was thrown, as a string, without throwing in turn.
+ *
+ * `String(value)` calls `toString`, which a thrown object may not have or may
+ * define to throw, and a thrown symbol makes it throw outright. That exception
+ * would escape the `catch` this is called from and fail the log call, which is
+ * the one thing that `catch` exists to prevent.
+ */
+function describeThrown(error: unknown): string {
+  try {
+    const described = error instanceof Error ? error.message : error;
+    // `Error.message` is a string by construction but not by guarantee: a
+    // subclass can define it as anything, and interpolating a symbol throws.
+    return typeof described === 'string' ? described : String(described);
+  } catch {
+    return 'a value that cannot be described';
+  }
+}
+
+/**
+ * Applied to the merged fields before anything is sanitized, so a serializer sees
+ * what the caller passed and the sanitizer sees only what the serializer returned.
+ */
+function applySerializers(
+  merged: LogEntry,
+  serializers: Record<string, (value: unknown) => unknown>,
+): void {
+  for (const key of Object.keys(merged)) {
+    const serialize = serializers[key];
+    if (!serialize) {
+      continue;
+    }
+    try {
+      defineField(merged, key, serialize(merged[key]));
+    } catch (error) {
+      // A logging call must not fail because a field was not the shape a
+      // serializer expected, and a silent drop would hide that it happened.
+      defineField(merged, key, `[serializer threw: ${describeThrown(error)}]`);
+    }
+  }
 }
 
 /**
@@ -32,23 +86,35 @@ export interface EntryParts {
 export function createLogEntry(parts: EntryParts): LogEntry {
   const { level, message, error, appId } = parts;
 
-  const merged: LogEntry = {
-    ...parts.bindings,
-    ...parts.context,
-    ...parts.extra,
-    ...parts.invalidMessageInfo,
-  };
-
-  const reserved = new Set<string>(RESERVED_ENTRY_KEYS);
-  if (!appId) {
-    reserved.delete('appId');
+  /**
+   * Spread, and only over the sources that exist. A four-source spread counts a
+   * source even when it is `undefined`, and three of these usually are: most
+   * loggers have no bindings and most calls produce no `invalidMessageInfo`.
+   *
+   * **Not `Object.assign`.** It copies with `[[Set]]`, so a source carrying an own
+   * `__proto__` key invokes the prototype setter instead of creating a property:
+   * the field vanishes from the entry and the merged object's prototype changes
+   * with it. `logger.info('req', JSON.parse(body))` is enough to reach that from
+   * outside. Spreading uses `CreateDataProperty` and keeps it an ordinary field.
+   */
+  const merged: LogEntry = parts.bindings
+    ? { ...parts.bindings, ...parts.context, ...parts.extra }
+    : { ...parts.context, ...parts.extra };
+  if (parts.invalidMessageInfo) {
+    // Built here, with fixed keys, so there is nothing hostile to copy.
+    Object.assign(merged, parts.invalidMessageInfo);
   }
-  if (!error) {
-    reserved.delete('error');
+
+  if (parts.serializers) {
+    applySerializers(merged, parts.serializers);
   }
 
   const conflicts: LogEntry = {};
-  for (const key of reserved) {
+  for (const key of RESERVED) {
+    // Neither is a reserved name when the entry is not going to write it.
+    if ((key === 'appId' && !appId) || (key === 'error' && !error)) {
+      continue;
+    }
     if (!(key in merged)) {
       continue;
     }
@@ -62,7 +128,8 @@ export function createLogEntry(parts: EntryParts): LogEntry {
 
   const logEntry: LogEntry = {
     level,
-    timestamp: new Date().toISOString(),
+    timestamp:
+      parts.timestamp === 'epoch' ? Date.now() : new Date().toISOString(),
     pid: PID,
     message,
     ...(appId ? { appId } : {}),
@@ -70,11 +137,7 @@ export function createLogEntry(parts: EntryParts): LogEntry {
   };
 
   if (error) {
-    logEntry.error = {
-      name: error.name,
-      message: error.message,
-      stack: error.stack?.replace(/\n(\s+)?/g, ','),
-    };
+    logEntry.error = serializeError(error);
   }
 
   if (Object.keys(conflicts).length > 0) {
