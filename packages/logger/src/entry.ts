@@ -34,6 +34,22 @@ export interface EntryParts {
 }
 
 /**
+ * What was thrown, as a string, without throwing in turn.
+ *
+ * `String(value)` calls `toString`, which a thrown object may not have or may
+ * define to throw, and a thrown symbol makes it throw outright. That exception
+ * would escape the `catch` this is called from and fail the log call, which is
+ * the one thing that `catch` exists to prevent.
+ */
+function describeThrown(error: unknown): string {
+  try {
+    return error instanceof Error ? error.message : String(error);
+  } catch {
+    return 'a value that cannot be described';
+  }
+}
+
+/**
  * Applied to the merged fields before anything is sanitized, so a serializer sees
  * what the caller passed and the sanitizer sees only what the serializer returned.
  */
@@ -51,13 +67,7 @@ function applySerializers(
     } catch (error) {
       // A logging call must not fail because a field was not the shape a
       // serializer expected, and a silent drop would hide that it happened.
-      defineField(
-        merged,
-        key,
-        `[serializer threw: ${
-          error instanceof Error ? error.message : String(error)
-        }]`,
-      );
+      defineField(merged, key, `[serializer threw: ${describeThrown(error)}]`);
     }
   }
 }

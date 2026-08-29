@@ -91,6 +91,7 @@ export class StreamTransport implements Transport {
   #timer: ReturnType<typeof setInterval> | undefined;
   #exitHook: (() => void) | undefined;
   #reported = false;
+  #closing = false;
   readonly #onDrain: () => void;
   readonly #onStreamError: (error: Error) => void;
 
@@ -121,6 +122,11 @@ export class StreamTransport implements Transport {
       this.#held = [];
       this.#heldBytes = 0;
       this.#report(error);
+      // `close()` left this listener attached for exactly this event. Now that it
+      // has arrived and been handled, there is nothing more to wait for.
+      if (this.#closing) {
+        this.#detach();
+      }
     };
     stream.on('drain', this.#onDrain);
     stream.on('error', this.#onStreamError);
@@ -196,11 +202,7 @@ export class StreamTransport implements Transport {
 
   close(): void {
     this.flush();
-
-    const detach = (): void => {
-      this.#stream.off('drain', this.#onDrain);
-      this.#stream.off('error', this.#onStreamError);
-    };
+    this.#closing = true;
 
     // One last attempt: the stream may have drained since it refused, and the
     // `drain` listener that would otherwise notice is about to be removed. A
@@ -213,11 +215,19 @@ export class StreamTransport implements Transport {
       !this.#stream.writableEnded
     ) {
       this.#writable = true;
-      // The `error` listener has to outlive this write. Removing it first would
-      // leave an asynchronous stream error with nothing listening, and an
-      // unhandled `error` event takes the process down: the one thing this
-      // transport exists not to do.
-      writing = this.#releaseHeld(detach);
+      /**
+       * The `error` listener has to outlive this write, and outlive it in both
+       * directions. Detaching before it settles leaves an asynchronous stream
+       * error with nothing listening; detaching when it settles *with* an error
+       * is the same thing one step later, because Node emits `'error'` after
+       * calling this back. So it detaches only on success, and `#onStreamError`
+       * detaches on the other path once it has handled the event.
+       */
+      writing = this.#releaseHeld((error) => {
+        if (!error) {
+          this.#detach();
+        }
+      });
     }
     // Whatever is still held has nowhere left to go. Counting it is the whole
     // point of `droppedCount`; abandoning it silently would make `stats()` claim
@@ -236,8 +246,13 @@ export class StreamTransport implements Transport {
       this.#exitHook = undefined;
     }
     if (!writing) {
-      detach();
+      this.#detach();
     }
+  }
+
+  #detach(): void {
+    this.#stream.off('drain', this.#onDrain);
+    this.#stream.off('error', this.#onStreamError);
   }
 
   #push(chunk: string, lines: number): void {
@@ -252,7 +267,11 @@ export class StreamTransport implements Transport {
     this.#writeNow(chunk, lines);
   }
 
-  #writeNow(chunk: string, lines: number, settled?: () => void): void {
+  #writeNow(
+    chunk: string,
+    lines: number,
+    settled?: (error?: Error | null) => void,
+  ): void {
     const announced = this.#unannouncedDrops;
     const payload = announced > 0 ? this.#dropNotice(announced) + chunk : chunk;
     try {
@@ -268,8 +287,10 @@ export class StreamTransport implements Transport {
     } catch (error) {
       this.#drop(lines);
       this.#report(error);
-      // The stream never took it, so its callback will never run.
-      settled?.();
+      // The stream never took it, so its callback will never run. Reported as a
+      // failure, so the caller does not detach a listener the stream may still
+      // need.
+      settled?.(error instanceof Error ? error : new Error(String(error)));
     }
   }
 
@@ -288,7 +309,7 @@ export class StreamTransport implements Transport {
   }
 
   /** Everything held goes out as one write, since it is all bound for one place. */
-  #releaseHeld(settled?: () => void): boolean {
+  #releaseHeld(settled?: (error?: Error | null) => void): boolean {
     if (this.#held.length === 0) return false;
     const held = this.#held;
     this.#held = [];

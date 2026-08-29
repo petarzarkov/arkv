@@ -255,3 +255,73 @@ describe('date-stamped pruning', () => {
     expect(rotated[0]).toMatch(/^app\.log\.\d{4}-\d{2}-\d{2}T\d{2}/);
   });
 });
+
+describe('failures inside the failure paths', () => {
+  it('survives a serializer that throws something String() cannot render', () => {
+    const sink = new MemoryTransport();
+    const logger = new Logger({
+      serializers: {
+        req: () => {
+          // `String(Symbol())` throws, and so would this object's `toString`.
+          throw {
+            toString: () => {
+              throw new Error('nope');
+            },
+          };
+        },
+      },
+      transports: [sink],
+    });
+
+    expect(() => logger.info('handled', { req: {} })).not.toThrow();
+    expect(String(sink.last?.req)).toContain('serializer threw');
+  });
+
+  it('survives a serializer that throws a symbol', () => {
+    const sink = new MemoryTransport();
+    const logger = new Logger({
+      serializers: {
+        req: () => {
+          throw Symbol('boom');
+        },
+      },
+      transports: [sink],
+    });
+
+    expect(() => logger.info('handled', { req: {} })).not.toThrow();
+    expect(String(sink.last?.req)).toContain('serializer threw');
+  });
+
+  it('keeps the error listener when the final write has not settled', async () => {
+    class FailsLater extends Writable {
+      override _write(
+        _c: unknown,
+        _e: string,
+        cb: (error?: Error) => void,
+      ): void {
+        setImmediate(() => cb(new Error('pipe broke')));
+      }
+    }
+    const stream = new FailsLater({ highWaterMark: 1 });
+    const failures: Error[] = [];
+    const transport = new StreamTransport(stream, {
+      onError: (error) => failures.push(error),
+    });
+
+    transport.write({ message: 'one' }, LogLevel.INFO);
+    for (let at = 0; at < 3; at += 1) {
+      transport.write({ message: `held ${at}` }, LogLevel.INFO);
+    }
+    transport.close();
+
+    // Node emits `error` after calling the write callback, so detaching from
+    // that callback would leave the event unhandled and end the process. The
+    // listener is still here at the moment `close()` returns.
+    expect(stream.listenerCount('error')).toBe(1);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(failures.length).toBeGreaterThan(0);
+    // Handled, and only then released.
+    expect(stream.listenerCount('error')).toBe(0);
+  });
+});
