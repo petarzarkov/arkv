@@ -22,6 +22,7 @@ import {
   type LoggerConfig,
   LogLevel,
   type Transport,
+  type TransportStats,
 } from './types.js';
 
 /**
@@ -172,7 +173,11 @@ export class Logger {
     return child;
   }
 
-  /** Push every transport's buffer to its destination. Synchronous. */
+  /**
+   * Push every transport's buffer to its destination. Synchronous, so it is
+   * callable from `process.on('exit')`, and best-effort for a transport whose
+   * sink is a network. Await {@link Logger.flushAsync} where you can.
+   */
   flush(): void {
     for (const transport of this.#transports) {
       try {
@@ -193,6 +198,78 @@ export class Logger {
         this.#reportTransportError(error, transport);
       }
     }
+  }
+
+  /**
+   * Drain every transport, awaiting the ones that can only answer
+   * asynchronously. This is what a graceful shutdown awaits, and the only way a
+   * batch bound for a collector is known to have left the process.
+   *
+   * Transports drain concurrently: they are independent sinks, and draining them
+   * in series would make a shutdown as slow as their sum. A transport that fails
+   * is reported through `onTransportError` and does not prevent the others from
+   * finishing.
+   */
+  async flushAsync(): Promise<void> {
+    await this.#settle((transport) =>
+      transport.flushAsync ? transport.flushAsync() : transport.flush?.(),
+    );
+  }
+
+  /** Drain, then release. The async half of {@link Logger.close}. */
+  async closeAsync(): Promise<void> {
+    await this.#settle(async (transport) => {
+      if (transport.closeAsync) {
+        await transport.closeAsync();
+        return;
+      }
+      if (transport.flushAsync) {
+        await transport.flushAsync();
+      } else {
+        transport.flush?.();
+      }
+      transport.close?.();
+    });
+  }
+
+  async #settle(run: (transport: Transport) => unknown): Promise<void> {
+    const results = await Promise.allSettled(
+      this.#transports.map(async (transport) => {
+        try {
+          await run(transport);
+        } catch (error) {
+          this.#reportTransportError(error, transport);
+        }
+      }),
+    );
+    // `run` already reports what it caught; this catches a transport that
+    // rejected outside it, so neither becomes an unhandled rejection.
+    for (const [at, result] of results.entries()) {
+      if (result.status === 'rejected') {
+        this.#reportTransportError(
+          result.reason,
+          this.#transports[at] as Transport,
+        );
+      }
+    }
+  }
+
+  /**
+   * What each transport is holding and what it has lost, for a health endpoint
+   * or a metric. A transport reporting a non-zero `dropped` is losing logs.
+   *
+   * Transports that keep no counters are omitted rather than reported as zero,
+   * which would read as "measured and fine".
+   */
+  stats(): TransportStats[] {
+    const reported: TransportStats[] = [];
+    for (const transport of this.#transports) {
+      const stats = transport.stats?.();
+      if (stats) {
+        reported.push(stats);
+      }
+    }
+    return reported;
   }
 
   info(message: string, ...optionalParams: unknown[]): void;

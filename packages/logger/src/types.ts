@@ -82,13 +82,31 @@ export type LogEntry = Record<string, unknown> & {
 
 export type LogFormatter = (entry: LogEntry, level: LogLevel) => string;
 
+/** What a transport is holding and what it has lost, for a health endpoint. */
+export interface TransportStats {
+  /** The transport's class name, so a report can say which one is unhappy. */
+  readonly name: string;
+  /** Entries discarded. Anything above zero is worth an alert. */
+  readonly dropped: number;
+  /** Entries or bytes waiting to be sent. */
+  readonly queued: number;
+  /** Write, send or open failures since construction. */
+  readonly errors: number;
+}
+
 /**
  * A sink for sanitized log entries.
  *
- * Every method is synchronous on purpose. `process.on('exit')` cannot await, so
- * a transport whose flush is async cannot guarantee its buffer reaches the disk
- * when the process ends — which is the one guarantee a file transport exists to
- * provide. See `FileTransport`.
+ * `write`, `flush` and `close` are synchronous on purpose. `process.on('exit')`
+ * cannot await, so a transport whose only flush is async cannot guarantee its
+ * buffer reaches the disk when the process ends — which is the one guarantee a
+ * file transport exists to provide. See `FileTransport`.
+ *
+ * A network sink cannot honour that, and pretending otherwise is worse than
+ * saying so. `flushAsync` and `closeAsync` are the half a graceful shutdown
+ * awaits, where there is still an event loop to await on; the synchronous pair
+ * stays what `process.on('exit')` calls, best-effort. A transport implements
+ * whichever it can honour, and `Logger` prefers the async one when it is there.
  */
 export interface Transport {
   /**
@@ -100,6 +118,12 @@ export interface Transport {
   write(entry: LogEntry, level: LogLevel): void;
   flush?(): void;
   close?(): void;
+  /** Drain what is held, awaiting the sink. Preferred by `Logger#flushAsync`. */
+  flushAsync?(): Promise<void>;
+  /** Drain, then release. Preferred by `Logger#closeAsync`. */
+  closeAsync?(): Promise<void>;
+  /** What this transport is holding and what it has lost. */
+  stats?(): TransportStats;
 }
 
 /**

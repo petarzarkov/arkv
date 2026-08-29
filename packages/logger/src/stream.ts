@@ -6,6 +6,7 @@ import {
   type LogFormatter,
   type LogLevel,
   type Transport,
+  type TransportStats,
 } from './types.js';
 
 export interface StreamTransportOptions {
@@ -85,6 +86,7 @@ export class StreamTransport implements Transport {
   #broken = false;
   #droppedTotal = 0;
   #unannouncedDrops = 0;
+  #errorCount = 0;
   #timer: ReturnType<typeof setInterval> | undefined;
   #exitHook: (() => void) | undefined;
   #reported = false;
@@ -154,6 +156,19 @@ export class StreamTransport implements Transport {
   /** Entries discarded because the hold reached `maxBufferBytes`, or the stream broke. */
   get droppedCount(): number {
     return this.#droppedTotal;
+  }
+
+  get errorCount(): number {
+    return this.#errorCount;
+  }
+
+  stats(): TransportStats {
+    return {
+      name: 'StreamTransport',
+      dropped: this.#droppedTotal,
+      queued: this.#heldBytes + this.#pending,
+      errors: this.#errorCount,
+    };
   }
 
   write(entry: LogEntry, level: LogLevel): void {
@@ -266,6 +281,7 @@ export class StreamTransport implements Transport {
    * throwing transport.
    */
   #report(error: unknown): void {
+    this.#errorCount += 1;
     const err = error instanceof Error ? error : new Error(String(error));
     if (this.#onError) {
       this.#onError(err);

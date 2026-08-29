@@ -11,7 +11,13 @@ import {
 import { dirname } from 'node:path';
 import { safeStringify } from '@arkv/shared';
 import { jsonFormat } from './format.js';
-import type { LogEntry, LogFormatter, LogLevel, Transport } from './types.js';
+import type {
+  LogEntry,
+  LogFormatter,
+  LogLevel,
+  Transport,
+  TransportStats,
+} from './types.js';
 
 export type RotationInterval = 'hourly' | 'daily';
 
@@ -142,6 +148,15 @@ export class FileTransport implements Transport {
   /** Bytes waiting in memory. Always `0` unless `bufferBytes` was set. */
   get pendingBytes(): number {
     return this.#pending;
+  }
+
+  stats(): TransportStats {
+    return {
+      name: 'FileTransport',
+      dropped: this.#droppedTotal,
+      queued: this.#pending,
+      errors: this.#errorCount,
+    };
   }
 
   write(entry: LogEntry, level: LogLevel): void {
