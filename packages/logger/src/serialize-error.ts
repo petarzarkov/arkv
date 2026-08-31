@@ -21,8 +21,15 @@ export const MAX_AGGREGATE_ERRORS = 10;
  */
 const RENDERED = new Set(['name', 'message', 'stack', 'cause', 'errors']);
 
+/**
+ * No capture group: the replacement is a comma and never referenced it, so every
+ * match was recording a capture nothing read, over a string that is routinely
+ * kilobytes of frames. `\s*` matches what `(\s+)?` matched, greedy either way.
+ */
+const STACK_BREAK = /\n\s*/g;
+
 const flattenStack = (stack: string | undefined): string | undefined =>
-  stack?.replace(/\n(\s+)?/g, ',');
+  stack?.replace(STACK_BREAK, ',');
 
 /**
  * An error as a plain object, with the three things the entry used to drop.
@@ -40,15 +47,21 @@ const flattenStack = (stack: string | undefined): string | undefined =>
  * afterwards, so a property named `token` on an error is masked like any other.
  */
 export function serializeError(error: Error): SerializedError {
-  return serialize(error, 0, new WeakSet<object>());
+  return serialize(error, 0, undefined);
 }
 
+/**
+ * `path` guards against a `cause` chain that loops back on itself, so it is only
+ * consulted while descending. An error with no `cause` and no `errors` never
+ * descends, which is almost every error logged, and was allocating a `WeakSet`,
+ * adding itself and deleting itself again for a question nobody asked. The first
+ * level that actually recurses creates it and passes it down.
+ */
 function serialize(
   error: Error,
   depth: number,
-  path: WeakSet<object>,
+  path: WeakSet<object> | undefined,
 ): SerializedError {
-  path.add(error);
   const out: SerializedError = { name: error.name, message: error.message };
 
   const stack = flattenStack(error.stack);
@@ -64,16 +77,21 @@ function serialize(
   }
 
   const { cause, errors } = error as { cause?: unknown; errors?: unknown };
-  if (cause !== undefined) {
-    out.cause = describe(cause, depth, path);
+  const hasBranches = Array.isArray(errors);
+  if (cause !== undefined || hasBranches) {
+    const seen = path ?? new WeakSet<object>();
+    seen.add(error);
+    if (cause !== undefined) {
+      out.cause = describe(cause, depth, seen);
+    }
+    if (hasBranches) {
+      out.errors = branches(errors, depth, seen);
+    }
+    // Deleted rather than left, so the same error reached twice down two
+    // different branches is rendered twice: only a true cycle on the current
+    // path is cut.
+    seen.delete(error);
   }
-  if (Array.isArray(errors)) {
-    out.errors = branches(errors, depth, path);
-  }
-
-  // Deleted rather than left, so the same error reached twice down two different
-  // branches is rendered twice — only a true cycle on the current path is cut.
-  path.delete(error);
   return out;
 }
 

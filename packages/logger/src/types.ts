@@ -65,6 +65,15 @@ export interface LoggerConfig {
    * turned off. Include a `ConsoleTransport` explicitly to keep both.
    */
   transports?: Transport[];
+  /**
+   * Batch the **default** console transport: one write per timer tick rather than
+   * a `console.log` per entry. Default `false`. See
+   * `ConsoleTransportOptions.batch` for what it trades.
+   *
+   * Ignored when `transports` is supplied, since that replaces the default and
+   * the transport's own option is then the place to say it.
+   */
+  batchConsole?: boolean;
   /** Static fields merged into every entry. See `Logger#child`. */
   bindings?: Record<string, unknown>;
   /**

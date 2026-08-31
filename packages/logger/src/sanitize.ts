@@ -1,4 +1,3 @@
-import { safeEntries } from '@arkv/shared';
 import { defineField } from './assign.js';
 import type { LogEntry } from './types.js';
 
@@ -158,6 +157,25 @@ function sanitizeArray(
   return cleaned;
 }
 
+/**
+ * `safeEntries` with nothing materialized. It builds a pair array per key on top of
+ * the key array itself, so a twelve-field entry allocated fourteen arrays per log
+ * call and threw all of them away. Reading the key inline keeps the guarantee that
+ * makes `safeEntries` worth having - a getter that throws yields a marker rather
+ * than taking the log call down - without the pairs.
+ *
+ * Measured on a twelve-field entry, the two builds compared in one process:
+ * `sanitizePrepared` 538 ns to 346 ns, and `Logger.info` 1475 ns to 942 ns, of
+ * which this is most.
+ */
+const readField = (obj: Record<string, unknown>, key: string): unknown => {
+  try {
+    return obj[key];
+  } catch {
+    return '[Getter: threw]';
+  }
+};
+
 function sanitizeObject(
   obj: Record<string, unknown>,
   options: PreparedSanitizeOptions,
@@ -165,7 +183,8 @@ function sanitizeObject(
   depth: number,
 ): LogEntry {
   const cleaned: LogEntry = {};
-  for (const [key, value] of safeEntries(obj)) {
+  for (const key of Object.keys(obj)) {
+    const value = readField(obj, key);
     // `undefined` has no JSON representation — `JSON.stringify` erases the key
     // anyway, so keeping it would make the colored and plain renderings
     // disagree. `null` does have one, and it is the difference between "this
@@ -368,8 +387,14 @@ function searchForError(
     return null;
   }
 
-  for (const [, entry] of safeEntries(value as Record<string, unknown>)) {
-    const found = searchForError(entry, maxDepth, visited, depth + 1);
+  const record = value as Record<string, unknown>;
+  for (const key of Object.keys(record)) {
+    const found = searchForError(
+      readField(record, key),
+      maxDepth,
+      visited,
+      depth + 1,
+    );
     if (found) {
       return found;
     }

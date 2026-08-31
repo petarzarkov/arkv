@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
 import { ContextStore } from './context.js';
 import { Logger } from './logger.js';
+import { MemoryTransport } from './testing.js';
 import { defaultTestConfig, parseLogOutput } from './test-utils.js';
 import { LogLevel } from './types.js';
 
@@ -475,5 +476,83 @@ describe('Logger', () => {
       const logCall = consoleLogSpy.mock.calls[0][0] as string;
       expect(logCall).toMatch(/^\{.*\}$/);
     });
+  });
+});
+
+/**
+ * A single plain-object param is handed straight through as the entry's `extra`
+ * rather than copied field by field, so these pin the invariant that makes that
+ * safe: the caller's object is read and never written.
+ */
+describe('the caller keeps its object', () => {
+  it('does not touch the object it was given', () => {
+    const memory = new MemoryTransport();
+    const logger = new Logger({ transports: [memory] });
+    const fields = { statusCode: 200, elapsedMs: 1 };
+    const before = { ...fields };
+
+    logger.info('GET /json 200', fields);
+
+    expect(fields).toEqual(before);
+    expect(Object.keys(fields)).toEqual(['statusCode', 'elapsedMs']);
+    expect(memory.last?.statusCode).toBe(200);
+  });
+
+  it('leaves a reserved key on the caller and files the clash', () => {
+    const memory = new MemoryTransport();
+    const logger = new Logger({ transports: [memory] });
+    // `level` is the logger's own field, so the entry keeps its own and files the
+    // caller's under the conflicts key. The caller's object must still have it.
+    const fields = { level: 'not-a-level', statusCode: 200 };
+
+    logger.info('clash', fields);
+
+    expect(fields.level).toBe('not-a-level');
+    expect(memory.last?.level).toBe('info');
+    expect(memory.last?.reservedFieldConflicts).toEqual({
+      level: 'not-a-level',
+    });
+  });
+
+  it('does not let one call object reach the next entry', () => {
+    const memory = new MemoryTransport();
+    const logger = new Logger({ transports: [memory] });
+    const first = { a: 1 };
+
+    logger.info('one', first);
+    logger.info('two', { b: 2 });
+
+    expect(memory.entries[0]?.a).toBe(1);
+    expect(memory.entries[1]?.a).toBeUndefined();
+    expect(memory.entries[1]?.b).toBe(2);
+    expect(first).toEqual({ a: 1 });
+  });
+
+  it('still merges when there is more than one param', () => {
+    const memory = new MemoryTransport();
+    const logger = new Logger({ transports: [memory] });
+    const one = { a: 1 };
+    const two = { b: 2 };
+
+    logger.info('both', one, two);
+
+    expect(memory.last?.a).toBe(1);
+    expect(memory.last?.b).toBe(2);
+    expect(one).toEqual({ a: 1 });
+    expect(two).toEqual({ b: 2 });
+  });
+
+  it('still finds an error nested in the single object', () => {
+    const memory = new MemoryTransport();
+    const logger = new Logger({ transports: [memory] });
+    const boom = new Error('nested');
+    const fields = { detail: { boom } };
+
+    logger.info('found', fields);
+
+    expect(
+      (memory.last?.error as { message?: string } | undefined)?.message,
+    ).toBe('nested');
+    expect(fields.detail.boom).toBe(boom);
   });
 });
