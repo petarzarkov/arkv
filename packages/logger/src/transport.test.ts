@@ -579,3 +579,92 @@ describe('ConsoleTransport batching', () => {
     }
   });
 });
+
+/**
+ * A batched write is reached from a `setTimeout` callback and from
+ * `process.on('exit')`, neither of which the logger's dispatch wraps, so a
+ * throwing stdout has nowhere to be caught but here.
+ */
+describe('ConsoleTransport batching survives a failing stdout', () => {
+  const tick = (): Promise<void> =>
+    new Promise((resolve) => {
+      setTimeout(resolve, 1);
+    });
+
+  it('does not throw out of the flush timer, and counts what was lost', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      throw new Error('EPIPE');
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    const uncaught: unknown[] = [];
+    const onUncaught = (error: unknown): void => {
+      uncaught.push(error);
+    };
+    process.on('uncaughtException', onUncaught);
+    try {
+      const logger = new Logger({ transports: [transport] });
+      logger.info('lost one');
+      logger.info('lost two');
+
+      await tick();
+
+      expect(uncaught).toEqual([]);
+      expect(transport.stats()).toMatchObject({
+        name: 'ConsoleTransport',
+        dropped: 2,
+        errors: 1,
+        queued: 0,
+      });
+    } finally {
+      process.off('uncaughtException', onUncaught);
+      logSpy.mockRestore();
+      transport.close();
+    }
+  });
+
+  it('keeps counting across more than one failed flush', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      throw new Error('EPIPE');
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    try {
+      const logger = new Logger({ transports: [transport] });
+      logger.info('first');
+      await tick();
+      logger.info('second');
+      await tick();
+
+      expect(transport.stats()).toMatchObject({ dropped: 2, errors: 2 });
+    } finally {
+      logSpy.mockRestore();
+      transport.close();
+    }
+  });
+
+  it('reports nothing dropped while stdout is working', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    try {
+      new Logger({ transports: [transport] }).info('fine');
+      await tick();
+      expect(transport.stats()).toMatchObject({ dropped: 0, errors: 0 });
+    } finally {
+      logSpy.mockRestore();
+      transport.close();
+    }
+  });
+});

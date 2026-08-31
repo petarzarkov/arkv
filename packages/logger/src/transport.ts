@@ -66,6 +66,8 @@ export class ConsoleTransport implements Transport {
   readonly #batch: boolean;
   #pending = '';
   #queued = 0;
+  #dropped = 0;
+  #errors = 0;
   #timer?: ReturnType<typeof setTimeout>;
   #exitHook?: () => void;
 
@@ -83,12 +85,20 @@ export class ConsoleTransport implements Transport {
     }
   }
 
+  /**
+   * `dropped` and `errors` count batched writes only, and that is the whole of
+   * what this transport can know. An unbatched write happens inside the logger's
+   * dispatch, which isolates a throwing transport and reports it through
+   * `onTransportError`, so counting it here as well would report one failure
+   * twice. A batched write has no such caller, which is why {@link flush} counts
+   * its own.
+   */
   stats(): TransportStats {
     return {
       name: 'ConsoleTransport',
-      dropped: 0,
+      dropped: this.#dropped,
       queued: this.#queued,
-      errors: 0,
+      errors: this.#errors,
     };
   }
 
@@ -123,13 +133,29 @@ export class ConsoleTransport implements Transport {
     this.#timer = timer;
   }
 
-  /** Writes whatever is queued. Idempotent, and a no-op when not batching. */
+  /**
+   * Writes whatever is queued. Idempotent, and a no-op when not batching.
+   *
+   * The write is guarded because of where this runs. An unbatched write sits
+   * inside the logger's dispatch, which catches a throwing transport and reports
+   * it; a batched one is reached from a `setTimeout` callback and from
+   * `process.on('exit')`, and neither has a caller to catch anything. An `EPIPE`
+   * from a closed stdout would have been an uncaught exception taking the process
+   * with it, and the batch was already cleared, so the entries would have gone
+   * without being counted. They are counted now, and `stats()` reports them.
+   */
   flush(): void {
     if (this.#pending === '') return;
     const batch = this.#pending;
+    const count = this.#queued;
     this.#pending = '';
     this.#queued = 0;
-    console.log(batch);
+    try {
+      console.log(batch);
+    } catch {
+      this.#errors += 1;
+      this.#dropped += count;
+    }
   }
 
   /** Flushes, stops the timer and releases the exit hook. */

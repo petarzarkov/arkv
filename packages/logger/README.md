@@ -332,6 +332,12 @@ until the tick. Three things bound what that can cost:
 A process killed with `SIGKILL` still loses what was queued. That is the trade;
 leave it off where you cannot take it.
 
+A batched write is reached from a timer and from `process.on('exit')`, so unlike
+an unbatched one it has no caller for the logger's transport isolation to be. A
+stdout that throws, an `EPIPE` from a closed pipe being the usual way, is counted
+rather than raised: `transport.stats()` reports it under `errors`, with the
+entries that went with it under `dropped`.
+
 #### Writing to a stream
 
 `StreamTransport` takes any `Writable`: a socket, a pipe to a log collector, an
