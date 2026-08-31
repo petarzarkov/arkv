@@ -1,5 +1,6 @@
 import { describe, expect, it, spyOn } from 'bun:test';
 import { ContextStore } from './context.js';
+import { jsonFormat } from './format.js';
 import { captureGlobalErrors } from './errors.js';
 import { Logger } from './logger.js';
 import { MemoryTransport, parseLogEntry } from './testing.js';
@@ -421,6 +422,310 @@ describe('captureGlobalErrors', () => {
       expect(errorOf(memory.last).message).toBe('kaboom');
     } finally {
       stop();
+    }
+  });
+});
+
+/**
+ * `batch` is the one transport option that changes *when* output appears, so
+ * every test here is about ordering and timing rather than content.
+ */
+describe('ConsoleTransport batching', () => {
+  const tick = (): Promise<void> =>
+    new Promise((resolve) => {
+      setTimeout(resolve, 1);
+    });
+
+  it('writes nothing synchronously, then one call per tick', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    try {
+      const logger = new Logger({ transports: [transport] });
+      logger.info('first');
+      logger.info('second');
+      expect(logSpy).not.toHaveBeenCalled();
+
+      await tick();
+
+      expect(logSpy).toHaveBeenCalledTimes(1);
+      const lines = String(logSpy.mock.calls[0]![0]).split('\n');
+      expect(lines).toHaveLength(2);
+      expect(parseLogEntry(lines[0]!).message).toBe('first');
+      expect(parseLogEntry(lines[1]!).message).toBe('second');
+    } finally {
+      transport.close();
+      logSpy.mockRestore();
+    }
+  });
+
+  it('flushes what is queued before writing an error, so order holds', () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    const errSpy = spyOn(console, 'error').mockImplementation(() => {
+      // silence
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    try {
+      const logger = new Logger({ transports: [transport] });
+      logger.info('before');
+      logger.error('boom');
+
+      // The queued info is on stdout already, rather than arriving a tick after
+      // the error that was logged later than it.
+      expect(logSpy).toHaveBeenCalledTimes(1);
+      expect(parseLogEntry(logSpy.mock.calls[0]?.[0] as string).message).toBe(
+        'before',
+      );
+      expect(errSpy).toHaveBeenCalledTimes(1);
+      expect(parseLogEntry(errSpy.mock.calls[0]?.[0] as string).message).toBe(
+        'boom',
+      );
+    } finally {
+      transport.close();
+      logSpy.mockRestore();
+      errSpy.mockRestore();
+    }
+  });
+
+  it('flush writes immediately and is idempotent', () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    try {
+      new Logger({ transports: [transport] }).info('held');
+      transport.flush();
+      transport.flush();
+      expect(logSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      transport.close();
+      logSpy.mockRestore();
+    }
+  });
+
+  it('reports what it is holding, and nothing once flushed', () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    try {
+      new Logger({ transports: [transport] }).info('one');
+      expect(transport.stats()).toMatchObject({
+        name: 'ConsoleTransport',
+        queued: 1,
+      });
+      transport.flush();
+      expect(transport.stats().queued).toBe(0);
+    } finally {
+      transport.close();
+      logSpy.mockRestore();
+    }
+  });
+
+  it('close flushes, so a shutdown loses nothing', () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    try {
+      new Logger({ transports: [transport] }).info('last');
+      transport.close();
+      expect(logSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+
+  it('is off unless asked, and `batchConsole` asks for the default transport', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    try {
+      new Logger({ isDevelopment: false }).info('immediate');
+      expect(logSpy).toHaveBeenCalledTimes(1);
+
+      logSpy.mockClear();
+      const batched = new Logger({ isDevelopment: false, batchConsole: true });
+      batched.info('deferred');
+      expect(logSpy).not.toHaveBeenCalled();
+      await tick();
+      expect(logSpy).toHaveBeenCalledTimes(1);
+      batched.close();
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+});
+
+/**
+ * A batched write is reached from a `setTimeout` callback and from
+ * `process.on('exit')`, neither of which the logger's dispatch wraps, so a
+ * throwing stdout has nowhere to be caught but here.
+ */
+describe('ConsoleTransport batching survives a failing stdout', () => {
+  const tick = (): Promise<void> =>
+    new Promise((resolve) => {
+      setTimeout(resolve, 1);
+    });
+
+  it('does not throw out of the flush timer, and counts what was lost', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      throw new Error('EPIPE');
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    const uncaught: unknown[] = [];
+    const onUncaught = (error: unknown): void => {
+      uncaught.push(error);
+    };
+    process.on('uncaughtException', onUncaught);
+    try {
+      const logger = new Logger({ transports: [transport] });
+      logger.info('lost one');
+      logger.info('lost two');
+
+      await tick();
+
+      expect(uncaught).toEqual([]);
+      expect(transport.stats()).toMatchObject({
+        name: 'ConsoleTransport',
+        dropped: 2,
+        errors: 1,
+        queued: 0,
+      });
+    } finally {
+      process.off('uncaughtException', onUncaught);
+      logSpy.mockRestore();
+      transport.close();
+    }
+  });
+
+  it('keeps counting across more than one failed flush', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      throw new Error('EPIPE');
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    try {
+      const logger = new Logger({ transports: [transport] });
+      logger.info('first');
+      await tick();
+      logger.info('second');
+      await tick();
+
+      expect(transport.stats()).toMatchObject({ dropped: 2, errors: 2 });
+    } finally {
+      logSpy.mockRestore();
+      transport.close();
+    }
+  });
+
+  it('reports nothing dropped while stdout is working', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: jsonFormat,
+      flushOnExit: false,
+    });
+    try {
+      new Logger({ transports: [transport] }).info('fine');
+      await tick();
+      expect(transport.stats()).toMatchObject({ dropped: 0, errors: 0 });
+    } finally {
+      logSpy.mockRestore();
+      transport.close();
+    }
+  });
+});
+
+/**
+ * A formatter is a public option and may return an empty string, so the payload
+ * cannot double as the empty-batch sentinel.
+ */
+describe('ConsoleTransport batching with an empty formatter result', () => {
+  const tick = (): Promise<void> =>
+    new Promise((resolve) => {
+      setTimeout(resolve, 1);
+    });
+
+  it('writes the blank line and clears the queue', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: () => '',
+      flushOnExit: false,
+    });
+    try {
+      new Logger({ transports: [transport] }).info('rendered as nothing');
+      await tick();
+
+      expect(logSpy).toHaveBeenCalledTimes(1);
+      expect(logSpy.mock.calls[0]![0]).toBe('');
+      expect(transport.stats().queued).toBe(0);
+    } finally {
+      logSpy.mockRestore();
+      transport.close();
+    }
+  });
+
+  it('does not let an empty entry inflate the next batch count', async () => {
+    let calls = 0;
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      calls += 1;
+      throw new Error('EPIPE');
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      // First entry renders empty, the second does not.
+      format: () => (calls === 0 && transport.stats().queued === 0 ? '' : 'x'),
+      flushOnExit: false,
+    });
+    try {
+      const logger = new Logger({ transports: [transport] });
+      logger.info('empty');
+      await tick();
+      logger.info('not empty');
+      await tick();
+
+      // Two flushes, one entry each: the empty one must not be carried into the
+      // second batch's count.
+      expect(transport.stats()).toMatchObject({ dropped: 2, errors: 2 });
+    } finally {
+      logSpy.mockRestore();
+      transport.close();
     }
   });
 });

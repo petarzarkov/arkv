@@ -5,7 +5,7 @@ import {
   type ContextReader,
   type ContextSource,
 } from './context-contract.js';
-import { createLogEntry } from './entry.js';
+import { createLogEntry, type EntryParts } from './entry.js';
 import { jsonFormat, prettyFormat } from './format.js';
 import {
   DEFAULT_MAX_DEPTH,
@@ -104,6 +104,7 @@ export class Logger {
     this.#onTransportError = cfg.onTransportError;
     this.#transports = cfg.transports ?? [
       new ConsoleTransport({
+        batch: cfg.batchConsole ?? false,
         format: isDevelopment ? prettyFormat : jsonFormat,
       }),
     ];
@@ -379,12 +380,16 @@ export class Logger {
     );
 
     const finalError = messageError || error;
-    const finalExtra = {
-      ...messageExtra,
-      ...extra,
-    };
+    // One spread only where there is something to merge. `messageExtra` is set
+    // only when the message itself was an object, so for a string message this
+    // was a two-source spread over `undefined` and a second object per entry.
+    const finalExtra =
+      messageExtra === undefined ? extra : { ...messageExtra, ...extra };
 
-    const logEntry = createLogEntry({
+    // Assigned rather than spread from a conditional literal. Each
+    // `...(x ? { x } : {})` allocated an empty object on every call that had
+    // neither, which is every call for a logger configured with neither.
+    const parts: EntryParts = {
       level,
       message: preparedMessage,
       bindings: this.#bindings,
@@ -393,9 +398,11 @@ export class Logger {
       invalidMessageInfo,
       error: finalError,
       appId: this.appId,
-      ...(this.#serializers ? { serializers: this.#serializers } : {}),
-      ...(this.#timestamp ? { timestamp: this.#timestamp } : {}),
-    });
+    };
+    if (this.#serializers) parts.serializers = this.#serializers;
+    if (this.#timestamp) parts.timestamp = this.#timestamp;
+
+    const logEntry = createLogEntry(parts);
 
     const sanitizedLogEntry = sanitizePrepared(logEntry, this.#sanitizeOptions);
 

@@ -296,6 +296,48 @@ interface Transport {
 Each transport formats for itself, so the console can be colored while the file
 stays plain JSON. `jsonFormat` and `prettyFormat` are exported.
 
+#### Batching the console
+
+`ConsoleTransport` calls `console.log` once per entry. Under load that is one
+`write(2)` per line, and against a consumer that reads slowly it is one encounter
+with kernel backpressure per line. `batch` coalesces everything at `info` and
+below into one write per timer tick:
+
+```typescript
+new Logger({ batchConsole: true });
+
+// or, when you are supplying transports yourself
+new Logger({ transports: [new ConsoleTransport({ batch: true })] });
+```
+
+**Measure before reaching for this.** No throughput win was reproducible for it:
+in `@dunx/http`'s request path on Bun 1.4.0, round-robin over five rounds, it was
+10267 ns unbatched against 11106 ns batched with stdout on /dev/null, and 22.9 us
+against 23.8 us with stdout in a pipe nobody drains. Slower in both. A write to
+/dev/null costs about 100 ns, so there is little to save, and against a blocked
+consumer the limit is bytes written rather than calls made. Batching removes
+syscalls, so it pays only where syscall count is the bottleneck.
+
+It is also off by default because it changes **when** output appears, not what
+appears. A `logger.info()` no longer reaches stdout before the next statement
+runs, so a test asserting on `console.log` straight after a log call sees nothing
+until the tick. Three things bound what that can cost:
+
+- `warn` and above are never buffered, and flush whatever is queued behind them,
+  so an error still arrives immediately and in order.
+- The window is one timer tick.
+- `flush()` is public, `close()` flushes, and a `process.on('exit')` hook flushes
+  unless you pass `flushOnExit: false`.
+
+A process killed with `SIGKILL` still loses what was queued. That is the trade;
+leave it off where you cannot take it.
+
+A batched write is reached from a timer and from `process.on('exit')`, so unlike
+an unbatched one it has no caller for the logger's transport isolation to be. A
+stdout that throws, an `EPIPE` from a closed pipe being the usual way, is counted
+rather than raised: `transport.stats()` reports it under `errors`, with the
+entries that went with it under `dropped`.
+
 #### Writing to a stream
 
 `StreamTransport` takes any `Writable`: a socket, a pipe to a log collector, an

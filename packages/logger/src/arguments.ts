@@ -81,9 +81,38 @@ export function extractErrorAndExtra(
   level: LogLevel,
   maxDepth: number,
 ): { error: Error | null; extra: LogEntry } {
+  /**
+   * `logger.info('msg', { a, b })` is the shape almost every call has, and the
+   * general path below copies that object field by field into a fresh `extra`
+   * that `createLogEntry` then spreads again. Where there is exactly one plain
+   * object and no error hiding in `err`/`error`, the caller's object can be handed
+   * back directly: nothing downstream writes to `extra` on this path, and the
+   * spread in `createLogEntry` gives the same `__proto__` guarantee `assignFields`
+   * does.
+   *
+   * The branches below that do write to `extra` - a string param, or an
+   * unmergeable one - are exactly the branches this fast path excludes.
+   */
+  if (params.length === 1) {
+    const only = params[0];
+    if (
+      isPlainObject(only) &&
+      !(only.err instanceof Error) &&
+      !(only.error instanceof Error) &&
+      !(isErrorLevel(level) && typeof only.err === 'string') &&
+      !(isErrorLevel(level) && typeof only.error === 'string')
+    ) {
+      return {
+        error: findNestedError(only, maxDepth),
+        extra: only as LogEntry,
+      };
+    }
+  }
+
   let error: Error | null = null;
   const extra: LogEntry = {};
-  const unmergeable: unknown[] = [];
+  // Allocated only when something cannot be merged, which is almost never.
+  let unmergeable: unknown[] | undefined;
 
   for (const param of params) {
     if (param instanceof Error) {
@@ -128,11 +157,11 @@ export function extractErrorAndExtra(
       if (foundError) {
         error = foundError;
       }
-      unmergeable.push(param);
+      (unmergeable ??= []).push(param);
     }
   }
 
-  if (unmergeable.length > 0) {
+  if (unmergeable !== undefined) {
     extra.params = unmergeable;
   }
 
