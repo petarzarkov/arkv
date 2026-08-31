@@ -668,3 +668,64 @@ describe('ConsoleTransport batching survives a failing stdout', () => {
     }
   });
 });
+
+/**
+ * A formatter is a public option and may return an empty string, so the payload
+ * cannot double as the empty-batch sentinel.
+ */
+describe('ConsoleTransport batching with an empty formatter result', () => {
+  const tick = (): Promise<void> =>
+    new Promise((resolve) => {
+      setTimeout(resolve, 1);
+    });
+
+  it('writes the blank line and clears the queue', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      // silence
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      format: () => '',
+      flushOnExit: false,
+    });
+    try {
+      new Logger({ transports: [transport] }).info('rendered as nothing');
+      await tick();
+
+      expect(logSpy).toHaveBeenCalledTimes(1);
+      expect(logSpy.mock.calls[0]![0]).toBe('');
+      expect(transport.stats().queued).toBe(0);
+    } finally {
+      logSpy.mockRestore();
+      transport.close();
+    }
+  });
+
+  it('does not let an empty entry inflate the next batch count', async () => {
+    let calls = 0;
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {
+      calls += 1;
+      throw new Error('EPIPE');
+    });
+    const transport = new ConsoleTransport({
+      batch: true,
+      // First entry renders empty, the second does not.
+      format: () => (calls === 0 && transport.stats().queued === 0 ? '' : 'x'),
+      flushOnExit: false,
+    });
+    try {
+      const logger = new Logger({ transports: [transport] });
+      logger.info('empty');
+      await tick();
+      logger.info('not empty');
+      await tick();
+
+      // Two flushes, one entry each: the empty one must not be carried into the
+      // second batch's count.
+      expect(transport.stats()).toMatchObject({ dropped: 2, errors: 2 });
+    } finally {
+      logSpy.mockRestore();
+      transport.close();
+    }
+  });
+});

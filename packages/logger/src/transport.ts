@@ -118,8 +118,12 @@ export class ConsoleTransport implements Transport {
       return;
     }
 
-    this.#pending =
-      this.#pending === '' ? output : `${this.#pending}\n${output}`;
+    // `#queued`, not `#pending === ''`, decides whether this is the first entry
+    // of a batch. A formatter is a public option and may return an empty string,
+    // and using the payload as its own empty-batch sentinel meant such an entry
+    // queued but never flushed: the blank line went missing, `#queued` never
+    // returned to zero, and the next batch that did write counted it.
+    this.#pending = this.#queued === 0 ? output : `${this.#pending}\n${output}`;
     this.#queued += 1;
     if (this.#timer !== undefined) return;
     const timer = setTimeout(() => {
@@ -145,7 +149,7 @@ export class ConsoleTransport implements Transport {
    * without being counted. They are counted now, and `stats()` reports them.
    */
   flush(): void {
-    if (this.#pending === '') return;
+    if (this.#queued === 0) return;
     const batch = this.#pending;
     const count = this.#queued;
     this.#pending = '';
