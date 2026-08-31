@@ -58,8 +58,13 @@ jobs:
       # "Only 1 table definition allowed in MVP". That failed the build on a PR
       # touching no Rust at all, and passed on a re-run, which is the worst
       # version of this bug to debug.
+      #
+      # The action itself is pinned by commit rather than by `v0.4.0`, because a
+      # tag is mutable and this one is lightweight: whoever can push the tag can
+      # change what runs here. The commit is the one `v0.4.0` points at, checked
+      # against the ref API and against what the runner logged resolving it.
       - name: Install wasm-pack
-        uses: jetli/wasm-pack-action@v0.4.0
+        uses: jetli/wasm-pack-action@0d096b08b4e5a7de8c28de67e11e945404e9eefa # v0.4.0
         with:
           version: v0.15.0
 
