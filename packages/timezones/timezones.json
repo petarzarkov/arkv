@@ -1,8 +1,8 @@
 {
-  "version": "2026c",
-  "lastModified": "Wed, 08 Jul 2026 18:02:48 GMT",
-  "updatedAt": "Sun, 26 Jul 2026 09:58:26 GMT",
-  "numberOfZones": 597,
+  "version": "2026d",
+  "lastModified": "Fri, 11 Sep 2026 22:36:31 GMT",
+  "updatedAt": "Tue, 15 Sep 2026 04:35:09 GMT",
+  "numberOfZones": 593,
   "filesUsed": [
     "zone.tab",
     "zone1970.tab",
@@ -1304,7 +1304,6 @@
     },
     "America/Chicago": {
       "children": [
-        "CST6CDT",
         "US/Central"
       ],
       "comments": "Central (most areas)",
@@ -1472,7 +1471,6 @@
     "America/Denver": {
       "children": [
         "America/Shiprock",
-        "MST7MDT",
         "Navajo",
         "US/Mountain"
       ],
@@ -1884,7 +1882,7 @@
       "utc": "-04:00"
     },
     "America/Inuvik": {
-      "comments": "Mountain - NT (west)",
+      "comments": "CST - NT (west)",
       "countryCodes": [
         "CA"
       ],
@@ -2028,7 +2026,6 @@
     },
     "America/Los_Angeles": {
       "children": [
-        "PST8PDT",
         "US/Pacific"
       ],
       "comments": "Pacific",
@@ -2314,7 +2311,6 @@
     },
     "America/New_York": {
       "children": [
-        "EST5EDT",
         "US/Eastern"
       ],
       "comments": "Eastern (most areas)",
@@ -2737,12 +2733,12 @@
         "CL"
       ],
       "geographicArea": "America",
-      "label": "America/Santiago (GMT-04:00)",
+      "label": "America/Santiago (GMT-03:00)",
       "location": "Santiago",
       "locationLabel": "Santiago",
       "type": "Canonical",
       "tzCode": "America/Santiago",
-      "utc": "-04:00"
+      "utc": "-03:00"
     },
     "America/Santo_Domingo": {
       "countryCodes": [
@@ -5045,16 +5041,6 @@
       "tzCode": "CET",
       "utc": "+02:00"
     },
-    "CST6CDT": {
-      "geographicArea": "America",
-      "label": "CST6CDT (GMT-05:00)",
-      "location": "CST6CDT",
-      "locationLabel": "CST6CDT",
-      "parent": "America/Chicago",
-      "type": "Link",
-      "tzCode": "CST6CDT",
-      "utc": "-05:00"
-    },
     "Canada/Atlantic": {
       "geographicArea": "Canada",
       "label": "Canada/Atlantic (GMT-03:00)",
@@ -5137,23 +5123,23 @@
     },
     "Chile/Continental": {
       "geographicArea": "Chile",
-      "label": "Chile/Continental (GMT-04:00)",
+      "label": "Chile/Continental (GMT-03:00)",
       "location": "Continental",
       "locationLabel": "Continental",
       "parent": "America/Santiago",
       "type": "Link",
       "tzCode": "Chile/Continental",
-      "utc": "-04:00"
+      "utc": "-03:00"
     },
     "Chile/EasterIsland": {
       "geographicArea": "Chile",
-      "label": "Chile/EasterIsland (GMT-06:00)",
+      "label": "Chile/EasterIsland (GMT-05:00)",
       "location": "EasterIsland",
       "locationLabel": "EasterIsland",
       "parent": "Pacific/Easter",
       "type": "Link",
       "tzCode": "Chile/EasterIsland",
-      "utc": "-06:00"
+      "utc": "-05:00"
     },
     "Cuba": {
       "geographicArea": "America",
@@ -5184,16 +5170,6 @@
       "type": "Link",
       "tzCode": "EST",
       "utc": "-05:00"
-    },
-    "EST5EDT": {
-      "geographicArea": "America",
-      "label": "EST5EDT (GMT-04:00)",
-      "location": "EST5EDT",
-      "locationLabel": "EST5EDT",
-      "parent": "America/New_York",
-      "type": "Link",
-      "tzCode": "EST5EDT",
-      "utc": "-04:00"
     },
     "Egypt": {
       "geographicArea": "Africa",
@@ -6768,16 +6744,6 @@
       "tzCode": "MST",
       "utc": "-07:00"
     },
-    "MST7MDT": {
-      "geographicArea": "America",
-      "label": "MST7MDT (GMT-06:00)",
-      "location": "MST7MDT",
-      "locationLabel": "MST7MDT",
-      "parent": "America/Denver",
-      "type": "Link",
-      "tzCode": "MST7MDT",
-      "utc": "-06:00"
-    },
     "Mexico/BajaNorte": {
       "geographicArea": "Mexico",
       "label": "Mexico/BajaNorte (GMT-07:00)",
@@ -6847,16 +6813,6 @@
       "type": "Link",
       "tzCode": "PRC",
       "utc": "+08:00"
-    },
-    "PST8PDT": {
-      "geographicArea": "America",
-      "label": "PST8PDT (GMT-07:00)",
-      "location": "PST8PDT",
-      "locationLabel": "PST8PDT",
-      "parent": "America/Los_Angeles",
-      "type": "Link",
-      "tzCode": "PST8PDT",
-      "utc": "-07:00"
     },
     "Pacific/Apia": {
       "countryCodes": [
@@ -6941,12 +6897,12 @@
         "CL"
       ],
       "geographicArea": "Pacific",
-      "label": "Pacific/Easter (GMT-06:00)",
+      "label": "Pacific/Easter (GMT-05:00)",
       "location": "Easter",
       "locationLabel": "Easter",
       "type": "Canonical",
       "tzCode": "Pacific/Easter",
-      "utc": "-06:00"
+      "utc": "-05:00"
     },
     "Pacific/Efate": {
       "countryCodes": [

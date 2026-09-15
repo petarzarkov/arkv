@@ -105,7 +105,7 @@
 | <a name="america-catamarca"></a>Catamarca | `America/Catamarca` | Link | - | -03:00 | Parent: [`America/Argentina/Catamarca`](#america-argentina-catamarca) |
 | <a name="america-cayenne"></a>Cayenne | `America/Cayenne` | Canonical | GF | -03:00 | - |
 | <a name="america-cayman"></a>Cayman | `America/Cayman` | Link | KY | -05:00 | Parent: [`America/Panama`](#america-panama) |
-| <a name="america-chicago"></a>Chicago | `America/Chicago` | Canonical | US | -05:00 | Children: [`CST6CDT`](#cst6cdt), [`US/Central`](#us-central) |
+| <a name="america-chicago"></a>Chicago | `America/Chicago` | Canonical | US | -05:00 | Children: [`US/Central`](#us-central) |
 | <a name="america-chihuahua"></a>Chihuahua | `America/Chihuahua` | Canonical | MX | -06:00 | - |
 | <a name="america-ciudad-juarez"></a>Ciudad Juarez | `America/Ciudad_Juarez` | Canonical | MX | -06:00 | - |
 | <a name="america-coral-harbour"></a>Coral Harbour | `America/Coral_Harbour` | Link | - | -05:00 | Parent: [`America/Panama`](#america-panama) |
@@ -118,7 +118,7 @@
 | <a name="america-danmarkshavn"></a>Danmarkshavn | `America/Danmarkshavn` | Canonical | GL | +00:00 | - |
 | <a name="america-dawson"></a>Dawson | `America/Dawson` | Canonical | CA | -07:00 | - |
 | <a name="america-dawson-creek"></a>Dawson Creek | `America/Dawson_Creek` | Canonical | CA | -07:00 | - |
-| <a name="america-denver"></a>Denver | `America/Denver` | Canonical | US | -06:00 | Children: [`America/Shiprock`](#america-shiprock), [`MST7MDT`](#mst7mdt), [`Navajo`](#navajo), [`US/Mountain`](#us-mountain) |
+| <a name="america-denver"></a>Denver | `America/Denver` | Canonical | US | -06:00 | Children: [`America/Shiprock`](#america-shiprock), [`Navajo`](#navajo), [`US/Mountain`](#us-mountain) |
 | <a name="america-detroit"></a>Detroit | `America/Detroit` | Canonical | US | -04:00 | Children: [`US/Michigan`](#us-michigan) |
 | <a name="america-dominica"></a>Dominica | `America/Dominica` | Link | DM | -04:00 | Parent: [`America/Puerto_Rico`](#america-puerto-rico) |
 | <a name="america-edmonton"></a>Edmonton | `America/Edmonton` | Canonical | CA | -06:00 | Children: [`America/Yellowknife`](#america-yellowknife), [`Canada/Mountain`](#canada-mountain) |
@@ -160,7 +160,7 @@
 | <a name="america-kralendijk"></a>Kralendijk | `America/Kralendijk` | Link | BQ | -04:00 | Parent: [`America/Puerto_Rico`](#america-puerto-rico) |
 | <a name="america-la-paz"></a>La Paz | `America/La_Paz` | Canonical | BO | -04:00 | - |
 | <a name="america-lima"></a>Lima | `America/Lima` | Canonical | PE | -05:00 | - |
-| <a name="america-los-angeles"></a>Los Angeles | `America/Los_Angeles` | Canonical | US | -07:00 | Children: [`PST8PDT`](#pst8pdt), [`US/Pacific`](#us-pacific) |
+| <a name="america-los-angeles"></a>Los Angeles | `America/Los_Angeles` | Canonical | US | -07:00 | Children: [`US/Pacific`](#us-pacific) |
 | <a name="america-louisville"></a>Louisville | `America/Louisville` | Link | - | -04:00 | Parent: [`America/Kentucky/Louisville`](#america-kentucky-louisville) |
 | <a name="america-lower-princes"></a>Lower Princes | `America/Lower_Princes` | Link | SX | -04:00 | Parent: [`America/Puerto_Rico`](#america-puerto-rico) |
 | <a name="america-maceio"></a>Maceio | `America/Maceio` | Canonical | BR | -03:00 | - |
@@ -182,7 +182,7 @@
 | <a name="america-montreal"></a>Montreal | `America/Montreal` | Link | - | -04:00 | Parent: [`America/Toronto`](#america-toronto) |
 | <a name="america-montserrat"></a>Montserrat | `America/Montserrat` | Link | MS | -04:00 | Parent: [`America/Puerto_Rico`](#america-puerto-rico) |
 | <a name="america-nassau"></a>Nassau | `America/Nassau` | Link | BS | -04:00 | Parent: [`America/Toronto`](#america-toronto) |
-| <a name="america-new-york"></a>New York | `America/New_York` | Canonical | US | -04:00 | Children: [`EST5EDT`](#est5edt), [`US/Eastern`](#us-eastern) |
+| <a name="america-new-york"></a>New York | `America/New_York` | Canonical | US | -04:00 | Children: [`US/Eastern`](#us-eastern) |
 | <a name="america-nipigon"></a>Nipigon | `America/Nipigon` | Link | - | -04:00 | Parent: [`America/Toronto`](#america-toronto) |
 | <a name="america-nome"></a>Nome | `America/Nome` | Canonical | US | -08:00 | - |
 | <a name="america-noronha"></a>Noronha | `America/Noronha` | Canonical | BR | -02:00 | Children: [`Brazil/DeNoronha`](#brazil-denoronha) |
@@ -210,7 +210,7 @@
 | <a name="america-rosario"></a>Rosario | `America/Rosario` | Link | - | -03:00 | Parent: [`America/Argentina/Cordoba`](#america-argentina-cordoba) |
 | <a name="america-santa-isabel"></a>Santa Isabel | `America/Santa_Isabel` | Link | - | -07:00 | Parent: [`America/Tijuana`](#america-tijuana) |
 | <a name="america-santarem"></a>Santarem | `America/Santarem` | Canonical | BR | -03:00 | - |
-| <a name="america-santiago"></a>Santiago | `America/Santiago` | Canonical | CL | -04:00 | Children: [`Chile/Continental`](#chile-continental) |
+| <a name="america-santiago"></a>Santiago | `America/Santiago` | Canonical | CL | -03:00 | Children: [`Chile/Continental`](#chile-continental) |
 | <a name="america-santo-domingo"></a>Santo Domingo | `America/Santo_Domingo` | Canonical | DO | -04:00 | - |
 | <a name="america-sao-paulo"></a>Sao Paulo | `America/Sao_Paulo` | Canonical | BR | -03:00 | Children: [`Brazil/East`](#brazil-east) |
 | <a name="america-scoresbysund"></a>Scoresbysund | `America/Scoresbysund` | Canonical | GL | -01:00 | - |
@@ -235,15 +235,11 @@
 | <a name="america-winnipeg"></a>Winnipeg | `America/Winnipeg` | Canonical | CA | -05:00 | Children: [`America/Rainy_River`](#america-rainy-river), [`Canada/Central`](#canada-central) |
 | <a name="america-yakutat"></a>Yakutat | `America/Yakutat` | Canonical | US | -08:00 | - |
 | <a name="america-yellowknife"></a>Yellowknife | `America/Yellowknife` | Link | - | -06:00 | Parent: [`America/Edmonton`](#america-edmonton) |
-| <a name="cst6cdt"></a>CST6CDT | `CST6CDT` | Link | - | -05:00 | Parent: [`America/Chicago`](#america-chicago) |
 | <a name="cuba"></a>Cuba | `Cuba` | Link | - | -04:00 | Parent: [`America/Havana`](#america-havana) |
 | <a name="est"></a>EST | `EST` | Link | - | -05:00 | Parent: [`America/Panama`](#america-panama) |
-| <a name="est5edt"></a>EST5EDT | `EST5EDT` | Link | - | -04:00 | Parent: [`America/New_York`](#america-new-york) |
 | <a name="jamaica"></a>Jamaica | `Jamaica` | Link | - | -05:00 | Parent: [`America/Jamaica`](#america-jamaica) |
 | <a name="mst"></a>MST | `MST` | Link | - | -07:00 | Parent: [`America/Phoenix`](#america-phoenix) |
-| <a name="mst7mdt"></a>MST7MDT | `MST7MDT` | Link | - | -06:00 | Parent: [`America/Denver`](#america-denver) |
 | <a name="navajo"></a>Navajo | `Navajo` | Link | - | -06:00 | Parent: [`America/Denver`](#america-denver) |
-| <a name="pst8pdt"></a>PST8PDT | `PST8PDT` | Link | - | -07:00 | Parent: [`America/Los_Angeles`](#america-los-angeles) |
 
 ## Antarctica
 
@@ -451,8 +447,8 @@
 
 | Location | Timezone | Type | Country Codes | Current Offset | Link |
 |----------|----------|------|---------------|----------------|------|
-| <a name="chile-continental"></a>Continental | `Chile/Continental` | Link | - | -04:00 | Parent: [`America/Santiago`](#america-santiago) |
-| <a name="chile-easterisland"></a>EasterIsland | `Chile/EasterIsland` | Link | - | -06:00 | Parent: [`Pacific/Easter`](#pacific-easter) |
+| <a name="chile-continental"></a>Continental | `Chile/Continental` | Link | - | -03:00 | Parent: [`America/Santiago`](#america-santiago) |
+| <a name="chile-easterisland"></a>EasterIsland | `Chile/EasterIsland` | Link | - | -05:00 | Parent: [`Pacific/Easter`](#pacific-easter) |
 
 ## Etc
 
@@ -620,7 +616,7 @@
 | <a name="pacific-bougainville"></a>Bougainville | `Pacific/Bougainville` | Canonical | PG | +11:00 | - |
 | <a name="pacific-chatham"></a>Chatham | `Pacific/Chatham` | Canonical | NZ | +12:45 | Children: [`NZ-CHAT`](#nz-chat) |
 | <a name="pacific-chuuk"></a>Chuuk | `Pacific/Chuuk` | Link | FM | +10:00 | Parent: [`Pacific/Port_Moresby`](#pacific-port-moresby) |
-| <a name="pacific-easter"></a>Easter | `Pacific/Easter` | Canonical | CL | -06:00 | Children: [`Chile/EasterIsland`](#chile-easterisland) |
+| <a name="pacific-easter"></a>Easter | `Pacific/Easter` | Canonical | CL | -05:00 | Children: [`Chile/EasterIsland`](#chile-easterisland) |
 | <a name="pacific-efate"></a>Efate | `Pacific/Efate` | Canonical | VU | +11:00 | - |
 | <a name="pacific-enderbury"></a>Enderbury | `Pacific/Enderbury` | Link | - | +13:00 | Parent: [`Pacific/Kanton`](#pacific-kanton) |
 | <a name="pacific-fakaofo"></a>Fakaofo | `Pacific/Fakaofo` | Canonical | TK | +13:00 | - |

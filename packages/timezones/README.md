@@ -31,10 +31,10 @@ The fields for each timezone object are as follows:
 
 Inspired by: [list of tz database in wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 
-- **IANA DB Version**: 2026c
-- **Updated**: Sun, 26 Jul 2026 09:58:26 GMT
-- **Last Modified**: Wed, 08 Jul 2026 18:02:48 GMT
-- **Number of zones**: 597
+- **IANA DB Version**: 2026d
+- **Updated**: Tue, 15 Sep 2026 04:35:09 GMT
+- **Last Modified**: Fri, 11 Sep 2026 22:36:31 GMT
+- **Number of zones**: 593
 - **Zones**: [TIMEZONES.md](https://github.com/petarzarkov/arkv/blob/main/packages/timezones/TIMEZONES.md)
 - **Files used from IANA DB**: `zone.tab, zone1970.tab, etcetera, backward`
 
