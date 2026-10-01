@@ -250,10 +250,10 @@
 | <a name="antarctica-dumontdurville"></a>DumontDUrville | `Antarctica/DumontDUrville` | Link | AQ | +10:00 | Parent: [`Pacific/Port_Moresby`](#pacific-port-moresby) |
 | <a name="antarctica-macquarie"></a>Macquarie | `Antarctica/Macquarie` | Canonical | AU | +10:00 | - |
 | <a name="antarctica-mawson"></a>Mawson | `Antarctica/Mawson` | Canonical | AQ | +05:00 | - |
-| <a name="antarctica-mcmurdo"></a>McMurdo | `Antarctica/McMurdo` | Link | AQ | +12:00 | Parent: [`Pacific/Auckland`](#pacific-auckland) |
+| <a name="antarctica-mcmurdo"></a>McMurdo | `Antarctica/McMurdo` | Link | AQ | +13:00 | Parent: [`Pacific/Auckland`](#pacific-auckland) |
 | <a name="antarctica-palmer"></a>Palmer | `Antarctica/Palmer` | Canonical | AQ | -03:00 | - |
 | <a name="antarctica-rothera"></a>Rothera | `Antarctica/Rothera` | Canonical | AQ | -03:00 | - |
-| <a name="antarctica-south-pole"></a>South Pole | `Antarctica/South_Pole` | Link | - | +12:00 | Parent: [`Pacific/Auckland`](#pacific-auckland) |
+| <a name="antarctica-south-pole"></a>South Pole | `Antarctica/South_Pole` | Link | - | +13:00 | Parent: [`Pacific/Auckland`](#pacific-auckland) |
 | <a name="antarctica-syowa"></a>Syowa | `Antarctica/Syowa` | Link | AQ | +03:00 | Parent: [`Asia/Riyadh`](#asia-riyadh) |
 | <a name="antarctica-troll"></a>Troll | `Antarctica/Troll` | Canonical | AQ | +02:00 | - |
 | <a name="antarctica-vostok"></a>Vostok | `Antarctica/Vostok` | Canonical | AQ | +05:00 | - |
@@ -609,12 +609,12 @@
 |----------|----------|------|---------------|----------------|------|
 | <a name="hst"></a>HST | `HST` | Link | - | -10:00 | Parent: [`Pacific/Honolulu`](#pacific-honolulu) |
 | <a name="kwajalein"></a>Kwajalein | `Kwajalein` | Link | - | +12:00 | Parent: [`Pacific/Kwajalein`](#pacific-kwajalein) |
-| <a name="nz"></a>NZ | `NZ` | Link | - | +12:00 | Parent: [`Pacific/Auckland`](#pacific-auckland) |
-| <a name="nz-chat"></a>NZ-CHAT | `NZ-CHAT` | Link | - | +12:45 | Parent: [`Pacific/Chatham`](#pacific-chatham) |
+| <a name="nz"></a>NZ | `NZ` | Link | - | +13:00 | Parent: [`Pacific/Auckland`](#pacific-auckland) |
+| <a name="nz-chat"></a>NZ-CHAT | `NZ-CHAT` | Link | - | +13:45 | Parent: [`Pacific/Chatham`](#pacific-chatham) |
 | <a name="pacific-apia"></a>Apia | `Pacific/Apia` | Canonical | WS | +13:00 | - |
-| <a name="pacific-auckland"></a>Auckland | `Pacific/Auckland` | Canonical | AQ, NZ | +12:00 | Children: [`Antarctica/McMurdo`](#antarctica-mcmurdo), [`Antarctica/South_Pole`](#antarctica-south-pole), [`NZ`](#nz) |
+| <a name="pacific-auckland"></a>Auckland | `Pacific/Auckland` | Canonical | AQ, NZ | +13:00 | Children: [`Antarctica/McMurdo`](#antarctica-mcmurdo), [`Antarctica/South_Pole`](#antarctica-south-pole), [`NZ`](#nz) |
 | <a name="pacific-bougainville"></a>Bougainville | `Pacific/Bougainville` | Canonical | PG | +11:00 | - |
-| <a name="pacific-chatham"></a>Chatham | `Pacific/Chatham` | Canonical | NZ | +12:45 | Children: [`NZ-CHAT`](#nz-chat) |
+| <a name="pacific-chatham"></a>Chatham | `Pacific/Chatham` | Canonical | NZ | +13:45 | Children: [`NZ-CHAT`](#nz-chat) |
 | <a name="pacific-chuuk"></a>Chuuk | `Pacific/Chuuk` | Link | FM | +10:00 | Parent: [`Pacific/Port_Moresby`](#pacific-port-moresby) |
 | <a name="pacific-easter"></a>Easter | `Pacific/Easter` | Canonical | CL | -05:00 | Children: [`Chile/EasterIsland`](#chile-easterisland) |
 | <a name="pacific-efate"></a>Efate | `Pacific/Efate` | Canonical | VU | +11:00 | - |

@@ -1,7 +1,7 @@
 {
-  "version": "2026d",
-  "lastModified": "Fri, 11 Sep 2026 22:36:31 GMT",
-  "updatedAt": "Tue, 15 Sep 2026 04:35:09 GMT",
+  "version": "2026e",
+  "lastModified": "Wed, 30 Sep 2026 01:06:34 GMT",
+  "updatedAt": "Thu, 01 Oct 2026 05:29:09 GMT",
   "numberOfZones": 593,
   "filesUsed": [
     "zone.tab",
@@ -3032,7 +3032,7 @@
         "America/Rainy_River",
         "Canada/Central"
       ],
-      "comments": "Central - ON (west), Manitoba",
+      "comments": "EST - Manitoba, ON (northwest)",
       "countryCodes": [
         "CA"
       ],
@@ -3139,13 +3139,13 @@
         "AQ"
       ],
       "geographicArea": "Antarctica",
-      "label": "Antarctica/McMurdo (GMT+12:00)",
+      "label": "Antarctica/McMurdo (GMT+13:00)",
       "location": "McMurdo",
       "locationLabel": "McMurdo",
       "parent": "Pacific/Auckland",
       "type": "Link",
       "tzCode": "Antarctica/McMurdo",
-      "utc": "+12:00"
+      "utc": "+13:00"
     },
     "Antarctica/Palmer": {
       "comments": "Palmer",
@@ -3175,13 +3175,13 @@
     },
     "Antarctica/South_Pole": {
       "geographicArea": "Antarctica",
-      "label": "Antarctica/South_Pole (GMT+12:00)",
+      "label": "Antarctica/South_Pole (GMT+13:00)",
       "location": "South_Pole",
       "locationLabel": "South Pole",
       "parent": "Pacific/Auckland",
       "type": "Link",
       "tzCode": "Antarctica/South_Pole",
-      "utc": "+12:00"
+      "utc": "+13:00"
     },
     "Antarctica/Syowa": {
       "comments": "Syowa",
@@ -6776,23 +6776,23 @@
     },
     "NZ": {
       "geographicArea": "Pacific",
-      "label": "NZ (GMT+12:00)",
+      "label": "NZ (GMT+13:00)",
       "location": "NZ",
       "locationLabel": "NZ",
       "parent": "Pacific/Auckland",
       "type": "Link",
       "tzCode": "NZ",
-      "utc": "+12:00"
+      "utc": "+13:00"
     },
     "NZ-CHAT": {
       "geographicArea": "Pacific",
-      "label": "NZ-CHAT (GMT+12:45)",
+      "label": "NZ-CHAT (GMT+13:45)",
       "location": "NZ-CHAT",
       "locationLabel": "NZ-CHAT",
       "parent": "Pacific/Chatham",
       "type": "Link",
       "tzCode": "NZ-CHAT",
-      "utc": "+12:45"
+      "utc": "+13:45"
     },
     "Navajo": {
       "geographicArea": "America",
@@ -6838,12 +6838,12 @@
         "NZ"
       ],
       "geographicArea": "Pacific",
-      "label": "Pacific/Auckland (GMT+12:00)",
+      "label": "Pacific/Auckland (GMT+13:00)",
       "location": "Auckland",
       "locationLabel": "Auckland",
       "type": "Canonical",
       "tzCode": "Pacific/Auckland",
-      "utc": "+12:00"
+      "utc": "+13:00"
     },
     "Pacific/Bougainville": {
       "comments": "Bougainville",
@@ -6867,12 +6867,12 @@
         "NZ"
       ],
       "geographicArea": "Pacific",
-      "label": "Pacific/Chatham (GMT+12:45)",
+      "label": "Pacific/Chatham (GMT+13:45)",
       "location": "Chatham",
       "locationLabel": "Chatham",
       "type": "Canonical",
       "tzCode": "Pacific/Chatham",
-      "utc": "+12:45"
+      "utc": "+13:45"
     },
     "Pacific/Chuuk": {
       "comments": "Chuuk/Truk, Yap",
