@@ -96,6 +96,28 @@ export interface LoggerConfig {
    */
   serializers?: Record<string, (value: unknown) => unknown>;
   /**
+   * Runs on the whole entry, in order, before it is sanitized. Return the entry or
+   * a replacement to keep it, `undefined` to drop it.
+   *
+   * What `serializers` cannot say: a rule across fields, a secret inside a value
+   * (`url: '/reset?token=...'`, which no key-name mask reaches), or a drop decided
+   * by something other than `filterEvents`' exact event name.
+   *
+   * Once per entry, not once per transport, so the default console transport is
+   * covered with nothing to wrap. A filter sees the entry after `bindings`, context
+   * and `serializers` are merged, and `error` is already a plain serialized object:
+   * test `entry.error?.name`, not `instanceof`. What it returns is still masked and
+   * depth-limited, and a dropped entry skips that walk.
+   *
+   * The entry object is the logger's own, so changing or deleting a top-level field
+   * in place is safe. A nested value can still be the caller's object.
+   *
+   * A filter that throws drops the entry, because letting it through unfiltered
+   * would write what a redaction filter exists to stop. The first failure per
+   * logger is reported on `console.error`.
+   */
+  filters?: LogFilter[];
+  /**
    * `iso` (the default) writes `2026-08-29T06:50:27.000Z`. `epoch` writes
    * milliseconds as a number, which some ingesters prefer and which costs no
    * `Date` allocation per entry.
@@ -115,6 +137,12 @@ export type LogEntry = Record<string, unknown> & {
 };
 
 export type LogFormatter = (entry: LogEntry, level: LogLevel) => string;
+
+/** See `LoggerConfig.filters`. */
+export type LogFilter = (
+  entry: LogEntry,
+  level: LogLevel,
+) => LogEntry | undefined;
 
 /** What a transport is holding and what it has lost, for a health endpoint. */
 export interface TransportStats {

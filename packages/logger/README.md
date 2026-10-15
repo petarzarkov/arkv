@@ -652,6 +652,50 @@ const logger = new Logger(
 
 When the context's `event` field matches a filtered event, the log is silently dropped.
 
+### Serializers and Filters
+
+`serializers` rewrite one field by name before the entry is sanitized:
+
+```typescript
+const logger = new Logger({
+  serializers: {
+    req: (value) => {
+      const req = value as { method: string; url: string };
+      return { method: req.method, url: req.url };
+    },
+  },
+});
+```
+
+`filters` see the whole entry, for what a per-field rewrite or a key-name mask
+cannot reach: a secret inside a value, a rule across fields, or a drop decided by
+something other than the event name. Return the entry (or a replacement) to keep
+it, `undefined` to drop it:
+
+```typescript
+import { Logger, type LogFilter } from '@arkv/logger';
+
+const redactQuery: LogFilter = (entry) =>
+  typeof entry.url === 'string'
+    ? { ...entry, url: entry.url.replace(/([?&]token=)[^&]*/g, '$1[REDACTED]') }
+    : entry;
+
+const dropHealthChecks: LogFilter = (entry, level) =>
+  level === 'info' && entry.path === '/health' ? undefined : entry;
+
+const logger = new Logger({ filters: [redactQuery, dropHealthChecks] });
+```
+
+- Filters run in order, **once per entry**, before any transport, the default
+  console transport included.
+- They run before sanitization, so `maskFields` still applies to what a filter
+  returns, and a dropped entry skips the sanitize walk.
+- `error` is already serialized to a plain object by then: test `entry.error?.name`,
+  not `instanceof`.
+- A filter that throws drops its entry (unfiltered, it would carry what the filter
+  exists to remove). The first failure per logger is reported on `console.error`.
+- `child()` loggers inherit them.
+
 ## API
 
 ### `Logger`
@@ -716,6 +760,8 @@ an `invalidMessageWarning`, and the value itself is kept under
 | `maxDepth` | `number` | `32` | Max nesting depth before truncation |
 | `transports` | `Transport[]` | one `ConsoleTransport` | Replaces the default — see [Transports](#transports) |
 | `bindings` | `Record<string, unknown>` | — | Static fields merged into every entry |
+| `serializers` | `Record<string, (value) => unknown>` | — | Rewrite one field by name. See [Serializers and Filters](#serializers-and-filters) |
+| `filters` | `LogFilter[]` | — | Rewrite or drop the whole entry, once per entry |
 | `onTransportError` | `(error, transport) => void` | — | Called instead of the one-shot `console.error` |
 
 ### `FileTransport`
