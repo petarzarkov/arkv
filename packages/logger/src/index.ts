@@ -52,6 +52,7 @@ export {
   DEFAULT_MASK_FIELDS,
   LOG_LEVELS,
   type LogEntry,
+  type LogFilter,
   type LogFormatter,
   type LoggerConfig,
   LogLevel,

@@ -17,6 +17,8 @@ import { ConsoleTransport } from './transport.js';
 import {
   DEFAULT_MASK_FIELDS,
   LOG_LEVELS,
+  type LogEntry,
+  type LogFilter,
   type LoggerConfig,
   LogLevel,
   type Transport,
@@ -75,6 +77,8 @@ export class Logger {
   readonly #appEnv?: string;
   readonly #bindings?: Record<string, unknown>;
   readonly #serializers?: Record<string, (value: unknown) => unknown>;
+  readonly #filters: LogFilter[];
+  #reportedFilterFailure = false;
   readonly #timestamp?: 'iso' | 'epoch';
   readonly #transports: Transport[];
   readonly #sanitizeOptions: PreparedSanitizeOptions;
@@ -100,6 +104,7 @@ export class Logger {
     this.#appEnv = cfg.env;
     this.#bindings = cfg.bindings;
     this.#serializers = cfg.serializers;
+    this.#filters = cfg.filters ?? [];
     this.#timestamp = cfg.timestamp;
     this.#onTransportError = cfg.onTransportError;
     this.#transports = cfg.transports ?? [
@@ -402,7 +407,12 @@ export class Logger {
     if (this.#serializers) parts.serializers = this.#serializers;
     if (this.#timestamp) parts.timestamp = this.#timestamp;
 
-    const logEntry = createLogEntry(parts);
+    const built = createLogEntry(parts);
+    const logEntry =
+      this.#filters.length === 0 ? built : this.#runFilters(built, level);
+    if (logEntry === undefined) {
+      return;
+    }
 
     const sanitizedLogEntry = sanitizePrepared(logEntry, this.#sanitizeOptions);
 
@@ -418,6 +428,33 @@ export class Logger {
         this.#reportTransportError(error_, transport);
       }
     }
+  }
+
+  /**
+   * A throw drops the entry rather than letting it through: unfiltered, it would
+   * carry exactly what a redaction filter exists to remove.
+   */
+  #runFilters(entry: LogEntry, level: LogLevel): LogEntry | undefined {
+    let current = entry;
+    try {
+      for (const filter of this.#filters) {
+        const next = filter(current, level);
+        if (next === undefined) {
+          return undefined;
+        }
+        current = next;
+      }
+    } catch (error) {
+      if (!this.#reportedFilterFailure) {
+        this.#reportedFilterFailure = true;
+        const reason = error instanceof Error ? error.message : String(error);
+        console.error(
+          `[@arkv/logger] a filter threw, so its entry was dropped: ${reason}. Further filter failures from this logger are suppressed.`,
+        );
+      }
+      return undefined;
+    }
+    return current;
   }
 
   /**
