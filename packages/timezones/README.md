@@ -18,8 +18,8 @@ The fields for each timezone object are as follows:
 | Field Name       | Description                                                                                                    | Example Value             |
 | ---------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `tzCode`         | The standard IANA Time Zone Database identifier (tz tzCode).                                                     | `Europe/Sofia` |
-| `label`          | A display string combining the `tzCode` and the recorded UTC offset.                                             | `Europe/Sofia (GMT+03:00)` |
-| `utc`            | The UTC offset in `+HH:MM` or `-HH:MM` format, as recorded when the data was generated.                          | `+03:00` |
+| `label`          | A display string combining the `tzCode` and the recorded UTC offset.                                             | `Europe/Sofia (GMT+02:00)` |
+| `utc`            | The UTC offset in `+HH:MM` or `-HH:MM` format, as recorded when the data was generated.                          | `+02:00` |
 | `locationLabel`  | A human-readable name for the primary city or location associated with the timezone.                             | `Sofia` |
 | `countryCodes`   | An array of `ISO 3166-1 alpha-2` country codes associated with this timezone.                                    | `['KI', ...]` |
 | `geographicArea` | The continent or ocean region the timezone is located in.                                                       | `Europe` |
@@ -31,9 +31,9 @@ The fields for each timezone object are as follows:
 
 Inspired by: [list of tz database in wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 
-- **IANA DB Version**: 2026e
-- **Updated**: Thu, 01 Oct 2026 05:29:09 GMT
-- **Last Modified**: Wed, 30 Sep 2026 01:06:34 GMT
+- **IANA DB Version**: 2026f
+- **Updated**: Thu, 29 Oct 2026 05:27:02 GMT
+- **Last Modified**: Wed, 28 Oct 2026 07:16:29 GMT
 - **Number of zones**: 593
 - **Zones**: [TIMEZONES.md](https://github.com/petarzarkov/arkv/blob/main/packages/timezones/TIMEZONES.md)
 - **Files used from IANA DB**: `zone.tab, zone1970.tab, etcetera, backward`

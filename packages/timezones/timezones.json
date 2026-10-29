@@ -1,7 +1,7 @@
 {
-  "version": "2026e",
-  "lastModified": "Wed, 30 Sep 2026 01:06:34 GMT",
-  "updatedAt": "Thu, 01 Oct 2026 05:29:09 GMT",
+  "version": "2026f",
+  "lastModified": "Wed, 28 Oct 2026 07:16:29 GMT",
+  "updatedAt": "Thu, 29 Oct 2026 05:27:02 GMT",
   "numberOfZones": 593,
   "filesUsed": [
     "zone.tab",
@@ -232,12 +232,12 @@
         "ES"
       ],
       "geographicArea": "Africa",
-      "label": "Africa/Ceuta (GMT+02:00)",
+      "label": "Africa/Ceuta (GMT+01:00)",
       "location": "Ceuta",
       "locationLabel": "Ceuta",
       "type": "Canonical",
       "tzCode": "Africa/Ceuta",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Africa/Conakry": {
       "countryCodes": [
@@ -1060,12 +1060,12 @@
         "PY"
       ],
       "geographicArea": "America",
-      "label": "America/Asuncion (GMT-04:00)",
+      "label": "America/Asuncion (GMT-03:00)",
       "location": "Asuncion",
       "locationLabel": "Asuncion",
       "type": "Canonical",
       "tzCode": "America/Asuncion",
-      "utc": "-04:00"
+      "utc": "-03:00"
     },
     "America/Atikokan": {
       "comments": "EST - ON (Atikokan), NU (Coral H)",
@@ -1618,13 +1618,13 @@
     },
     "America/Godthab": {
       "geographicArea": "America",
-      "label": "America/Godthab (GMT-01:00)",
+      "label": "America/Godthab (GMT-02:00)",
       "location": "Godthab",
       "locationLabel": "Godthab",
       "parent": "America/Nuuk",
       "type": "Link",
       "tzCode": "America/Godthab",
-      "utc": "-01:00"
+      "utc": "-02:00"
     },
     "America/Goose_Bay": {
       "comments": "Atlantic - Labrador (most areas)",
@@ -2412,12 +2412,12 @@
         "GL"
       ],
       "geographicArea": "America",
-      "label": "America/Nuuk (GMT-01:00)",
+      "label": "America/Nuuk (GMT-02:00)",
       "location": "Nuuk",
       "locationLabel": "Nuuk",
       "type": "Canonical",
       "tzCode": "America/Nuuk",
-      "utc": "-01:00"
+      "utc": "-02:00"
     },
     "America/Ojinaga": {
       "comments": "Chihuahua (US border - east)",
@@ -2774,12 +2774,12 @@
         "GL"
       ],
       "geographicArea": "America",
-      "label": "America/Scoresbysund (GMT-01:00)",
+      "label": "America/Scoresbysund (GMT-02:00)",
       "location": "Scoresbysund",
       "locationLabel": "Scoresbysund",
       "type": "Canonical",
       "tzCode": "America/Scoresbysund",
-      "utc": "-01:00"
+      "utc": "-02:00"
     },
     "America/Shiprock": {
       "geographicArea": "America",
@@ -3113,12 +3113,12 @@
         "AU"
       ],
       "geographicArea": "Antarctica",
-      "label": "Antarctica/Macquarie (GMT+10:00)",
+      "label": "Antarctica/Macquarie (GMT+11:00)",
       "location": "Macquarie",
       "locationLabel": "Macquarie",
       "type": "Canonical",
       "tzCode": "Antarctica/Macquarie",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Antarctica/Mawson": {
       "comments": "Mawson",
@@ -3203,12 +3203,12 @@
         "AQ"
       ],
       "geographicArea": "Antarctica",
-      "label": "Antarctica/Troll (GMT+02:00)",
+      "label": "Antarctica/Troll (GMT+00:00)",
       "location": "Troll",
       "locationLabel": "Troll",
       "type": "Canonical",
       "tzCode": "Antarctica/Troll",
-      "utc": "+02:00"
+      "utc": "+00:00"
     },
     "Antarctica/Vostok": {
       "comments": "Vostok",
@@ -3228,13 +3228,13 @@
         "SJ"
       ],
       "geographicArea": "Arctic",
-      "label": "Arctic/Longyearbyen (GMT+02:00)",
+      "label": "Arctic/Longyearbyen (GMT+01:00)",
       "location": "Longyearbyen",
       "locationLabel": "Longyearbyen",
       "parent": "Europe/Berlin",
       "type": "Link",
       "tzCode": "Arctic/Longyearbyen",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Asia/Aden": {
       "countryCodes": [
@@ -3428,12 +3428,12 @@
         "LB"
       ],
       "geographicArea": "Asia",
-      "label": "Asia/Beirut (GMT+03:00)",
+      "label": "Asia/Beirut (GMT+02:00)",
       "location": "Beirut",
       "locationLabel": "Beirut",
       "type": "Canonical",
       "tzCode": "Asia/Beirut",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Asia/Bishkek": {
       "countryCodes": [
@@ -3614,12 +3614,12 @@
         "CY"
       ],
       "geographicArea": "Asia",
-      "label": "Asia/Famagusta (GMT+03:00)",
+      "label": "Asia/Famagusta (GMT+02:00)",
       "location": "Famagusta",
       "locationLabel": "Famagusta",
       "type": "Canonical",
       "tzCode": "Asia/Famagusta",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Asia/Gaza": {
       "comments": "Gaza Strip",
@@ -3627,12 +3627,12 @@
         "PS"
       ],
       "geographicArea": "Asia",
-      "label": "Asia/Gaza (GMT+03:00)",
+      "label": "Asia/Gaza (GMT+02:00)",
       "location": "Gaza",
       "locationLabel": "Gaza",
       "type": "Canonical",
       "tzCode": "Asia/Gaza",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Asia/Harbin": {
       "geographicArea": "Asia",
@@ -3650,12 +3650,12 @@
         "PS"
       ],
       "geographicArea": "Asia",
-      "label": "Asia/Hebron (GMT+03:00)",
+      "label": "Asia/Hebron (GMT+02:00)",
       "location": "Hebron",
       "locationLabel": "Hebron",
       "type": "Canonical",
       "tzCode": "Asia/Hebron",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Asia/Ho_Chi_Minh": {
       "children": [
@@ -3759,12 +3759,12 @@
         "IL"
       ],
       "geographicArea": "Asia",
-      "label": "Asia/Jerusalem (GMT+03:00)",
+      "label": "Asia/Jerusalem (GMT+02:00)",
       "location": "Jerusalem",
       "locationLabel": "Jerusalem",
       "type": "Canonical",
       "tzCode": "Asia/Jerusalem",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Asia/Kabul": {
       "countryCodes": [
@@ -4011,12 +4011,12 @@
         "CY"
       ],
       "geographicArea": "Asia",
-      "label": "Asia/Nicosia (GMT+03:00)",
+      "label": "Asia/Nicosia (GMT+02:00)",
       "location": "Nicosia",
       "locationLabel": "Nicosia",
       "type": "Canonical",
       "tzCode": "Asia/Nicosia",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Asia/Novokuznetsk": {
       "comments": "MSK+04 - Kemerovo",
@@ -4340,13 +4340,13 @@
     },
     "Asia/Tel_Aviv": {
       "geographicArea": "Asia",
-      "label": "Asia/Tel_Aviv (GMT+03:00)",
+      "label": "Asia/Tel_Aviv (GMT+02:00)",
       "location": "Tel_Aviv",
       "locationLabel": "Tel Aviv",
       "parent": "Asia/Jerusalem",
       "type": "Link",
       "tzCode": "Asia/Tel_Aviv",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Asia/Thimbu": {
       "geographicArea": "Asia",
@@ -4556,12 +4556,12 @@
         "PT"
       ],
       "geographicArea": "Atlantic",
-      "label": "Atlantic/Azores (GMT+00:00)",
+      "label": "Atlantic/Azores (GMT-01:00)",
       "location": "Azores",
       "locationLabel": "Azores",
       "type": "Canonical",
       "tzCode": "Atlantic/Azores",
-      "utc": "+00:00"
+      "utc": "-01:00"
     },
     "Atlantic/Bermuda": {
       "countryCodes": [
@@ -4581,12 +4581,12 @@
         "ES"
       ],
       "geographicArea": "Atlantic",
-      "label": "Atlantic/Canary (GMT+01:00)",
+      "label": "Atlantic/Canary (GMT+00:00)",
       "location": "Canary",
       "locationLabel": "Canary",
       "type": "Canonical",
       "tzCode": "Atlantic/Canary",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Atlantic/Cape_Verde": {
       "countryCodes": [
@@ -4602,13 +4602,13 @@
     },
     "Atlantic/Faeroe": {
       "geographicArea": "Atlantic",
-      "label": "Atlantic/Faeroe (GMT+01:00)",
+      "label": "Atlantic/Faeroe (GMT+00:00)",
       "location": "Faeroe",
       "locationLabel": "Faeroe",
       "parent": "Atlantic/Faroe",
       "type": "Link",
       "tzCode": "Atlantic/Faeroe",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Atlantic/Faroe": {
       "children": [
@@ -4618,22 +4618,22 @@
         "FO"
       ],
       "geographicArea": "Atlantic",
-      "label": "Atlantic/Faroe (GMT+01:00)",
+      "label": "Atlantic/Faroe (GMT+00:00)",
       "location": "Faroe",
       "locationLabel": "Faroe",
       "type": "Canonical",
       "tzCode": "Atlantic/Faroe",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Atlantic/Jan_Mayen": {
       "geographicArea": "Atlantic",
-      "label": "Atlantic/Jan_Mayen (GMT+02:00)",
+      "label": "Atlantic/Jan_Mayen (GMT+01:00)",
       "location": "Jan_Mayen",
       "locationLabel": "Jan Mayen",
       "parent": "Europe/Berlin",
       "type": "Link",
       "tzCode": "Atlantic/Jan_Mayen",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Atlantic/Madeira": {
       "comments": "Madeira Islands",
@@ -4641,12 +4641,12 @@
         "PT"
       ],
       "geographicArea": "Atlantic",
-      "label": "Atlantic/Madeira (GMT+01:00)",
+      "label": "Atlantic/Madeira (GMT+00:00)",
       "location": "Madeira",
       "locationLabel": "Madeira",
       "type": "Canonical",
       "tzCode": "Atlantic/Madeira",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Atlantic/Reykjavik": {
       "countryCodes": [
@@ -4700,13 +4700,13 @@
     },
     "Australia/ACT": {
       "geographicArea": "Australia",
-      "label": "Australia/ACT (GMT+10:00)",
+      "label": "Australia/ACT (GMT+11:00)",
       "location": "ACT",
       "locationLabel": "ACT",
       "parent": "Australia/Sydney",
       "type": "Link",
       "tzCode": "Australia/ACT",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Australia/Adelaide": {
       "children": [
@@ -4717,12 +4717,12 @@
         "AU"
       ],
       "geographicArea": "Australia",
-      "label": "Australia/Adelaide (GMT+09:30)",
+      "label": "Australia/Adelaide (GMT+10:30)",
       "location": "Adelaide",
       "locationLabel": "Adelaide",
       "type": "Canonical",
       "tzCode": "Australia/Adelaide",
-      "utc": "+09:30"
+      "utc": "+10:30"
     },
     "Australia/Brisbane": {
       "children": [
@@ -4749,32 +4749,32 @@
         "AU"
       ],
       "geographicArea": "Australia",
-      "label": "Australia/Broken_Hill (GMT+09:30)",
+      "label": "Australia/Broken_Hill (GMT+10:30)",
       "location": "Broken_Hill",
       "locationLabel": "Broken Hill",
       "type": "Canonical",
       "tzCode": "Australia/Broken_Hill",
-      "utc": "+09:30"
+      "utc": "+10:30"
     },
     "Australia/Canberra": {
       "geographicArea": "Australia",
-      "label": "Australia/Canberra (GMT+10:00)",
+      "label": "Australia/Canberra (GMT+11:00)",
       "location": "Canberra",
       "locationLabel": "Canberra",
       "parent": "Australia/Sydney",
       "type": "Link",
       "tzCode": "Australia/Canberra",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Australia/Currie": {
       "geographicArea": "Australia",
-      "label": "Australia/Currie (GMT+10:00)",
+      "label": "Australia/Currie (GMT+11:00)",
       "location": "Currie",
       "locationLabel": "Currie",
       "parent": "Australia/Hobart",
       "type": "Link",
       "tzCode": "Australia/Currie",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Australia/Darwin": {
       "children": [
@@ -4815,22 +4815,22 @@
         "AU"
       ],
       "geographicArea": "Australia",
-      "label": "Australia/Hobart (GMT+10:00)",
+      "label": "Australia/Hobart (GMT+11:00)",
       "location": "Hobart",
       "locationLabel": "Hobart",
       "type": "Canonical",
       "tzCode": "Australia/Hobart",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Australia/LHI": {
       "geographicArea": "Australia",
-      "label": "Australia/LHI (GMT+10:30)",
+      "label": "Australia/LHI (GMT+11:00)",
       "location": "LHI",
       "locationLabel": "LHI",
       "parent": "Australia/Lord_Howe",
       "type": "Link",
       "tzCode": "Australia/LHI",
-      "utc": "+10:30"
+      "utc": "+11:00"
     },
     "Australia/Lindeman": {
       "comments": "Queensland (Whitsunday Islands)",
@@ -4854,12 +4854,12 @@
         "AU"
       ],
       "geographicArea": "Australia",
-      "label": "Australia/Lord_Howe (GMT+10:30)",
+      "label": "Australia/Lord_Howe (GMT+11:00)",
       "location": "Lord_Howe",
       "locationLabel": "Lord Howe",
       "type": "Canonical",
       "tzCode": "Australia/Lord_Howe",
-      "utc": "+10:30"
+      "utc": "+11:00"
     },
     "Australia/Melbourne": {
       "children": [
@@ -4870,22 +4870,22 @@
         "AU"
       ],
       "geographicArea": "Australia",
-      "label": "Australia/Melbourne (GMT+10:00)",
+      "label": "Australia/Melbourne (GMT+11:00)",
       "location": "Melbourne",
       "locationLabel": "Melbourne",
       "type": "Canonical",
       "tzCode": "Australia/Melbourne",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Australia/NSW": {
       "geographicArea": "Australia",
-      "label": "Australia/NSW (GMT+10:00)",
+      "label": "Australia/NSW (GMT+11:00)",
       "location": "NSW",
       "locationLabel": "NSW",
       "parent": "Australia/Sydney",
       "type": "Link",
       "tzCode": "Australia/NSW",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Australia/North": {
       "geographicArea": "Australia",
@@ -4925,13 +4925,13 @@
     },
     "Australia/South": {
       "geographicArea": "Australia",
-      "label": "Australia/South (GMT+09:30)",
+      "label": "Australia/South (GMT+10:30)",
       "location": "South",
       "locationLabel": "South",
       "parent": "Australia/Adelaide",
       "type": "Link",
       "tzCode": "Australia/South",
-      "utc": "+09:30"
+      "utc": "+10:30"
     },
     "Australia/Sydney": {
       "children": [
@@ -4944,32 +4944,32 @@
         "AU"
       ],
       "geographicArea": "Australia",
-      "label": "Australia/Sydney (GMT+10:00)",
+      "label": "Australia/Sydney (GMT+11:00)",
       "location": "Sydney",
       "locationLabel": "Sydney",
       "type": "Canonical",
       "tzCode": "Australia/Sydney",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Australia/Tasmania": {
       "geographicArea": "Australia",
-      "label": "Australia/Tasmania (GMT+10:00)",
+      "label": "Australia/Tasmania (GMT+11:00)",
       "location": "Tasmania",
       "locationLabel": "Tasmania",
       "parent": "Australia/Hobart",
       "type": "Link",
       "tzCode": "Australia/Tasmania",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Australia/Victoria": {
       "geographicArea": "Australia",
-      "label": "Australia/Victoria (GMT+10:00)",
+      "label": "Australia/Victoria (GMT+11:00)",
       "location": "Victoria",
       "locationLabel": "Victoria",
       "parent": "Australia/Melbourne",
       "type": "Link",
       "tzCode": "Australia/Victoria",
-      "utc": "+10:00"
+      "utc": "+11:00"
     },
     "Australia/West": {
       "geographicArea": "Australia",
@@ -4983,13 +4983,13 @@
     },
     "Australia/Yancowinna": {
       "geographicArea": "Australia",
-      "label": "Australia/Yancowinna (GMT+09:30)",
+      "label": "Australia/Yancowinna (GMT+10:30)",
       "location": "Yancowinna",
       "locationLabel": "Yancowinna",
       "parent": "Australia/Broken_Hill",
       "type": "Link",
       "tzCode": "Australia/Yancowinna",
-      "utc": "+09:30"
+      "utc": "+10:30"
     },
     "Brazil/Acre": {
       "geographicArea": "Brazil",
@@ -5033,13 +5033,13 @@
     },
     "CET": {
       "geographicArea": "Europe",
-      "label": "CET (GMT+02:00)",
+      "label": "CET (GMT+01:00)",
       "location": "CET",
       "locationLabel": "CET",
       "parent": "Europe/Brussels",
       "type": "Link",
       "tzCode": "CET",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Canada/Atlantic": {
       "geographicArea": "Canada",
@@ -5153,13 +5153,13 @@
     },
     "EET": {
       "geographicArea": "Europe",
-      "label": "EET (GMT+03:00)",
+      "label": "EET (GMT+02:00)",
       "location": "EET",
       "locationLabel": "EET",
       "parent": "Europe/Athens",
       "type": "Link",
       "tzCode": "EET",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "EST": {
       "geographicArea": "America",
@@ -5183,13 +5183,13 @@
     },
     "Eire": {
       "geographicArea": "Europe",
-      "label": "Eire (GMT+01:00)",
+      "label": "Eire (GMT+00:00)",
       "location": "Eire",
       "locationLabel": "Eire",
       "parent": "Europe/Dublin",
       "type": "Link",
       "tzCode": "Eire",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Etc/GMT": {
       "children": [
@@ -5538,25 +5538,25 @@
         "NL"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Amsterdam (GMT+02:00)",
+      "label": "Europe/Amsterdam (GMT+01:00)",
       "location": "Amsterdam",
       "locationLabel": "Amsterdam",
       "parent": "Europe/Brussels",
       "type": "Link",
       "tzCode": "Europe/Amsterdam",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Andorra": {
       "countryCodes": [
         "AD"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Andorra (GMT+02:00)",
+      "label": "Europe/Andorra (GMT+01:00)",
       "location": "Andorra",
       "locationLabel": "Andorra",
       "type": "Canonical",
       "tzCode": "Europe/Andorra",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Astrakhan": {
       "comments": "MSK+01 - Astrakhan",
@@ -5579,22 +5579,22 @@
         "GR"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Athens (GMT+03:00)",
+      "label": "Europe/Athens (GMT+02:00)",
       "location": "Athens",
       "locationLabel": "Athens",
       "type": "Canonical",
       "tzCode": "Europe/Athens",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Belfast": {
       "geographicArea": "Europe",
-      "label": "Europe/Belfast (GMT+01:00)",
+      "label": "Europe/Belfast (GMT+00:00)",
       "location": "Belfast",
       "locationLabel": "Belfast",
       "parent": "Europe/London",
       "type": "Link",
       "tzCode": "Europe/Belfast",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Europe/Belgrade": {
       "children": [
@@ -5613,12 +5613,12 @@
         "SI"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Belgrade (GMT+02:00)",
+      "label": "Europe/Belgrade (GMT+01:00)",
       "location": "Belgrade",
       "locationLabel": "Belgrade",
       "type": "Canonical",
       "tzCode": "Europe/Belgrade",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Berlin": {
       "children": [
@@ -5637,25 +5637,25 @@
         "SJ"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Berlin (GMT+02:00)",
+      "label": "Europe/Berlin (GMT+01:00)",
       "location": "Berlin",
       "locationLabel": "Berlin",
       "type": "Canonical",
       "tzCode": "Europe/Berlin",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Bratislava": {
       "countryCodes": [
         "SK"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Bratislava (GMT+02:00)",
+      "label": "Europe/Bratislava (GMT+01:00)",
       "location": "Bratislava",
       "locationLabel": "Bratislava",
       "parent": "Europe/Prague",
       "type": "Link",
       "tzCode": "Europe/Bratislava",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Brussels": {
       "children": [
@@ -5670,36 +5670,36 @@
         "NL"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Brussels (GMT+02:00)",
+      "label": "Europe/Brussels (GMT+01:00)",
       "location": "Brussels",
       "locationLabel": "Brussels",
       "type": "Canonical",
       "tzCode": "Europe/Brussels",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Bucharest": {
       "countryCodes": [
         "RO"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Bucharest (GMT+03:00)",
+      "label": "Europe/Bucharest (GMT+02:00)",
       "location": "Bucharest",
       "locationLabel": "Bucharest",
       "type": "Canonical",
       "tzCode": "Europe/Bucharest",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Budapest": {
       "countryCodes": [
         "HU"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Budapest (GMT+02:00)",
+      "label": "Europe/Budapest (GMT+01:00)",
       "location": "Budapest",
       "locationLabel": "Budapest",
       "type": "Canonical",
       "tzCode": "Europe/Budapest",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Busingen": {
       "comments": "Busingen",
@@ -5707,13 +5707,13 @@
         "DE"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Busingen (GMT+02:00)",
+      "label": "Europe/Busingen (GMT+01:00)",
       "location": "Busingen",
       "locationLabel": "Busingen",
       "parent": "Europe/Zurich",
       "type": "Link",
       "tzCode": "Europe/Busingen",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Chisinau": {
       "children": [
@@ -5723,25 +5723,25 @@
         "MD"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Chisinau (GMT+03:00)",
+      "label": "Europe/Chisinau (GMT+02:00)",
       "location": "Chisinau",
       "locationLabel": "Chisinau",
       "type": "Canonical",
       "tzCode": "Europe/Chisinau",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Copenhagen": {
       "countryCodes": [
         "DK"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Copenhagen (GMT+02:00)",
+      "label": "Europe/Copenhagen (GMT+01:00)",
       "location": "Copenhagen",
       "locationLabel": "Copenhagen",
       "parent": "Europe/Berlin",
       "type": "Link",
       "tzCode": "Europe/Copenhagen",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Dublin": {
       "children": [
@@ -5751,37 +5751,37 @@
         "IE"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Dublin (GMT+01:00)",
+      "label": "Europe/Dublin (GMT+00:00)",
       "location": "Dublin",
       "locationLabel": "Dublin",
       "type": "Canonical",
       "tzCode": "Europe/Dublin",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Europe/Gibraltar": {
       "countryCodes": [
         "GI"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Gibraltar (GMT+02:00)",
+      "label": "Europe/Gibraltar (GMT+01:00)",
       "location": "Gibraltar",
       "locationLabel": "Gibraltar",
       "type": "Canonical",
       "tzCode": "Europe/Gibraltar",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Guernsey": {
       "countryCodes": [
         "GG"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Guernsey (GMT+01:00)",
+      "label": "Europe/Guernsey (GMT+00:00)",
       "location": "Guernsey",
       "locationLabel": "Guernsey",
       "parent": "Europe/London",
       "type": "Link",
       "tzCode": "Europe/Guernsey",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Europe/Helsinki": {
       "children": [
@@ -5792,25 +5792,25 @@
         "FI"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Helsinki (GMT+03:00)",
+      "label": "Europe/Helsinki (GMT+02:00)",
       "location": "Helsinki",
       "locationLabel": "Helsinki",
       "type": "Canonical",
       "tzCode": "Europe/Helsinki",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Isle_of_Man": {
       "countryCodes": [
         "IM"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Isle_of_Man (GMT+01:00)",
+      "label": "Europe/Isle_of_Man (GMT+00:00)",
       "location": "Isle_of_Man",
       "locationLabel": "Isle of_Man",
       "parent": "Europe/London",
       "type": "Link",
       "tzCode": "Europe/Isle_of_Man",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Europe/Istanbul": {
       "children": [
@@ -5833,13 +5833,13 @@
         "JE"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Jersey (GMT+01:00)",
+      "label": "Europe/Jersey (GMT+00:00)",
       "location": "Jersey",
       "locationLabel": "Jersey",
       "parent": "Europe/London",
       "type": "Link",
       "tzCode": "Europe/Jersey",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Europe/Kaliningrad": {
       "comments": "MSK-01 - Kaliningrad",
@@ -5856,13 +5856,13 @@
     },
     "Europe/Kiev": {
       "geographicArea": "Europe",
-      "label": "Europe/Kiev (GMT+03:00)",
+      "label": "Europe/Kiev (GMT+02:00)",
       "location": "Kiev",
       "locationLabel": "Kiev",
       "parent": "Europe/Kyiv",
       "type": "Link",
       "tzCode": "Europe/Kiev",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Kirov": {
       "comments": "MSK+00 - Kirov",
@@ -5888,12 +5888,12 @@
         "UA"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Kyiv (GMT+03:00)",
+      "label": "Europe/Kyiv (GMT+02:00)",
       "location": "Kyiv",
       "locationLabel": "Kyiv",
       "type": "Canonical",
       "tzCode": "Europe/Kyiv",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Lisbon": {
       "children": [
@@ -5905,25 +5905,25 @@
         "PT"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Lisbon (GMT+01:00)",
+      "label": "Europe/Lisbon (GMT+00:00)",
       "location": "Lisbon",
       "locationLabel": "Lisbon",
       "type": "Canonical",
       "tzCode": "Europe/Lisbon",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Europe/Ljubljana": {
       "countryCodes": [
         "SI"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Ljubljana (GMT+02:00)",
+      "label": "Europe/Ljubljana (GMT+01:00)",
       "location": "Ljubljana",
       "locationLabel": "Ljubljana",
       "parent": "Europe/Belgrade",
       "type": "Link",
       "tzCode": "Europe/Ljubljana",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/London": {
       "children": [
@@ -5941,25 +5941,25 @@
         "JE"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/London (GMT+01:00)",
+      "label": "Europe/London (GMT+00:00)",
       "location": "London",
       "locationLabel": "London",
       "type": "Canonical",
       "tzCode": "Europe/London",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Europe/Luxembourg": {
       "countryCodes": [
         "LU"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Luxembourg (GMT+02:00)",
+      "label": "Europe/Luxembourg (GMT+01:00)",
       "location": "Luxembourg",
       "locationLabel": "Luxembourg",
       "parent": "Europe/Brussels",
       "type": "Link",
       "tzCode": "Europe/Luxembourg",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Madrid": {
       "comments": "Spain (mainland)",
@@ -5967,37 +5967,37 @@
         "ES"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Madrid (GMT+02:00)",
+      "label": "Europe/Madrid (GMT+01:00)",
       "location": "Madrid",
       "locationLabel": "Madrid",
       "type": "Canonical",
       "tzCode": "Europe/Madrid",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Malta": {
       "countryCodes": [
         "MT"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Malta (GMT+02:00)",
+      "label": "Europe/Malta (GMT+01:00)",
       "location": "Malta",
       "locationLabel": "Malta",
       "type": "Canonical",
       "tzCode": "Europe/Malta",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Mariehamn": {
       "countryCodes": [
         "AX"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Mariehamn (GMT+03:00)",
+      "label": "Europe/Mariehamn (GMT+02:00)",
       "location": "Mariehamn",
       "locationLabel": "Mariehamn",
       "parent": "Europe/Helsinki",
       "type": "Link",
       "tzCode": "Europe/Mariehamn",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Minsk": {
       "countryCodes": [
@@ -6016,13 +6016,13 @@
         "MC"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Monaco (GMT+02:00)",
+      "label": "Europe/Monaco (GMT+01:00)",
       "location": "Monaco",
       "locationLabel": "Monaco",
       "parent": "Europe/Paris",
       "type": "Link",
       "tzCode": "Europe/Monaco",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Moscow": {
       "children": [
@@ -6042,26 +6042,26 @@
     },
     "Europe/Nicosia": {
       "geographicArea": "Europe",
-      "label": "Europe/Nicosia (GMT+03:00)",
+      "label": "Europe/Nicosia (GMT+02:00)",
       "location": "Nicosia",
       "locationLabel": "Nicosia",
       "parent": "Asia/Nicosia",
       "type": "Link",
       "tzCode": "Europe/Nicosia",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Oslo": {
       "countryCodes": [
         "NO"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Oslo (GMT+02:00)",
+      "label": "Europe/Oslo (GMT+01:00)",
       "location": "Oslo",
       "locationLabel": "Oslo",
       "parent": "Europe/Berlin",
       "type": "Link",
       "tzCode": "Europe/Oslo",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Paris": {
       "children": [
@@ -6072,25 +6072,25 @@
         "MC"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Paris (GMT+02:00)",
+      "label": "Europe/Paris (GMT+01:00)",
       "location": "Paris",
       "locationLabel": "Paris",
       "type": "Canonical",
       "tzCode": "Europe/Paris",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Podgorica": {
       "countryCodes": [
         "ME"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Podgorica (GMT+02:00)",
+      "label": "Europe/Podgorica (GMT+01:00)",
       "location": "Podgorica",
       "locationLabel": "Podgorica",
       "parent": "Europe/Belgrade",
       "type": "Link",
       "tzCode": "Europe/Podgorica",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Prague": {
       "children": [
@@ -6101,24 +6101,24 @@
         "SK"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Prague (GMT+02:00)",
+      "label": "Europe/Prague (GMT+01:00)",
       "location": "Prague",
       "locationLabel": "Prague",
       "type": "Canonical",
       "tzCode": "Europe/Prague",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Riga": {
       "countryCodes": [
         "LV"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Riga (GMT+03:00)",
+      "label": "Europe/Riga (GMT+02:00)",
       "location": "Riga",
       "locationLabel": "Riga",
       "type": "Canonical",
       "tzCode": "Europe/Riga",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Rome": {
       "children": [
@@ -6131,12 +6131,12 @@
         "VA"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Rome (GMT+02:00)",
+      "label": "Europe/Rome (GMT+01:00)",
       "location": "Rome",
       "locationLabel": "Rome",
       "type": "Canonical",
       "tzCode": "Europe/Rome",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Samara": {
       "comments": "MSK+01 - Samara, Udmurtia",
@@ -6156,26 +6156,26 @@
         "SM"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/San_Marino (GMT+02:00)",
+      "label": "Europe/San_Marino (GMT+01:00)",
       "location": "San_Marino",
       "locationLabel": "San Marino",
       "parent": "Europe/Rome",
       "type": "Link",
       "tzCode": "Europe/San_Marino",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Sarajevo": {
       "countryCodes": [
         "BA"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Sarajevo (GMT+02:00)",
+      "label": "Europe/Sarajevo (GMT+01:00)",
       "location": "Sarajevo",
       "locationLabel": "Sarajevo",
       "parent": "Europe/Belgrade",
       "type": "Link",
       "tzCode": "Europe/Sarajevo",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Saratov": {
       "comments": "MSK+01 - Saratov",
@@ -6209,72 +6209,72 @@
         "MK"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Skopje (GMT+02:00)",
+      "label": "Europe/Skopje (GMT+01:00)",
       "location": "Skopje",
       "locationLabel": "Skopje",
       "parent": "Europe/Belgrade",
       "type": "Link",
       "tzCode": "Europe/Skopje",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Sofia": {
       "countryCodes": [
         "BG"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Sofia (GMT+03:00)",
+      "label": "Europe/Sofia (GMT+02:00)",
       "location": "Sofia",
       "locationLabel": "Sofia",
       "type": "Canonical",
       "tzCode": "Europe/Sofia",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Stockholm": {
       "countryCodes": [
         "SE"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Stockholm (GMT+02:00)",
+      "label": "Europe/Stockholm (GMT+01:00)",
       "location": "Stockholm",
       "locationLabel": "Stockholm",
       "parent": "Europe/Berlin",
       "type": "Link",
       "tzCode": "Europe/Stockholm",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Tallinn": {
       "countryCodes": [
         "EE"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Tallinn (GMT+03:00)",
+      "label": "Europe/Tallinn (GMT+02:00)",
       "location": "Tallinn",
       "locationLabel": "Tallinn",
       "type": "Canonical",
       "tzCode": "Europe/Tallinn",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Tirane": {
       "countryCodes": [
         "AL"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Tirane (GMT+02:00)",
+      "label": "Europe/Tirane (GMT+01:00)",
       "location": "Tirane",
       "locationLabel": "Tirane",
       "type": "Canonical",
       "tzCode": "Europe/Tirane",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Tiraspol": {
       "geographicArea": "Europe",
-      "label": "Europe/Tiraspol (GMT+03:00)",
+      "label": "Europe/Tiraspol (GMT+02:00)",
       "location": "Tiraspol",
       "locationLabel": "Tiraspol",
       "parent": "Europe/Chisinau",
       "type": "Link",
       "tzCode": "Europe/Tiraspol",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Ulyanovsk": {
       "comments": "MSK+01 - Ulyanovsk",
@@ -6291,63 +6291,63 @@
     },
     "Europe/Uzhgorod": {
       "geographicArea": "Europe",
-      "label": "Europe/Uzhgorod (GMT+03:00)",
+      "label": "Europe/Uzhgorod (GMT+02:00)",
       "location": "Uzhgorod",
       "locationLabel": "Uzhgorod",
       "parent": "Europe/Kyiv",
       "type": "Link",
       "tzCode": "Europe/Uzhgorod",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Vaduz": {
       "countryCodes": [
         "LI"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Vaduz (GMT+02:00)",
+      "label": "Europe/Vaduz (GMT+01:00)",
       "location": "Vaduz",
       "locationLabel": "Vaduz",
       "parent": "Europe/Zurich",
       "type": "Link",
       "tzCode": "Europe/Vaduz",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Vatican": {
       "countryCodes": [
         "VA"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Vatican (GMT+02:00)",
+      "label": "Europe/Vatican (GMT+01:00)",
       "location": "Vatican",
       "locationLabel": "Vatican",
       "parent": "Europe/Rome",
       "type": "Link",
       "tzCode": "Europe/Vatican",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Vienna": {
       "countryCodes": [
         "AT"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Vienna (GMT+02:00)",
+      "label": "Europe/Vienna (GMT+01:00)",
       "location": "Vienna",
       "locationLabel": "Vienna",
       "type": "Canonical",
       "tzCode": "Europe/Vienna",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Vilnius": {
       "countryCodes": [
         "LT"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Vilnius (GMT+03:00)",
+      "label": "Europe/Vilnius (GMT+02:00)",
       "location": "Vilnius",
       "locationLabel": "Vilnius",
       "type": "Canonical",
       "tzCode": "Europe/Vilnius",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Volgograd": {
       "comments": "MSK+00 - Volgograd",
@@ -6370,35 +6370,35 @@
         "PL"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Warsaw (GMT+02:00)",
+      "label": "Europe/Warsaw (GMT+01:00)",
       "location": "Warsaw",
       "locationLabel": "Warsaw",
       "type": "Canonical",
       "tzCode": "Europe/Warsaw",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Zagreb": {
       "countryCodes": [
         "HR"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Zagreb (GMT+02:00)",
+      "label": "Europe/Zagreb (GMT+01:00)",
       "location": "Zagreb",
       "locationLabel": "Zagreb",
       "parent": "Europe/Belgrade",
       "type": "Link",
       "tzCode": "Europe/Zagreb",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Europe/Zaporozhye": {
       "geographicArea": "Europe",
-      "label": "Europe/Zaporozhye (GMT+03:00)",
+      "label": "Europe/Zaporozhye (GMT+02:00)",
       "location": "Zaporozhye",
       "locationLabel": "Zaporozhye",
       "parent": "Europe/Kyiv",
       "type": "Link",
       "tzCode": "Europe/Zaporozhye",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Europe/Zurich": {
       "children": [
@@ -6412,32 +6412,32 @@
         "LI"
       ],
       "geographicArea": "Europe",
-      "label": "Europe/Zurich (GMT+02:00)",
+      "label": "Europe/Zurich (GMT+01:00)",
       "location": "Zurich",
       "locationLabel": "Zurich",
       "type": "Canonical",
       "tzCode": "Europe/Zurich",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "GB": {
       "geographicArea": "Europe",
-      "label": "GB (GMT+01:00)",
+      "label": "GB (GMT+00:00)",
       "location": "GB",
       "locationLabel": "GB",
       "parent": "Europe/London",
       "type": "Link",
       "tzCode": "GB",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "GB-Eire": {
       "geographicArea": "Europe",
-      "label": "GB-Eire (GMT+01:00)",
+      "label": "GB-Eire (GMT+00:00)",
       "location": "GB-Eire",
       "locationLabel": "GB-Eire",
       "parent": "Europe/London",
       "type": "Link",
       "tzCode": "GB-Eire",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "GMT": {
       "geographicArea": null,
@@ -6676,13 +6676,13 @@
     },
     "Israel": {
       "geographicArea": "Asia",
-      "label": "Israel (GMT+03:00)",
+      "label": "Israel (GMT+02:00)",
       "location": "Israel",
       "locationLabel": "Israel",
       "parent": "Asia/Jerusalem",
       "type": "Link",
       "tzCode": "Israel",
-      "utc": "+03:00"
+      "utc": "+02:00"
     },
     "Jamaica": {
       "geographicArea": "America",
@@ -6726,13 +6726,13 @@
     },
     "MET": {
       "geographicArea": "Europe",
-      "label": "MET (GMT+02:00)",
+      "label": "MET (GMT+01:00)",
       "location": "MET",
       "locationLabel": "MET",
       "parent": "Europe/Brussels",
       "type": "Link",
       "tzCode": "MET",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "MST": {
       "geographicArea": "America",
@@ -7179,12 +7179,12 @@
         "NF"
       ],
       "geographicArea": "Pacific",
-      "label": "Pacific/Norfolk (GMT+11:00)",
+      "label": "Pacific/Norfolk (GMT+12:00)",
       "location": "Norfolk",
       "locationLabel": "Norfolk",
       "type": "Canonical",
       "tzCode": "Pacific/Norfolk",
-      "utc": "+11:00"
+      "utc": "+12:00"
     },
     "Pacific/Noumea": {
       "countryCodes": [
@@ -7418,23 +7418,23 @@
     },
     "Poland": {
       "geographicArea": "Europe",
-      "label": "Poland (GMT+02:00)",
+      "label": "Poland (GMT+01:00)",
       "location": "Poland",
       "locationLabel": "Poland",
       "parent": "Europe/Warsaw",
       "type": "Link",
       "tzCode": "Poland",
-      "utc": "+02:00"
+      "utc": "+01:00"
     },
     "Portugal": {
       "geographicArea": "Europe",
-      "label": "Portugal (GMT+01:00)",
+      "label": "Portugal (GMT+00:00)",
       "location": "Portugal",
       "locationLabel": "Portugal",
       "parent": "Europe/Lisbon",
       "type": "Link",
       "tzCode": "Portugal",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "ROC": {
       "geographicArea": "Asia",
@@ -7638,13 +7638,13 @@
     },
     "WET": {
       "geographicArea": "Europe",
-      "label": "WET (GMT+01:00)",
+      "label": "WET (GMT+00:00)",
       "location": "WET",
       "locationLabel": "WET",
       "parent": "Europe/Lisbon",
       "type": "Link",
       "tzCode": "WET",
-      "utc": "+01:00"
+      "utc": "+00:00"
     },
     "Zulu": {
       "geographicArea": null,

@@ -19,7 +19,7 @@
 | <a name="africa-bujumbura"></a>Bujumbura | `Africa/Bujumbura` | Link | BI | +02:00 | Parent: [`Africa/Maputo`](#africa-maputo) |
 | <a name="africa-cairo"></a>Cairo | `Africa/Cairo` | Canonical | EG | +03:00 | Children: [`Egypt`](#egypt) |
 | <a name="africa-casablanca"></a>Casablanca | `Africa/Casablanca` | Canonical | MA | +01:00 | - |
-| <a name="africa-ceuta"></a>Ceuta | `Africa/Ceuta` | Canonical | ES | +02:00 | - |
+| <a name="africa-ceuta"></a>Ceuta | `Africa/Ceuta` | Canonical | ES | +01:00 | - |
 | <a name="africa-conakry"></a>Conakry | `Africa/Conakry` | Link | GN | +00:00 | Parent: [`Africa/Abidjan`](#africa-abidjan) |
 | <a name="africa-dakar"></a>Dakar | `Africa/Dakar` | Link | SN | +00:00 | Parent: [`Africa/Abidjan`](#africa-abidjan) |
 | <a name="africa-dar-es-salaam"></a>Dar es_Salaam | `Africa/Dar_es_Salaam` | Link | TZ | +03:00 | Parent: [`Africa/Nairobi`](#africa-nairobi) |
@@ -85,7 +85,7 @@
 | <a name="america-argentina-tucuman"></a>Argentina - Tucuman | `America/Argentina/Tucuman` | Canonical | AR | -03:00 | - |
 | <a name="america-argentina-ushuaia"></a>Argentina - Ushuaia | `America/Argentina/Ushuaia` | Canonical | AR | -03:00 | - |
 | <a name="america-aruba"></a>Aruba | `America/Aruba` | Link | AW | -04:00 | Parent: [`America/Puerto_Rico`](#america-puerto-rico) |
-| <a name="america-asuncion"></a>Asuncion | `America/Asuncion` | Canonical | PY | -04:00 | - |
+| <a name="america-asuncion"></a>Asuncion | `America/Asuncion` | Canonical | PY | -03:00 | - |
 | <a name="america-atikokan"></a>Atikokan | `America/Atikokan` | Link | CA | -05:00 | Parent: [`America/Panama`](#america-panama) |
 | <a name="america-atka"></a>Atka | `America/Atka` | Link | - | -09:00 | Parent: [`America/Adak`](#america-adak) |
 | <a name="america-bahia"></a>Bahia | `America/Bahia` | Canonical | BR | -03:00 | - |
@@ -129,7 +129,7 @@
 | <a name="america-fort-wayne"></a>Fort Wayne | `America/Fort_Wayne` | Link | - | -04:00 | Parent: [`America/Indiana/Indianapolis`](#america-indiana-indianapolis) |
 | <a name="america-fortaleza"></a>Fortaleza | `America/Fortaleza` | Canonical | BR | -03:00 | - |
 | <a name="america-glace-bay"></a>Glace Bay | `America/Glace_Bay` | Canonical | CA | -03:00 | - |
-| <a name="america-godthab"></a>Godthab | `America/Godthab` | Link | - | -01:00 | Parent: [`America/Nuuk`](#america-nuuk) |
+| <a name="america-godthab"></a>Godthab | `America/Godthab` | Link | - | -02:00 | Parent: [`America/Nuuk`](#america-nuuk) |
 | <a name="america-goose-bay"></a>Goose Bay | `America/Goose_Bay` | Canonical | CA | -03:00 | - |
 | <a name="america-grand-turk"></a>Grand Turk | `America/Grand_Turk` | Canonical | TC | -04:00 | - |
 | <a name="america-grenada"></a>Grenada | `America/Grenada` | Link | GD | -04:00 | Parent: [`America/Puerto_Rico`](#america-puerto-rico) |
@@ -189,7 +189,7 @@
 | <a name="america-north-dakota-beulah"></a>North Dakota - Beulah | `America/North_Dakota/Beulah` | Canonical | US | -05:00 | - |
 | <a name="america-north-dakota-center"></a>North Dakota - Center | `America/North_Dakota/Center` | Canonical | US | -05:00 | - |
 | <a name="america-north-dakota-new-salem"></a>North Dakota - New_Salem | `America/North_Dakota/New_Salem` | Canonical | US | -05:00 | - |
-| <a name="america-nuuk"></a>Nuuk | `America/Nuuk` | Canonical | GL | -01:00 | Children: [`America/Godthab`](#america-godthab) |
+| <a name="america-nuuk"></a>Nuuk | `America/Nuuk` | Canonical | GL | -02:00 | Children: [`America/Godthab`](#america-godthab) |
 | <a name="america-ojinaga"></a>Ojinaga | `America/Ojinaga` | Canonical | MX | -05:00 | - |
 | <a name="america-panama"></a>Panama | `America/Panama` | Canonical | CA, KY, PA | -05:00 | Children: [`America/Atikokan`](#america-atikokan), [`America/Cayman`](#america-cayman), [`America/Coral_Harbour`](#america-coral-harbour), [`EST`](#est) |
 | <a name="america-pangnirtung"></a>Pangnirtung | `America/Pangnirtung` | Link | - | -04:00 | Parent: [`America/Iqaluit`](#america-iqaluit) |
@@ -213,7 +213,7 @@
 | <a name="america-santiago"></a>Santiago | `America/Santiago` | Canonical | CL | -03:00 | Children: [`Chile/Continental`](#chile-continental) |
 | <a name="america-santo-domingo"></a>Santo Domingo | `America/Santo_Domingo` | Canonical | DO | -04:00 | - |
 | <a name="america-sao-paulo"></a>Sao Paulo | `America/Sao_Paulo` | Canonical | BR | -03:00 | Children: [`Brazil/East`](#brazil-east) |
-| <a name="america-scoresbysund"></a>Scoresbysund | `America/Scoresbysund` | Canonical | GL | -01:00 | - |
+| <a name="america-scoresbysund"></a>Scoresbysund | `America/Scoresbysund` | Canonical | GL | -02:00 | - |
 | <a name="america-shiprock"></a>Shiprock | `America/Shiprock` | Link | - | -06:00 | Parent: [`America/Denver`](#america-denver) |
 | <a name="america-sitka"></a>Sitka | `America/Sitka` | Canonical | US | -08:00 | - |
 | <a name="america-st-barthelemy"></a>St Barthelemy | `America/St_Barthelemy` | Link | BL | -04:00 | Parent: [`America/Puerto_Rico`](#america-puerto-rico) |
@@ -248,21 +248,21 @@
 | <a name="antarctica-casey"></a>Casey | `Antarctica/Casey` | Canonical | AQ | +08:00 | - |
 | <a name="antarctica-davis"></a>Davis | `Antarctica/Davis` | Canonical | AQ | +07:00 | - |
 | <a name="antarctica-dumontdurville"></a>DumontDUrville | `Antarctica/DumontDUrville` | Link | AQ | +10:00 | Parent: [`Pacific/Port_Moresby`](#pacific-port-moresby) |
-| <a name="antarctica-macquarie"></a>Macquarie | `Antarctica/Macquarie` | Canonical | AU | +10:00 | - |
+| <a name="antarctica-macquarie"></a>Macquarie | `Antarctica/Macquarie` | Canonical | AU | +11:00 | - |
 | <a name="antarctica-mawson"></a>Mawson | `Antarctica/Mawson` | Canonical | AQ | +05:00 | - |
 | <a name="antarctica-mcmurdo"></a>McMurdo | `Antarctica/McMurdo` | Link | AQ | +13:00 | Parent: [`Pacific/Auckland`](#pacific-auckland) |
 | <a name="antarctica-palmer"></a>Palmer | `Antarctica/Palmer` | Canonical | AQ | -03:00 | - |
 | <a name="antarctica-rothera"></a>Rothera | `Antarctica/Rothera` | Canonical | AQ | -03:00 | - |
 | <a name="antarctica-south-pole"></a>South Pole | `Antarctica/South_Pole` | Link | - | +13:00 | Parent: [`Pacific/Auckland`](#pacific-auckland) |
 | <a name="antarctica-syowa"></a>Syowa | `Antarctica/Syowa` | Link | AQ | +03:00 | Parent: [`Asia/Riyadh`](#asia-riyadh) |
-| <a name="antarctica-troll"></a>Troll | `Antarctica/Troll` | Canonical | AQ | +02:00 | - |
+| <a name="antarctica-troll"></a>Troll | `Antarctica/Troll` | Canonical | AQ | +00:00 | - |
 | <a name="antarctica-vostok"></a>Vostok | `Antarctica/Vostok` | Canonical | AQ | +05:00 | - |
 
 ## Arctic
 
 | Location | Timezone | Type | Country Codes | Current Offset | Link |
 |----------|----------|------|---------------|----------------|------|
-| <a name="arctic-longyearbyen"></a>Longyearbyen | `Arctic/Longyearbyen` | Link | SJ | +02:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
+| <a name="arctic-longyearbyen"></a>Longyearbyen | `Arctic/Longyearbyen` | Link | SJ | +01:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
 
 ## Asia
 
@@ -282,7 +282,7 @@
 | <a name="asia-baku"></a>Baku | `Asia/Baku` | Canonical | AZ | +04:00 | - |
 | <a name="asia-bangkok"></a>Bangkok | `Asia/Bangkok` | Canonical | CX, KH, LA, TH, VN | +07:00 | Children: [`Asia/Phnom_Penh`](#asia-phnom-penh), [`Asia/Vientiane`](#asia-vientiane), [`Indian/Christmas`](#indian-christmas) |
 | <a name="asia-barnaul"></a>Barnaul | `Asia/Barnaul` | Canonical | RU | +07:00 | - |
-| <a name="asia-beirut"></a>Beirut | `Asia/Beirut` | Canonical | LB | +03:00 | - |
+| <a name="asia-beirut"></a>Beirut | `Asia/Beirut` | Canonical | LB | +02:00 | - |
 | <a name="asia-bishkek"></a>Bishkek | `Asia/Bishkek` | Canonical | KG | +06:00 | - |
 | <a name="asia-brunei"></a>Brunei | `Asia/Brunei` | Link | BN | +08:00 | Parent: [`Asia/Kuching`](#asia-kuching) |
 | <a name="asia-calcutta"></a>Calcutta | `Asia/Calcutta` | Link | - | +05:30 | Parent: [`Asia/Kolkata`](#asia-kolkata) |
@@ -297,10 +297,10 @@
 | <a name="asia-dili"></a>Dili | `Asia/Dili` | Canonical | TL | +09:00 | - |
 | <a name="asia-dubai"></a>Dubai | `Asia/Dubai` | Canonical | AE, OM, RE, SC, TF | +04:00 | Children: [`Asia/Muscat`](#asia-muscat), [`Indian/Mahe`](#indian-mahe), [`Indian/Reunion`](#indian-reunion) |
 | <a name="asia-dushanbe"></a>Dushanbe | `Asia/Dushanbe` | Canonical | TJ | +05:00 | - |
-| <a name="asia-famagusta"></a>Famagusta | `Asia/Famagusta` | Canonical | CY | +03:00 | - |
-| <a name="asia-gaza"></a>Gaza | `Asia/Gaza` | Canonical | PS | +03:00 | - |
+| <a name="asia-famagusta"></a>Famagusta | `Asia/Famagusta` | Canonical | CY | +02:00 | - |
+| <a name="asia-gaza"></a>Gaza | `Asia/Gaza` | Canonical | PS | +02:00 | - |
 | <a name="asia-harbin"></a>Harbin | `Asia/Harbin` | Link | - | +08:00 | Parent: [`Asia/Shanghai`](#asia-shanghai) |
-| <a name="asia-hebron"></a>Hebron | `Asia/Hebron` | Canonical | PS | +03:00 | - |
+| <a name="asia-hebron"></a>Hebron | `Asia/Hebron` | Canonical | PS | +02:00 | - |
 | <a name="asia-ho-chi-minh"></a>Ho Chi_Minh | `Asia/Ho_Chi_Minh` | Canonical | VN | +07:00 | Children: [`Asia/Saigon`](#asia-saigon) |
 | <a name="asia-hong-kong"></a>Hong Kong | `Asia/Hong_Kong` | Canonical | HK | +08:00 | Children: [`Hongkong`](#hongkong) |
 | <a name="asia-hovd"></a>Hovd | `Asia/Hovd` | Canonical | MN | +07:00 | - |
@@ -308,7 +308,7 @@
 | <a name="asia-istanbul"></a>Istanbul | `Asia/Istanbul` | Link | - | +03:00 | Parent: [`Europe/Istanbul`](#europe-istanbul) |
 | <a name="asia-jakarta"></a>Jakarta | `Asia/Jakarta` | Canonical | ID | +07:00 | - |
 | <a name="asia-jayapura"></a>Jayapura | `Asia/Jayapura` | Canonical | ID | +09:00 | - |
-| <a name="asia-jerusalem"></a>Jerusalem | `Asia/Jerusalem` | Canonical | IL | +03:00 | Children: [`Asia/Tel_Aviv`](#asia-tel-aviv), [`Israel`](#israel) |
+| <a name="asia-jerusalem"></a>Jerusalem | `Asia/Jerusalem` | Canonical | IL | +02:00 | Children: [`Asia/Tel_Aviv`](#asia-tel-aviv), [`Israel`](#israel) |
 | <a name="asia-kabul"></a>Kabul | `Asia/Kabul` | Canonical | AF | +04:30 | - |
 | <a name="asia-kamchatka"></a>Kamchatka | `Asia/Kamchatka` | Canonical | RU | +12:00 | - |
 | <a name="asia-karachi"></a>Karachi | `Asia/Karachi` | Canonical | PK | +05:00 | - |
@@ -327,7 +327,7 @@
 | <a name="asia-makassar"></a>Makassar | `Asia/Makassar` | Canonical | ID | +08:00 | Children: [`Asia/Ujung_Pandang`](#asia-ujung-pandang) |
 | <a name="asia-manila"></a>Manila | `Asia/Manila` | Canonical | PH | +08:00 | - |
 | <a name="asia-muscat"></a>Muscat | `Asia/Muscat` | Link | OM | +04:00 | Parent: [`Asia/Dubai`](#asia-dubai) |
-| <a name="asia-nicosia"></a>Nicosia | `Asia/Nicosia` | Canonical | CY | +03:00 | Children: [`Europe/Nicosia`](#europe-nicosia) |
+| <a name="asia-nicosia"></a>Nicosia | `Asia/Nicosia` | Canonical | CY | +02:00 | Children: [`Europe/Nicosia`](#europe-nicosia) |
 | <a name="asia-novokuznetsk"></a>Novokuznetsk | `Asia/Novokuznetsk` | Canonical | RU | +07:00 | - |
 | <a name="asia-novosibirsk"></a>Novosibirsk | `Asia/Novosibirsk` | Canonical | RU | +07:00 | - |
 | <a name="asia-omsk"></a>Omsk | `Asia/Omsk` | Canonical | RU | +06:00 | - |
@@ -351,7 +351,7 @@
 | <a name="asia-tashkent"></a>Tashkent | `Asia/Tashkent` | Canonical | UZ | +05:00 | - |
 | <a name="asia-tbilisi"></a>Tbilisi | `Asia/Tbilisi` | Canonical | GE | +04:00 | - |
 | <a name="asia-tehran"></a>Tehran | `Asia/Tehran` | Canonical | IR | +03:30 | Children: [`Iran`](#iran) |
-| <a name="asia-tel-aviv"></a>Tel Aviv | `Asia/Tel_Aviv` | Link | - | +03:00 | Parent: [`Asia/Jerusalem`](#asia-jerusalem) |
+| <a name="asia-tel-aviv"></a>Tel Aviv | `Asia/Tel_Aviv` | Link | - | +02:00 | Parent: [`Asia/Jerusalem`](#asia-jerusalem) |
 | <a name="asia-thimbu"></a>Thimbu | `Asia/Thimbu` | Link | - | +06:00 | Parent: [`Asia/Thimphu`](#asia-thimphu) |
 | <a name="asia-thimphu"></a>Thimphu | `Asia/Thimphu` | Canonical | BT | +06:00 | Children: [`Asia/Thimbu`](#asia-thimbu) |
 | <a name="asia-tokyo"></a>Tokyo | `Asia/Tokyo` | Canonical | AU, JP | +09:00 | Children: [`Japan`](#japan) |
@@ -369,7 +369,7 @@
 | <a name="asia-yerevan"></a>Yerevan | `Asia/Yerevan` | Canonical | AM | +04:00 | - |
 | <a name="hongkong"></a>Hongkong | `Hongkong` | Link | - | +08:00 | Parent: [`Asia/Hong_Kong`](#asia-hong-kong) |
 | <a name="iran"></a>Iran | `Iran` | Link | - | +03:30 | Parent: [`Asia/Tehran`](#asia-tehran) |
-| <a name="israel"></a>Israel | `Israel` | Link | - | +03:00 | Parent: [`Asia/Jerusalem`](#asia-jerusalem) |
+| <a name="israel"></a>Israel | `Israel` | Link | - | +02:00 | Parent: [`Asia/Jerusalem`](#asia-jerusalem) |
 | <a name="japan"></a>Japan | `Japan` | Link | - | +09:00 | Parent: [`Asia/Tokyo`](#asia-tokyo) |
 | <a name="prc"></a>PRC | `PRC` | Link | - | +08:00 | Parent: [`Asia/Shanghai`](#asia-shanghai) |
 | <a name="roc"></a>ROC | `ROC` | Link | - | +08:00 | Parent: [`Asia/Taipei`](#asia-taipei) |
@@ -380,14 +380,14 @@
 
 | Location | Timezone | Type | Country Codes | Current Offset | Link |
 |----------|----------|------|---------------|----------------|------|
-| <a name="atlantic-azores"></a>Azores | `Atlantic/Azores` | Canonical | PT | +00:00 | - |
+| <a name="atlantic-azores"></a>Azores | `Atlantic/Azores` | Canonical | PT | -01:00 | - |
 | <a name="atlantic-bermuda"></a>Bermuda | `Atlantic/Bermuda` | Canonical | BM | -03:00 | - |
-| <a name="atlantic-canary"></a>Canary | `Atlantic/Canary` | Canonical | ES | +01:00 | - |
+| <a name="atlantic-canary"></a>Canary | `Atlantic/Canary` | Canonical | ES | +00:00 | - |
 | <a name="atlantic-cape-verde"></a>Cape Verde | `Atlantic/Cape_Verde` | Canonical | CV | -01:00 | - |
-| <a name="atlantic-faeroe"></a>Faeroe | `Atlantic/Faeroe` | Link | - | +01:00 | Parent: [`Atlantic/Faroe`](#atlantic-faroe) |
-| <a name="atlantic-faroe"></a>Faroe | `Atlantic/Faroe` | Canonical | FO | +01:00 | Children: [`Atlantic/Faeroe`](#atlantic-faeroe) |
-| <a name="atlantic-jan-mayen"></a>Jan Mayen | `Atlantic/Jan_Mayen` | Link | - | +02:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
-| <a name="atlantic-madeira"></a>Madeira | `Atlantic/Madeira` | Canonical | PT | +01:00 | - |
+| <a name="atlantic-faeroe"></a>Faeroe | `Atlantic/Faeroe` | Link | - | +00:00 | Parent: [`Atlantic/Faroe`](#atlantic-faroe) |
+| <a name="atlantic-faroe"></a>Faroe | `Atlantic/Faroe` | Canonical | FO | +00:00 | Children: [`Atlantic/Faeroe`](#atlantic-faeroe) |
+| <a name="atlantic-jan-mayen"></a>Jan Mayen | `Atlantic/Jan_Mayen` | Link | - | +01:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
+| <a name="atlantic-madeira"></a>Madeira | `Atlantic/Madeira` | Canonical | PT | +00:00 | - |
 | <a name="atlantic-reykjavik"></a>Reykjavik | `Atlantic/Reykjavik` | Link | IS | +00:00 | Parent: [`Africa/Abidjan`](#africa-abidjan) |
 | <a name="atlantic-south-georgia"></a>South Georgia | `Atlantic/South_Georgia` | Canonical | GS | -02:00 | - |
 | <a name="atlantic-st-helena"></a>St Helena | `Atlantic/St_Helena` | Link | SH | +00:00 | Parent: [`Africa/Abidjan`](#africa-abidjan) |
@@ -397,29 +397,29 @@
 
 | Location | Timezone | Type | Country Codes | Current Offset | Link |
 |----------|----------|------|---------------|----------------|------|
-| <a name="australia-act"></a>ACT | `Australia/ACT` | Link | - | +10:00 | Parent: [`Australia/Sydney`](#australia-sydney) |
-| <a name="australia-adelaide"></a>Adelaide | `Australia/Adelaide` | Canonical | AU | +09:30 | Children: [`Australia/South`](#australia-south) |
+| <a name="australia-act"></a>ACT | `Australia/ACT` | Link | - | +11:00 | Parent: [`Australia/Sydney`](#australia-sydney) |
+| <a name="australia-adelaide"></a>Adelaide | `Australia/Adelaide` | Canonical | AU | +10:30 | Children: [`Australia/South`](#australia-south) |
 | <a name="australia-brisbane"></a>Brisbane | `Australia/Brisbane` | Canonical | AU | +10:00 | Children: [`Australia/Queensland`](#australia-queensland) |
-| <a name="australia-broken-hill"></a>Broken Hill | `Australia/Broken_Hill` | Canonical | AU | +09:30 | Children: [`Australia/Yancowinna`](#australia-yancowinna) |
-| <a name="australia-canberra"></a>Canberra | `Australia/Canberra` | Link | - | +10:00 | Parent: [`Australia/Sydney`](#australia-sydney) |
-| <a name="australia-currie"></a>Currie | `Australia/Currie` | Link | - | +10:00 | Parent: [`Australia/Hobart`](#australia-hobart) |
+| <a name="australia-broken-hill"></a>Broken Hill | `Australia/Broken_Hill` | Canonical | AU | +10:30 | Children: [`Australia/Yancowinna`](#australia-yancowinna) |
+| <a name="australia-canberra"></a>Canberra | `Australia/Canberra` | Link | - | +11:00 | Parent: [`Australia/Sydney`](#australia-sydney) |
+| <a name="australia-currie"></a>Currie | `Australia/Currie` | Link | - | +11:00 | Parent: [`Australia/Hobart`](#australia-hobart) |
 | <a name="australia-darwin"></a>Darwin | `Australia/Darwin` | Canonical | AU | +09:30 | Children: [`Australia/North`](#australia-north) |
 | <a name="australia-eucla"></a>Eucla | `Australia/Eucla` | Canonical | AU | +08:45 | - |
-| <a name="australia-hobart"></a>Hobart | `Australia/Hobart` | Canonical | AU | +10:00 | Children: [`Australia/Currie`](#australia-currie), [`Australia/Tasmania`](#australia-tasmania) |
-| <a name="australia-lhi"></a>LHI | `Australia/LHI` | Link | - | +10:30 | Parent: [`Australia/Lord_Howe`](#australia-lord-howe) |
+| <a name="australia-hobart"></a>Hobart | `Australia/Hobart` | Canonical | AU | +11:00 | Children: [`Australia/Currie`](#australia-currie), [`Australia/Tasmania`](#australia-tasmania) |
+| <a name="australia-lhi"></a>LHI | `Australia/LHI` | Link | - | +11:00 | Parent: [`Australia/Lord_Howe`](#australia-lord-howe) |
 | <a name="australia-lindeman"></a>Lindeman | `Australia/Lindeman` | Canonical | AU | +10:00 | - |
-| <a name="australia-lord-howe"></a>Lord Howe | `Australia/Lord_Howe` | Canonical | AU | +10:30 | Children: [`Australia/LHI`](#australia-lhi) |
-| <a name="australia-melbourne"></a>Melbourne | `Australia/Melbourne` | Canonical | AU | +10:00 | Children: [`Australia/Victoria`](#australia-victoria) |
+| <a name="australia-lord-howe"></a>Lord Howe | `Australia/Lord_Howe` | Canonical | AU | +11:00 | Children: [`Australia/LHI`](#australia-lhi) |
+| <a name="australia-melbourne"></a>Melbourne | `Australia/Melbourne` | Canonical | AU | +11:00 | Children: [`Australia/Victoria`](#australia-victoria) |
 | <a name="australia-north"></a>North | `Australia/North` | Link | - | +09:30 | Parent: [`Australia/Darwin`](#australia-darwin) |
-| <a name="australia-nsw"></a>NSW | `Australia/NSW` | Link | - | +10:00 | Parent: [`Australia/Sydney`](#australia-sydney) |
+| <a name="australia-nsw"></a>NSW | `Australia/NSW` | Link | - | +11:00 | Parent: [`Australia/Sydney`](#australia-sydney) |
 | <a name="australia-perth"></a>Perth | `Australia/Perth` | Canonical | AU | +08:00 | Children: [`Australia/West`](#australia-west) |
 | <a name="australia-queensland"></a>Queensland | `Australia/Queensland` | Link | - | +10:00 | Parent: [`Australia/Brisbane`](#australia-brisbane) |
-| <a name="australia-south"></a>South | `Australia/South` | Link | - | +09:30 | Parent: [`Australia/Adelaide`](#australia-adelaide) |
-| <a name="australia-sydney"></a>Sydney | `Australia/Sydney` | Canonical | AU | +10:00 | Children: [`Australia/ACT`](#australia-act), [`Australia/Canberra`](#australia-canberra), [`Australia/NSW`](#australia-nsw) |
-| <a name="australia-tasmania"></a>Tasmania | `Australia/Tasmania` | Link | - | +10:00 | Parent: [`Australia/Hobart`](#australia-hobart) |
-| <a name="australia-victoria"></a>Victoria | `Australia/Victoria` | Link | - | +10:00 | Parent: [`Australia/Melbourne`](#australia-melbourne) |
+| <a name="australia-south"></a>South | `Australia/South` | Link | - | +10:30 | Parent: [`Australia/Adelaide`](#australia-adelaide) |
+| <a name="australia-sydney"></a>Sydney | `Australia/Sydney` | Canonical | AU | +11:00 | Children: [`Australia/ACT`](#australia-act), [`Australia/Canberra`](#australia-canberra), [`Australia/NSW`](#australia-nsw) |
+| <a name="australia-tasmania"></a>Tasmania | `Australia/Tasmania` | Link | - | +11:00 | Parent: [`Australia/Hobart`](#australia-hobart) |
+| <a name="australia-victoria"></a>Victoria | `Australia/Victoria` | Link | - | +11:00 | Parent: [`Australia/Melbourne`](#australia-melbourne) |
 | <a name="australia-west"></a>West | `Australia/West` | Link | - | +08:00 | Parent: [`Australia/Perth`](#australia-perth) |
-| <a name="australia-yancowinna"></a>Yancowinna | `Australia/Yancowinna` | Link | - | +09:30 | Parent: [`Australia/Broken_Hill`](#australia-broken-hill) |
+| <a name="australia-yancowinna"></a>Yancowinna | `Australia/Yancowinna` | Link | - | +10:30 | Parent: [`Australia/Broken_Hill`](#australia-broken-hill) |
 
 ## Brazil
 
@@ -503,81 +503,81 @@
 
 | Location | Timezone | Type | Country Codes | Current Offset | Link |
 |----------|----------|------|---------------|----------------|------|
-| <a name="cet"></a>CET | `CET` | Link | - | +02:00 | Parent: [`Europe/Brussels`](#europe-brussels) |
-| <a name="eet"></a>EET | `EET` | Link | - | +03:00 | Parent: [`Europe/Athens`](#europe-athens) |
-| <a name="eire"></a>Eire | `Eire` | Link | - | +01:00 | Parent: [`Europe/Dublin`](#europe-dublin) |
-| <a name="europe-amsterdam"></a>Amsterdam | `Europe/Amsterdam` | Link | NL | +02:00 | Parent: [`Europe/Brussels`](#europe-brussels) |
-| <a name="europe-andorra"></a>Andorra | `Europe/Andorra` | Canonical | AD | +02:00 | - |
+| <a name="cet"></a>CET | `CET` | Link | - | +01:00 | Parent: [`Europe/Brussels`](#europe-brussels) |
+| <a name="eet"></a>EET | `EET` | Link | - | +02:00 | Parent: [`Europe/Athens`](#europe-athens) |
+| <a name="eire"></a>Eire | `Eire` | Link | - | +00:00 | Parent: [`Europe/Dublin`](#europe-dublin) |
+| <a name="europe-amsterdam"></a>Amsterdam | `Europe/Amsterdam` | Link | NL | +01:00 | Parent: [`Europe/Brussels`](#europe-brussels) |
+| <a name="europe-andorra"></a>Andorra | `Europe/Andorra` | Canonical | AD | +01:00 | - |
 | <a name="europe-astrakhan"></a>Astrakhan | `Europe/Astrakhan` | Canonical | RU | +04:00 | - |
-| <a name="europe-athens"></a>Athens | `Europe/Athens` | Canonical | GR | +03:00 | Children: [`EET`](#eet) |
-| <a name="europe-belfast"></a>Belfast | `Europe/Belfast` | Link | - | +01:00 | Parent: [`Europe/London`](#europe-london) |
-| <a name="europe-belgrade"></a>Belgrade | `Europe/Belgrade` | Canonical | BA, HR, ME, MK, RS, SI | +02:00 | Children: [`Europe/Ljubljana`](#europe-ljubljana), [`Europe/Podgorica`](#europe-podgorica), [`Europe/Sarajevo`](#europe-sarajevo), [`Europe/Skopje`](#europe-skopje), [`Europe/Zagreb`](#europe-zagreb) |
-| <a name="europe-berlin"></a>Berlin | `Europe/Berlin` | Canonical | DE, DK, NO, SE, SJ | +02:00 | Children: [`Arctic/Longyearbyen`](#arctic-longyearbyen), [`Atlantic/Jan_Mayen`](#atlantic-jan-mayen), [`Europe/Copenhagen`](#europe-copenhagen), [`Europe/Oslo`](#europe-oslo), [`Europe/Stockholm`](#europe-stockholm) |
-| <a name="europe-bratislava"></a>Bratislava | `Europe/Bratislava` | Link | SK | +02:00 | Parent: [`Europe/Prague`](#europe-prague) |
-| <a name="europe-brussels"></a>Brussels | `Europe/Brussels` | Canonical | BE, LU, NL | +02:00 | Children: [`CET`](#cet), [`Europe/Amsterdam`](#europe-amsterdam), [`Europe/Luxembourg`](#europe-luxembourg), [`MET`](#met) |
-| <a name="europe-bucharest"></a>Bucharest | `Europe/Bucharest` | Canonical | RO | +03:00 | - |
-| <a name="europe-budapest"></a>Budapest | `Europe/Budapest` | Canonical | HU | +02:00 | - |
-| <a name="europe-busingen"></a>Busingen | `Europe/Busingen` | Link | DE | +02:00 | Parent: [`Europe/Zurich`](#europe-zurich) |
-| <a name="europe-chisinau"></a>Chisinau | `Europe/Chisinau` | Canonical | MD | +03:00 | Children: [`Europe/Tiraspol`](#europe-tiraspol) |
-| <a name="europe-copenhagen"></a>Copenhagen | `Europe/Copenhagen` | Link | DK | +02:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
-| <a name="europe-dublin"></a>Dublin | `Europe/Dublin` | Canonical | IE | +01:00 | Children: [`Eire`](#eire) |
-| <a name="europe-gibraltar"></a>Gibraltar | `Europe/Gibraltar` | Canonical | GI | +02:00 | - |
-| <a name="europe-guernsey"></a>Guernsey | `Europe/Guernsey` | Link | GG | +01:00 | Parent: [`Europe/London`](#europe-london) |
-| <a name="europe-helsinki"></a>Helsinki | `Europe/Helsinki` | Canonical | AX, FI | +03:00 | Children: [`Europe/Mariehamn`](#europe-mariehamn) |
-| <a name="europe-isle-of-man"></a>Isle of_Man | `Europe/Isle_of_Man` | Link | IM | +01:00 | Parent: [`Europe/London`](#europe-london) |
+| <a name="europe-athens"></a>Athens | `Europe/Athens` | Canonical | GR | +02:00 | Children: [`EET`](#eet) |
+| <a name="europe-belfast"></a>Belfast | `Europe/Belfast` | Link | - | +00:00 | Parent: [`Europe/London`](#europe-london) |
+| <a name="europe-belgrade"></a>Belgrade | `Europe/Belgrade` | Canonical | BA, HR, ME, MK, RS, SI | +01:00 | Children: [`Europe/Ljubljana`](#europe-ljubljana), [`Europe/Podgorica`](#europe-podgorica), [`Europe/Sarajevo`](#europe-sarajevo), [`Europe/Skopje`](#europe-skopje), [`Europe/Zagreb`](#europe-zagreb) |
+| <a name="europe-berlin"></a>Berlin | `Europe/Berlin` | Canonical | DE, DK, NO, SE, SJ | +01:00 | Children: [`Arctic/Longyearbyen`](#arctic-longyearbyen), [`Atlantic/Jan_Mayen`](#atlantic-jan-mayen), [`Europe/Copenhagen`](#europe-copenhagen), [`Europe/Oslo`](#europe-oslo), [`Europe/Stockholm`](#europe-stockholm) |
+| <a name="europe-bratislava"></a>Bratislava | `Europe/Bratislava` | Link | SK | +01:00 | Parent: [`Europe/Prague`](#europe-prague) |
+| <a name="europe-brussels"></a>Brussels | `Europe/Brussels` | Canonical | BE, LU, NL | +01:00 | Children: [`CET`](#cet), [`Europe/Amsterdam`](#europe-amsterdam), [`Europe/Luxembourg`](#europe-luxembourg), [`MET`](#met) |
+| <a name="europe-bucharest"></a>Bucharest | `Europe/Bucharest` | Canonical | RO | +02:00 | - |
+| <a name="europe-budapest"></a>Budapest | `Europe/Budapest` | Canonical | HU | +01:00 | - |
+| <a name="europe-busingen"></a>Busingen | `Europe/Busingen` | Link | DE | +01:00 | Parent: [`Europe/Zurich`](#europe-zurich) |
+| <a name="europe-chisinau"></a>Chisinau | `Europe/Chisinau` | Canonical | MD | +02:00 | Children: [`Europe/Tiraspol`](#europe-tiraspol) |
+| <a name="europe-copenhagen"></a>Copenhagen | `Europe/Copenhagen` | Link | DK | +01:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
+| <a name="europe-dublin"></a>Dublin | `Europe/Dublin` | Canonical | IE | +00:00 | Children: [`Eire`](#eire) |
+| <a name="europe-gibraltar"></a>Gibraltar | `Europe/Gibraltar` | Canonical | GI | +01:00 | - |
+| <a name="europe-guernsey"></a>Guernsey | `Europe/Guernsey` | Link | GG | +00:00 | Parent: [`Europe/London`](#europe-london) |
+| <a name="europe-helsinki"></a>Helsinki | `Europe/Helsinki` | Canonical | AX, FI | +02:00 | Children: [`Europe/Mariehamn`](#europe-mariehamn) |
+| <a name="europe-isle-of-man"></a>Isle of_Man | `Europe/Isle_of_Man` | Link | IM | +00:00 | Parent: [`Europe/London`](#europe-london) |
 | <a name="europe-istanbul"></a>Istanbul | `Europe/Istanbul` | Canonical | TR | +03:00 | Children: [`Asia/Istanbul`](#asia-istanbul), [`Turkey`](#turkey) |
-| <a name="europe-jersey"></a>Jersey | `Europe/Jersey` | Link | JE | +01:00 | Parent: [`Europe/London`](#europe-london) |
+| <a name="europe-jersey"></a>Jersey | `Europe/Jersey` | Link | JE | +00:00 | Parent: [`Europe/London`](#europe-london) |
 | <a name="europe-kaliningrad"></a>Kaliningrad | `Europe/Kaliningrad` | Canonical | RU | +02:00 | - |
-| <a name="europe-kiev"></a>Kiev | `Europe/Kiev` | Link | - | +03:00 | Parent: [`Europe/Kyiv`](#europe-kyiv) |
+| <a name="europe-kiev"></a>Kiev | `Europe/Kiev` | Link | - | +02:00 | Parent: [`Europe/Kyiv`](#europe-kyiv) |
 | <a name="europe-kirov"></a>Kirov | `Europe/Kirov` | Canonical | RU | +03:00 | - |
-| <a name="europe-kyiv"></a>Kyiv | `Europe/Kyiv` | Canonical | UA | +03:00 | Children: [`Europe/Kiev`](#europe-kiev), [`Europe/Uzhgorod`](#europe-uzhgorod), [`Europe/Zaporozhye`](#europe-zaporozhye) |
-| <a name="europe-lisbon"></a>Lisbon | `Europe/Lisbon` | Canonical | PT | +01:00 | Children: [`Portugal`](#portugal), [`WET`](#wet) |
-| <a name="europe-ljubljana"></a>Ljubljana | `Europe/Ljubljana` | Link | SI | +02:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
-| <a name="europe-london"></a>London | `Europe/London` | Canonical | GB, GG, IM, JE | +01:00 | Children: [`Europe/Belfast`](#europe-belfast), [`Europe/Guernsey`](#europe-guernsey), [`Europe/Isle_of_Man`](#europe-isle-of-man), [`Europe/Jersey`](#europe-jersey), [`GB-Eire`](#gb-eire), [`GB`](#gb) |
-| <a name="europe-luxembourg"></a>Luxembourg | `Europe/Luxembourg` | Link | LU | +02:00 | Parent: [`Europe/Brussels`](#europe-brussels) |
-| <a name="europe-madrid"></a>Madrid | `Europe/Madrid` | Canonical | ES | +02:00 | - |
-| <a name="europe-malta"></a>Malta | `Europe/Malta` | Canonical | MT | +02:00 | - |
-| <a name="europe-mariehamn"></a>Mariehamn | `Europe/Mariehamn` | Link | AX | +03:00 | Parent: [`Europe/Helsinki`](#europe-helsinki) |
+| <a name="europe-kyiv"></a>Kyiv | `Europe/Kyiv` | Canonical | UA | +02:00 | Children: [`Europe/Kiev`](#europe-kiev), [`Europe/Uzhgorod`](#europe-uzhgorod), [`Europe/Zaporozhye`](#europe-zaporozhye) |
+| <a name="europe-lisbon"></a>Lisbon | `Europe/Lisbon` | Canonical | PT | +00:00 | Children: [`Portugal`](#portugal), [`WET`](#wet) |
+| <a name="europe-ljubljana"></a>Ljubljana | `Europe/Ljubljana` | Link | SI | +01:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
+| <a name="europe-london"></a>London | `Europe/London` | Canonical | GB, GG, IM, JE | +00:00 | Children: [`Europe/Belfast`](#europe-belfast), [`Europe/Guernsey`](#europe-guernsey), [`Europe/Isle_of_Man`](#europe-isle-of-man), [`Europe/Jersey`](#europe-jersey), [`GB-Eire`](#gb-eire), [`GB`](#gb) |
+| <a name="europe-luxembourg"></a>Luxembourg | `Europe/Luxembourg` | Link | LU | +01:00 | Parent: [`Europe/Brussels`](#europe-brussels) |
+| <a name="europe-madrid"></a>Madrid | `Europe/Madrid` | Canonical | ES | +01:00 | - |
+| <a name="europe-malta"></a>Malta | `Europe/Malta` | Canonical | MT | +01:00 | - |
+| <a name="europe-mariehamn"></a>Mariehamn | `Europe/Mariehamn` | Link | AX | +02:00 | Parent: [`Europe/Helsinki`](#europe-helsinki) |
 | <a name="europe-minsk"></a>Minsk | `Europe/Minsk` | Canonical | BY | +03:00 | - |
-| <a name="europe-monaco"></a>Monaco | `Europe/Monaco` | Link | MC | +02:00 | Parent: [`Europe/Paris`](#europe-paris) |
+| <a name="europe-monaco"></a>Monaco | `Europe/Monaco` | Link | MC | +01:00 | Parent: [`Europe/Paris`](#europe-paris) |
 | <a name="europe-moscow"></a>Moscow | `Europe/Moscow` | Canonical | RU | +03:00 | Children: [`W-SU`](#w-su) |
-| <a name="europe-nicosia"></a>Nicosia | `Europe/Nicosia` | Link | - | +03:00 | Parent: [`Asia/Nicosia`](#asia-nicosia) |
-| <a name="europe-oslo"></a>Oslo | `Europe/Oslo` | Link | NO | +02:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
-| <a name="europe-paris"></a>Paris | `Europe/Paris` | Canonical | FR, MC | +02:00 | Children: [`Europe/Monaco`](#europe-monaco) |
-| <a name="europe-podgorica"></a>Podgorica | `Europe/Podgorica` | Link | ME | +02:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
-| <a name="europe-prague"></a>Prague | `Europe/Prague` | Canonical | CZ, SK | +02:00 | Children: [`Europe/Bratislava`](#europe-bratislava) |
-| <a name="europe-riga"></a>Riga | `Europe/Riga` | Canonical | LV | +03:00 | - |
-| <a name="europe-rome"></a>Rome | `Europe/Rome` | Canonical | IT, SM, VA | +02:00 | Children: [`Europe/San_Marino`](#europe-san-marino), [`Europe/Vatican`](#europe-vatican) |
+| <a name="europe-nicosia"></a>Nicosia | `Europe/Nicosia` | Link | - | +02:00 | Parent: [`Asia/Nicosia`](#asia-nicosia) |
+| <a name="europe-oslo"></a>Oslo | `Europe/Oslo` | Link | NO | +01:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
+| <a name="europe-paris"></a>Paris | `Europe/Paris` | Canonical | FR, MC | +01:00 | Children: [`Europe/Monaco`](#europe-monaco) |
+| <a name="europe-podgorica"></a>Podgorica | `Europe/Podgorica` | Link | ME | +01:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
+| <a name="europe-prague"></a>Prague | `Europe/Prague` | Canonical | CZ, SK | +01:00 | Children: [`Europe/Bratislava`](#europe-bratislava) |
+| <a name="europe-riga"></a>Riga | `Europe/Riga` | Canonical | LV | +02:00 | - |
+| <a name="europe-rome"></a>Rome | `Europe/Rome` | Canonical | IT, SM, VA | +01:00 | Children: [`Europe/San_Marino`](#europe-san-marino), [`Europe/Vatican`](#europe-vatican) |
 | <a name="europe-samara"></a>Samara | `Europe/Samara` | Canonical | RU | +04:00 | - |
-| <a name="europe-san-marino"></a>San Marino | `Europe/San_Marino` | Link | SM | +02:00 | Parent: [`Europe/Rome`](#europe-rome) |
-| <a name="europe-sarajevo"></a>Sarajevo | `Europe/Sarajevo` | Link | BA | +02:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
+| <a name="europe-san-marino"></a>San Marino | `Europe/San_Marino` | Link | SM | +01:00 | Parent: [`Europe/Rome`](#europe-rome) |
+| <a name="europe-sarajevo"></a>Sarajevo | `Europe/Sarajevo` | Link | BA | +01:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
 | <a name="europe-saratov"></a>Saratov | `Europe/Saratov` | Canonical | RU | +04:00 | - |
 | <a name="europe-simferopol"></a>Simferopol | `Europe/Simferopol` | Canonical | RU, UA | +03:00 | - |
-| <a name="europe-skopje"></a>Skopje | `Europe/Skopje` | Link | MK | +02:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
-| <a name="europe-sofia"></a>Sofia | `Europe/Sofia` | Canonical | BG | +03:00 | - |
-| <a name="europe-stockholm"></a>Stockholm | `Europe/Stockholm` | Link | SE | +02:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
-| <a name="europe-tallinn"></a>Tallinn | `Europe/Tallinn` | Canonical | EE | +03:00 | - |
-| <a name="europe-tirane"></a>Tirane | `Europe/Tirane` | Canonical | AL | +02:00 | - |
-| <a name="europe-tiraspol"></a>Tiraspol | `Europe/Tiraspol` | Link | - | +03:00 | Parent: [`Europe/Chisinau`](#europe-chisinau) |
+| <a name="europe-skopje"></a>Skopje | `Europe/Skopje` | Link | MK | +01:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
+| <a name="europe-sofia"></a>Sofia | `Europe/Sofia` | Canonical | BG | +02:00 | - |
+| <a name="europe-stockholm"></a>Stockholm | `Europe/Stockholm` | Link | SE | +01:00 | Parent: [`Europe/Berlin`](#europe-berlin) |
+| <a name="europe-tallinn"></a>Tallinn | `Europe/Tallinn` | Canonical | EE | +02:00 | - |
+| <a name="europe-tirane"></a>Tirane | `Europe/Tirane` | Canonical | AL | +01:00 | - |
+| <a name="europe-tiraspol"></a>Tiraspol | `Europe/Tiraspol` | Link | - | +02:00 | Parent: [`Europe/Chisinau`](#europe-chisinau) |
 | <a name="europe-ulyanovsk"></a>Ulyanovsk | `Europe/Ulyanovsk` | Canonical | RU | +04:00 | - |
-| <a name="europe-uzhgorod"></a>Uzhgorod | `Europe/Uzhgorod` | Link | - | +03:00 | Parent: [`Europe/Kyiv`](#europe-kyiv) |
-| <a name="europe-vaduz"></a>Vaduz | `Europe/Vaduz` | Link | LI | +02:00 | Parent: [`Europe/Zurich`](#europe-zurich) |
-| <a name="europe-vatican"></a>Vatican | `Europe/Vatican` | Link | VA | +02:00 | Parent: [`Europe/Rome`](#europe-rome) |
-| <a name="europe-vienna"></a>Vienna | `Europe/Vienna` | Canonical | AT | +02:00 | - |
-| <a name="europe-vilnius"></a>Vilnius | `Europe/Vilnius` | Canonical | LT | +03:00 | - |
+| <a name="europe-uzhgorod"></a>Uzhgorod | `Europe/Uzhgorod` | Link | - | +02:00 | Parent: [`Europe/Kyiv`](#europe-kyiv) |
+| <a name="europe-vaduz"></a>Vaduz | `Europe/Vaduz` | Link | LI | +01:00 | Parent: [`Europe/Zurich`](#europe-zurich) |
+| <a name="europe-vatican"></a>Vatican | `Europe/Vatican` | Link | VA | +01:00 | Parent: [`Europe/Rome`](#europe-rome) |
+| <a name="europe-vienna"></a>Vienna | `Europe/Vienna` | Canonical | AT | +01:00 | - |
+| <a name="europe-vilnius"></a>Vilnius | `Europe/Vilnius` | Canonical | LT | +02:00 | - |
 | <a name="europe-volgograd"></a>Volgograd | `Europe/Volgograd` | Canonical | RU | +03:00 | - |
-| <a name="europe-warsaw"></a>Warsaw | `Europe/Warsaw` | Canonical | PL | +02:00 | Children: [`Poland`](#poland) |
-| <a name="europe-zagreb"></a>Zagreb | `Europe/Zagreb` | Link | HR | +02:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
-| <a name="europe-zaporozhye"></a>Zaporozhye | `Europe/Zaporozhye` | Link | - | +03:00 | Parent: [`Europe/Kyiv`](#europe-kyiv) |
-| <a name="europe-zurich"></a>Zurich | `Europe/Zurich` | Canonical | CH, DE, LI | +02:00 | Children: [`Europe/Busingen`](#europe-busingen), [`Europe/Vaduz`](#europe-vaduz) |
-| <a name="gb"></a>GB | `GB` | Link | - | +01:00 | Parent: [`Europe/London`](#europe-london) |
-| <a name="gb-eire"></a>GB-Eire | `GB-Eire` | Link | - | +01:00 | Parent: [`Europe/London`](#europe-london) |
-| <a name="met"></a>MET | `MET` | Link | - | +02:00 | Parent: [`Europe/Brussels`](#europe-brussels) |
-| <a name="poland"></a>Poland | `Poland` | Link | - | +02:00 | Parent: [`Europe/Warsaw`](#europe-warsaw) |
-| <a name="portugal"></a>Portugal | `Portugal` | Link | - | +01:00 | Parent: [`Europe/Lisbon`](#europe-lisbon) |
+| <a name="europe-warsaw"></a>Warsaw | `Europe/Warsaw` | Canonical | PL | +01:00 | Children: [`Poland`](#poland) |
+| <a name="europe-zagreb"></a>Zagreb | `Europe/Zagreb` | Link | HR | +01:00 | Parent: [`Europe/Belgrade`](#europe-belgrade) |
+| <a name="europe-zaporozhye"></a>Zaporozhye | `Europe/Zaporozhye` | Link | - | +02:00 | Parent: [`Europe/Kyiv`](#europe-kyiv) |
+| <a name="europe-zurich"></a>Zurich | `Europe/Zurich` | Canonical | CH, DE, LI | +01:00 | Children: [`Europe/Busingen`](#europe-busingen), [`Europe/Vaduz`](#europe-vaduz) |
+| <a name="gb"></a>GB | `GB` | Link | - | +00:00 | Parent: [`Europe/London`](#europe-london) |
+| <a name="gb-eire"></a>GB-Eire | `GB-Eire` | Link | - | +00:00 | Parent: [`Europe/London`](#europe-london) |
+| <a name="met"></a>MET | `MET` | Link | - | +01:00 | Parent: [`Europe/Brussels`](#europe-brussels) |
+| <a name="poland"></a>Poland | `Poland` | Link | - | +01:00 | Parent: [`Europe/Warsaw`](#europe-warsaw) |
+| <a name="portugal"></a>Portugal | `Portugal` | Link | - | +00:00 | Parent: [`Europe/Lisbon`](#europe-lisbon) |
 | <a name="turkey"></a>Turkey | `Turkey` | Link | - | +03:00 | Parent: [`Europe/Istanbul`](#europe-istanbul) |
 | <a name="w-su"></a>W-SU | `W-SU` | Link | - | +03:00 | Parent: [`Europe/Moscow`](#europe-moscow) |
-| <a name="wet"></a>WET | `WET` | Link | - | +01:00 | Parent: [`Europe/Lisbon`](#europe-lisbon) |
+| <a name="wet"></a>WET | `WET` | Link | - | +00:00 | Parent: [`Europe/Lisbon`](#europe-lisbon) |
 
 ## Indian
 
@@ -637,7 +637,7 @@
 | <a name="pacific-midway"></a>Midway | `Pacific/Midway` | Link | UM | -11:00 | Parent: [`Pacific/Pago_Pago`](#pacific-pago-pago) |
 | <a name="pacific-nauru"></a>Nauru | `Pacific/Nauru` | Canonical | NR | +12:00 | - |
 | <a name="pacific-niue"></a>Niue | `Pacific/Niue` | Canonical | NU | -11:00 | - |
-| <a name="pacific-norfolk"></a>Norfolk | `Pacific/Norfolk` | Canonical | NF | +11:00 | - |
+| <a name="pacific-norfolk"></a>Norfolk | `Pacific/Norfolk` | Canonical | NF | +12:00 | - |
 | <a name="pacific-noumea"></a>Noumea | `Pacific/Noumea` | Canonical | NC | +11:00 | - |
 | <a name="pacific-pago-pago"></a>Pago Pago | `Pacific/Pago_Pago` | Canonical | AS, UM | -11:00 | Children: [`Pacific/Midway`](#pacific-midway), [`Pacific/Samoa`](#pacific-samoa), [`US/Samoa`](#us-samoa) |
 | <a name="pacific-palau"></a>Palau | `Pacific/Palau` | Canonical | PW | +09:00 | - |
